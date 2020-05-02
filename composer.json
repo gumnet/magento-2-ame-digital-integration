@@ -1,5 +1,5 @@
 {
-  "name": "gumnet/ame",
+  "name": "gumnet/magento2-ame-integration",
   "description": "Magento 2 AME Digital Integration",
   "require": {
     "php": ">=5.6.0"
