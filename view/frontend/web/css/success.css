@@ -1,0 +1,57 @@
+#success_ame_external {
+    position: fixed;
+    display: block;
+    background-color: rgb(244, 244, 244);
+    top: 20%;
+    left: 20%;
+    height: 60%;
+    width: 60%;
+    text-align: center;
+    z-index: 999999;
+}
+#success_ame_internal{
+    top:10%;
+    width:340px;
+    background-color:#ffffff;
+    text-align:center;
+}
+#success_ame_value_txt{
+    font-weight: bold;
+    font-size: 11px;
+    font-family: Ubuntu, Ubuntu-Medium, Arial !important;
+    line-height: 1.5;
+
+}
+#success_ame_value{
+    font-weight: 600;
+    color: #fb3654;
+    font-family: Ubuntu, Ubuntu-Medium, Arial !important;
+}
+#success_ame_cashback_txt{
+    font-size: 12px;
+    margin-bottom: 0;
+}
+#success_ame_cashback_value{
+    font-weight: 600;
+    color: #4a90e2;
+    display: inline;
+}
+#success_ame_facil{
+    color: #ee345e;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: .5rem;
+}
+#success_ame_qrcode{
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+}
+#success_ame_info{
+    color: #aaaaaa;
+    font-size: 12px;
+    margin-left: 22px;
+}

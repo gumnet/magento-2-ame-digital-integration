@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="payment_method_is_active">
+        <observer name="disable_pg_ame" instance="GumNet\AME\Observer\ObserverforDisabledFrontendPg" />
+    </event>
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="ame_order_create" instance="GumNet\AME\Observer\OrderCreate"  />
+    </event>
+</config>

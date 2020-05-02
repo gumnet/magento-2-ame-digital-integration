@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">gumnet_ame_ame_order_listing.gumnet_ame_ame_order_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>gumnet_ame_ame_order_columns</spinner>
+        <deps>
+            <dep>gumnet_ame_ame_order_listing.gumnet_ame_ame_order_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource component="Magento_Ui/js/grid/provider" name="gumnet_ame_ame_order_listing_data_source">
+        <settings>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>GumNet_AME::ame_order</aclResource>
+        <dataProvider class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider" name="gumnet_ame_ame_order_listing_data_source">
+            <settings>
+                <requestFieldName>id</requestFieldName>
+                <primaryFieldName>id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters"/>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="gumnet_ame_ame_order_columns">
+        <selectionsColumn name="ids">
+            <settings>
+                <indexField>id</indexField>
+            </settings>
+        </selectionsColumn>
+        <column name="id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">id</label>
+            </settings>
+        </column>
+        <column name="increment_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">increment_id</label>
+            </settings>
+        </column>
+        <column name="ame_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">ame_id</label>
+            </settings>
+        </column>
+    </columns>
+</listing>

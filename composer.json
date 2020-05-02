@@ -1,0 +1,27 @@
+{
+  "name": "gumnet/ame",
+  "description": "Magento 2 AME Digital Integration",
+  "require": {
+    "php": ">=5.6.0"
+  },
+  "type": "magento2-module",
+  "license": [
+      "BSD-2-Clause"
+  ],
+  "authors": [
+    {
+      "name": "Gustavo Ulyssea @ GUM Net",
+      "email": "gustavo@gum.net.br",
+      "homepage": "https://gum.net.br",
+      "role": "Leader"
+    }
+  ],
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "GustavoUlyssea\\RedirectCheckout\\": ""
+    }
+  }
+}

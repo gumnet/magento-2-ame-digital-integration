@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<page>
+<head>
+    <css src="GumNet_AME::css/success.css"/>
+</head>
+<body>
+    <referenceContainer name="content">
+        <block class="GumNet\AME\Block\QrCode" name="order.details.success.ameqrcode" template="GumNet_AME::order/success_qrcode.phtml" after="order.success.additional.info"/>
+    </referenceContainer>
+</body>
+</page>
