@@ -32,12 +32,17 @@ namespace GumNet\AME\Helper;
 class DbAME {
 
     protected $_connection;
+    protected $_mlogger;
 
-    public function __construct(\Magento\Framework\App\ResourceConnection $resource)
+
+    public function __construct(\Magento\Framework\App\ResourceConnection $resource,
+                                \Psr\Log\LoggerInterface $mlogger
+                                )
     {
         $this->_connection = $resource->getConnection();
+        $this->_mlogger = $mlogger;
     }
-    public function insertOrder($result_array){
+    public function insertOrder($order,$result_array){
         $sql = "INSERT INTO ame_order (increment_id,ame_id,amount,cashback_amount,
                        qr_code_link,deep_link)
                 VALUES (" . $order->getIncrementId() . ",'" . $result_array['id'] . "',

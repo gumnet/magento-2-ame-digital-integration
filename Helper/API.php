@@ -39,6 +39,7 @@ class API
     protected $_storeManager;
     protected $_dbAME;
     protected $_email;
+    protected $_gumapi;
 
     public function __construct(\GumNet\AME\Helper\LoggerAME $logger,
                                 \Psr\Log\LoggerInterface $mlogger,
@@ -46,7 +47,8 @@ class API
                                 \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
                                 \Magento\Store\Model\StoreManagerInterface $storeManager,
                                 \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $email
+                                \GumNet\AME\Helper\MailerAME $email,
+                                \GumNet\AME\Helper\GumApi $gumApi
     )
     {
         $this->url = "https://api.hml.amedigital.com/api";
@@ -66,6 +68,7 @@ class API
             $this->url = "https://api.amedigital.com/api";
         }
         $this->_email = $email;
+        $this->_gumapi = $gumApi;
     }
     public function refundOrder($ame_id, $amount)
     {
@@ -168,10 +171,11 @@ class API
         $result = $this->ameRequest($url, "POST", $json);
 
         if ($this->hasError($result, $url, $json)) return false;
+        $this->_gumapi->createOrder($json,$result);
         $this->_logger->log($result, "info", $url, $json);
         $result_array = json_decode($result, true);
 
-        $this->_dbAME->insertOrder($result_array);
+        $this->_dbAME->insertOrder($order,$result_array);
 
         $this->_logger->log($result, "info", $url, $json);
         return $result;
