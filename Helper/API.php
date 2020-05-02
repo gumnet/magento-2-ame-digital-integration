@@ -48,7 +48,8 @@ class API
                                 \Magento\Store\Model\StoreManagerInterface $storeManager,
                                 \GumNet\AME\Helper\DbAME $dbAME,
                                 \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi
+                                \GumNet\AME\Helper\GumApi $gumApi,
+                                \GumNet\AME\Helper\Mlogger $nmlogger
     )
     {
         $this->url = "https://api.hml.amedigital.com/api";
@@ -58,6 +59,10 @@ class API
         $this->_scopeConfig = $scopeConfig;
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
+
+        if(!$this->_scopeConfig->getValue('ame/general/debug_log', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)){
+            $this->_mlogger = $nmlogger;
+        }
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
             $this->url = "https://api.dev.amedigital.com/api";
         }

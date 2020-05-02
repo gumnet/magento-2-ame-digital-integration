@@ -25,10 +25,15 @@
             </group>
             <group id="debug" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Debug</label>
+                <field id="debug_log" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Habilitar debug log</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="debug_email_enable" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Enviar emails de debug</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+
                 <field id="debug_email_addresses" translate="label" type="text" sortOrder="80" showInDefault="1">
                     <label>Enviar emails de debug para</label>
                 </field>
