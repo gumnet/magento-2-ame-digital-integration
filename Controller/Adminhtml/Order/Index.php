@@ -28,32 +28,39 @@
  */
 
 namespace GumNet\AME\Controller\Adminhtml\Order;
+
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\View\Result\Page;
 use Magento\Framework\View\Result\PageFactory;
-class Index extends Action
+
+/**
+ * Class Index
+ */
+class Index extends Action // implements HttpGetActionInterface
 {
+    const MENU_ID = 'GumNet_AME::order_index';
+
     protected $resultPageFactory;
+    protected $_api;
+
     public function __construct(
         Context $context,
-        PageFactory $resultPageFactory
-    )
-    {
+        PageFactory $resultPageFactory,
+        \GumNet\AME\Helper\API $api
+    ) {
+
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
+        $this->_api = $api;
+        $this->_isScopePrivate = true;
     }
     public function execute()
     {
-        $this->_view->loadLayout();
         $resultPage = $this->resultPageFactory->create();
-        $resultPage->getConfig()->getTitle()->prepend(__('AME Orders'));
-//        $resultPage->setActiveMenu('Vendor_Module::gridList_name');
-//        $resultPage->addBreadcrumb(__('Grid Name Process'), __('Grid Name List'));
-        $this->_addContent($this->_view->getLayout()->createBlock('GumNet\AME\Block\Adminhtml\Grid\Grid'));
-        $this->_view->renderLayout();
-    }
-    protected function _isAllowed()
-    {
-        return true;
+//        $resultPage->setActiveMenu(static::MENU_ID);
+        $resultPage->getConfig()->getTitle()->prepend(__('AME Order Detail Page'));
+        return $resultPage;
     }
 }

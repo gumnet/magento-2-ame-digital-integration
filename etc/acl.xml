@@ -4,10 +4,7 @@
         <resources>
             <resource id="Magento_Backend::admin">
                 <resource id="GumNet_AME::ame_order" sortOrder="10" title="ame_order">
-                    <resource id="GumNet_AME::ame_order_save" sortOrder="10" title="Save ame_order"/>
-                    <resource id="GumNet_AME::ame_order_delete" sortOrder="20" title="Delete ame_order"/>
-                    <resource id="GumNet_AME::ame_order_update" sortOrder="30" title="Update ame_order"/>
-                    <resource id="GumNet_AME::ame_order_view" sortOrder="40" title="View ame_order"/>
+                    <resource id="GumNet_AME::ame_order_view" sortOrder="10" title="View ame_order"/>
                 </resource>
             </resource>
         </resources>

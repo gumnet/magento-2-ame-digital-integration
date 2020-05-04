@@ -1,0 +1,94 @@
+<?php
+/**
+ * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
+ * @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
+ * @package GumNet AME
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY GUM Net (https://gum.net.br). AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$_request = $objectManager->get('\Magento\Framework\App\Request\Http');
+$id = $_request->getParam('id');
+
+$_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
+$order = $_order->get($id);
+$increment_id = $order->getIncrementId();
+
+$_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
+
+$admin_url = $this->helper('Magento\Backend\Helper\Data')->getHomePageUrl();
+
+$_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
+
+$json = $_apiAME->consultOrder($_dbAME->getAmeIdByIncrementId($increment_id));
+$json_array = json_decode($json,true);
+$json_string = json_encode($json_array, JSON_PRETTY_PRINT);
+$json_string = str_replace(" ","&nbsp;",$json_string);
+$json_string = nl2br($json_string);
+
+?>
+    <button id="capturar" title="Capturar" type="button" class="action-default scalable ship primary"
+            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/capture/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+            data-ui-id="sales-order-view-ship-button-sendorderame-button" >
+        <span>Capturar</span>
+    </button>
+    <button id="cancelar" title="Cancelar" type="button" class="action-default scalable ship primary"
+            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+            data-ui-id="sales-order-view-ship-button-sendorderame-button" >
+        <span>Cancelar</span>
+    </button>
+    <button id="refund" title="Reembolsar" type="button" class="action-default scalable ship primary"
+            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+            data-ui-id="sales-order-view-ship-button-sendorderame-button" >
+        <span>Reembolsar</span>
+    </button>
+<section class="admin__page-section order-view-account-information">
+    <div class="admin__page-section-title">
+        <span class="title"><?= $block->escapeHtml(__('AME Order Information')); ?></span>
+    </div>
+    <div class="admin__page-section-content">
+        <div class="admin__page-section-item order-information">
+            <div class="admin__page-section-item-title">
+                <span class="title">
+                        <?= $block->escapeHtml(__('Order # %1', $order->getRealOrderId())) ?>
+                </span>
+            </div>
+            <div class="admin__page-section-item-content">
+                <table class="admin__table-secondary order-information-table">
+                    <tr>
+                        <th><?= $block->escapeHtml(__('AME Order ID')) ?></th>
+                        <td><?= $block->escapeHtml($_dbAME->getAmeIdByIncrementId($increment_id)); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Consulta JSON</th>
+                        <td style="text-align: left!important;"><span id="json_string" style="text-align: left!important;"><?php echo $json_string; ?></span></td>
+                    </tr>
+                    <?= $block->getChildHtml() ?>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+
