@@ -43,17 +43,14 @@ class Index extends Action // implements HttpGetActionInterface
     const MENU_ID = 'GumNet_AME::order_index';
 
     protected $resultPageFactory;
-    protected $_api;
 
     public function __construct(
         Context $context,
-        PageFactory $resultPageFactory,
-        \GumNet\AME\Helper\API $api
+        PageFactory $resultPageFactory
     ) {
 
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
-        $this->_api = $api;
         $this->_isScopePrivate = true;
     }
     public function execute()

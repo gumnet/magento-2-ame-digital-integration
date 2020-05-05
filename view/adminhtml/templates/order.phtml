@@ -29,6 +29,7 @@
 
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $_request = $objectManager->get('\Magento\Framework\App\Request\Http');
+
 $id = $_request->getParam('id');
 
 $_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
@@ -41,6 +42,12 @@ $admin_url = $this->helper('Magento\Backend\Helper\Data')->getHomePageUrl();
 
 $_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
 
+
+$_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
+
+$formkey = $_formKey->getFormKey();
+
+
 $json = $_apiAME->consultOrder($_dbAME->getAmeIdByIncrementId($increment_id));
 $json_array = json_decode($json,true);
 $json_string = json_encode($json_array, JSON_PRETTY_PRINT);
@@ -48,21 +55,30 @@ $json_string = str_replace(" ","&nbsp;",$json_string);
 $json_string = nl2br($json_string);
 
 ?>
+<style>
+    form {
+        display:inline;
+    }
+</style>
     <button id="capturar" title="Capturar" type="button" class="action-default scalable ship primary"
-            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/capture/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+            onclick="window.open(&#039;<?php echo $admin_url; ?>../ameroutes/capture/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
         <span>Capturar</span>
     </button>
     <button id="cancelar" title="Cancelar" type="button" class="action-default scalable ship primary"
-            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+            onclick="window.open(&#039;<?php echo $admin_url; ?>../ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
         <span>Cancelar</span>
     </button>
-    <button id="refund" title="Reembolsar" type="button" class="action-default scalable ship primary"
-            onclick="window.open(&#039;<?php echo $admin_url; ?>/ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
+    <form method="post" action="<?php echo $admin_url; ?>../ameroutes/refund/index/id/<?php echo $id; ?>" target="_blank">
+    <button id="refund" title="Reembolsar" type="submit" class="action-default scalable ship primary"
+
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
         <span>Reembolsar</span>
     </button>
+        <input name="form_key" type="hidden" value="<?php echo $formkey; ?>">
+        <input type="text" name="valor" placeholder="valor em reais">
+    </form>
 <section class="admin__page-section order-view-account-information">
     <div class="admin__page-section-title">
         <span class="title"><?= $block->escapeHtml(__('AME Order Information')); ?></span>
@@ -79,6 +95,10 @@ $json_string = nl2br($json_string);
                     <tr>
                         <th><?= $block->escapeHtml(__('AME Order ID')) ?></th>
                         <td><?= $block->escapeHtml($_dbAME->getAmeIdByIncrementId($increment_id)); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?= $block->escapeHtml(__('AME Transaction ID')) ?></th>
+                        <td><?= $block->escapeHtml($_dbAME->getTransactionIdByOrderId($_dbAME->getAmeIdByIncrementId($increment_id))); ?></td>
                     </tr>
                     <tr>
                         <th>Consulta JSON</th>
