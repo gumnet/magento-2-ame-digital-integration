@@ -3,6 +3,7 @@
   "description": "Magento 2 AME Digital Integration",
   "require": {
     "php": ">=5.6.0"
+    "o2ti/full-checkout": ">=100.0.7"
   },
   "type": "magento2-module",
   "license": [
