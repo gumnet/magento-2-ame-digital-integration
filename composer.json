@@ -5,6 +5,9 @@
     "php": ">=5.6.0",
     "o2ti/full-checkout": ">=100.0.7"
   },
+  "replace": {
+    "moip/magento2": "*"
+    },
   "type": "magento2-module",
   "license": [
       "BSD-2-Clause"
