@@ -47,7 +47,7 @@ class PluginBtnOrderView
 
     public function beforeSetLayout( \Magento\Sales\Block\Adminhtml\Order\View $subject )
     {
-        $sendOrder = $this->_backendUrl->getUrl('ameroutes/index/index/id/'.$subject->getOrderId() );
+        $sendOrder = $this->_backendUrl->getUrl('ameroutes/order/index/id/'.$subject->getOrderId() );
         $subject->addButton(
             'sendorderame',
             [

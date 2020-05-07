@@ -62,11 +62,14 @@ class Index extends \Magento\Framework\App\Action\Action
 //        if(!$this->_auth->isLoggedIn()) die('unauthorized');
 
         $id = $this->request->getParam('id');
+        $url = "../../../../";
+        header('Location: ../../../../order/index/id/'.$id);
+        die();
+
         $order = $this->orderRepository->get($id);
         echo "Painel AME <br><br>\r";
         echo "Pedido Magento: ".$order->getIncrementId()."<br>\r";
         echo "Pedido AME: ".$this->_dbAME->getAmeIdByIncrementId($order->getIncrementId())."<br>\r";
-        $url = "../../../../";
         echo "<a href='".$url."capture/index/id/".$id."/'>Capturar</a> | ";
         echo "<a href='".$url."cancel/index/id/".$id."/'>Cancelar</a> | ";
         echo "<form method='post' action='".$url."refund/index/id/".$id."/'>";
