@@ -43,8 +43,35 @@ class GumApi
         $this->_scopeConfig = $scopeConfig;
         $this->url = "https://apiame.gum.net.br";
     }
+    public function captureTransaction($input,$result)
+    {
+        $this->gumRequest("capturetransaction",$result,$input);
+        return true;
+    }
     public function createOrder($input,$result)
     {
+        $this->gumRequest("createorder",$result,$input);
+        return true;
+    }
+    public function gumRequest($action,$result,$input=""){
+        $ch = curl_init();
+        $environment = $this->getEnvironment();
+        $post['environment'] = $environment;
+        $post['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
+        $post['input'] = $input;
+        $post['result'] = $result;
+        $post['action'] = $action;
+
+        curl_setopt($ch, CURLOPT_URL, $this->url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        $re = curl_exec($ch);
+        curl_close($ch);
+        return true;
+    }
+    public function getEnvironment(){
         $environment = "";
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
             $environment = "dev";
@@ -55,20 +82,7 @@ class GumApi
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
             $environment = "prod";
         }
-        $ch = curl_init();
-        $post['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
-        $post['environment'] = $environment;
-        $post['input'] = $input;
-        $post['result'] = $result;
-
-        curl_setopt($ch, CURLOPT_URL, $this->url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        $re = curl_exec($ch);
-        curl_close($ch);
-        return true;
+        return $environment;
     }
 }
 

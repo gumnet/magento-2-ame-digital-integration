@@ -33,7 +33,7 @@
         <tab id="ame_tab" translate="label" sortOrder="1000">
             <label>AME</label>
         </tab>
-        <section id="ame" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="ame" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>AME Configuration</label>
             <tab>ame_tab</tab>
             <resource>GumNet_AME::config</resource>
@@ -53,7 +53,22 @@
                     <label>Cashback %</label>
                 </field>
             </group>
-            <group id="debug" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="address" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Address</label>
+                <field id="street" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Rua</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+                <field id="number" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Número</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+                <field id="neighborhood" translate="label" type="select" sortOrder="30" showInDefault="1">
+                    <label>Bairro</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+            </group>
+            <group id="debug" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Debug</label>
                 <field id="debug_log" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Habilitar debug log</label>

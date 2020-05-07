@@ -152,19 +152,23 @@ class API
             $cashbackAmountValue = intval($this->getCashbackPercent() * $products_amount * 0.01);
             $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         }
-        if (isset($array_items)) unset($array_items);
-//        $array_items['description'] = "Taxa de envio";
-//        $array_items['quantity'] = 1;
-//        $array_items['amount'] = intval($order->getShippingAmount() * 100);
-//        array_push($json_array['attributes']['items'], $array_items);
 
         $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
         $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] = $order->getShippingAddress()->getStreet()[1];
+
+        $number_line = $this->_scopeConfig->getValue('ame/address/number', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['attributes']['customPayload']['shippingAddress']['number'] = $order->getShippingAddress()->getStreet()[$number_line];
+
         $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] = $order->getShippingAddress()->getStreet()[0];
+
+        $street_line = $this->_scopeConfig->getValue('ame/address/street', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['attributes']['customPayload']['shippingAddress']['street'] = $order->getShippingAddress()->getStreet()[$street_line];
+
         $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = $order->getShippingAddress()->getPostcode();
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = $order->getShippingAddress()->getStreet()[2];
+
+        $neighborhood_line = $this->_scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = $order->getShippingAddress()->getStreet()[$neighborhood_line];
+
         $json_array['attributes']['customPayload']['shippingAddress']['state'] = $this->codigoUF($order->getShippingAddress()->getRegion());
 
         $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
