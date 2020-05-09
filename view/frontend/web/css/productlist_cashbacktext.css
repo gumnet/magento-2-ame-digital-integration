@@ -1,0 +1,16 @@
+.products-list-ame-info{
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.product-list-ame-text{
+    color: #5f5f5f;
+}
+
+.product-list-ame-value{
+    color: #f6235e;
+    font-size: 15px;
+}
+.price-box.price-final_price{
+    margin-bottom: 10px;
+}

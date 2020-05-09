@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
@@ -27,12 +26,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="GumNet_AME" type="GumNet\AME\Block\LayoutProcessor" sortOrder="100"/>
-    </type>
-    <type name="Magento\Catalog\Block\Product\ListProduct" shared="false">
-        <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin" disabled="false" sortOrder="999" />
-    </type>
-</config>
+
+?>
+<div class="products-list-ame-info">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP6zwAAAgcBApocMXEAAAAASUVORK5CYII=" width="30">
+    <span class="product-list-ame-text" style="color: #5f5f5f;"> receba</span>
+    <span class="product-list-ame-value" style="color: #f6235e; font-size: 15px">
+        R$<?php echo number_format($block->getCashbackValue(),2,",","."); ?>
+    </span>
+    <span class="product-list-ame-text" style="color: #1b0487;">
+        (<?php echo $block->getCashbackPercent(); ?>% de volta)
+    </span>
+</div>

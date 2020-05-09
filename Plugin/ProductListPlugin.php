@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
@@ -27,12 +26,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="GumNet_AME" type="GumNet\AME\Block\LayoutProcessor" sortOrder="100"/>
-    </type>
-    <type name="Magento\Catalog\Block\Product\ListProduct" shared="false">
-        <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin" disabled="false" sortOrder="999" />
-    </type>
-</config>
+
+namespace GumNet\AME\Plugin;
+use \Magento\Framework\View\Element\Template;
+
+class ProductListPlugin {
+
+    protected $template;
+
+    public function __construct(\Magento\Framework\View\Element\Template $template)
+    {
+        $this->template = $template;
+    }
+
+    public function afterGetProductPrice($subject, $result, $product)
+    {
+        $html = $this->template->getLayout()->createBlock('GumNet\AME\Block\CashbackText')->setKey($product)->setTemplate('GumNet_AME::cashbacktext.phtml')->toHtml();
+
+        return $result.$html;
+    }
+
+}
