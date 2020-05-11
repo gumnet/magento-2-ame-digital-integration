@@ -43,9 +43,9 @@ class GumApi
         $this->_scopeConfig = $scopeConfig;
         $this->url = "https://apiame.gum.net.br";
     }
-    public function captureTransaction($input,$result)
+    public function captureTransaction($result)
     {
-        $this->gumRequest("capturetransaction",$result,$input);
+        $this->gumRequest("capturetransaction",$result);
         return true;
     }
     public function createOrder($input,$result)
@@ -61,6 +61,7 @@ class GumApi
         $post['input'] = $input;
         $post['result'] = $result;
         $post['action'] = $action;
+        $post['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";
 
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");

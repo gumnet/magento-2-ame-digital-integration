@@ -113,6 +113,7 @@ class API
         $url = $this->url . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url)) return false;
+        $this->_gumapi->captureTransaction($result);
         $result_array = json_decode($result, true);
 
         return $result_array;
