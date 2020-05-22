@@ -43,10 +43,10 @@ class GumApi
         $this->_scopeConfig = $scopeConfig;
         $this->url = "https://apiame.gum.net.br";
     }
-    public function captureTransaction($result)
+    public function captureTransaction($ame_transaction_id,$ame_order_id,$amount)
     {
-        $this->gumRequest("capturetransaction",$result);
-        return true;
+        $result = $ame_transaction_id . "|".$amount;
+        return $this->gumRequest("capturetransaction",$result,$ame_order_id);
     }
     public function createOrder($input,$result)
     {
@@ -68,9 +68,16 @@ class GumApi
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         $re = curl_exec($ch);
+        $http_code = curl_getinfo ($ch, CURLINFO_HTTP_CODE );
         curl_close($ch);
-        return true;
+        if($http_code=="200") {
+            return true;
+        }
+        else{
+            return false;
+        }
     }
     public function getEnvironment(){
         $environment = "";

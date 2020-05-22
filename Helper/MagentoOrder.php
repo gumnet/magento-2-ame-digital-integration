@@ -36,7 +36,6 @@ class MagentoOrder
     protected $_transaction;
 
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
         \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction
@@ -44,7 +43,6 @@ class MagentoOrder
         $this->_orderRepository = $orderRepository;
         $this->_invoiceService = $invoiceService;
         $this->_transaction = $transaction;
-        parent::__construct($context);
     }
     public function invoiceOrder($orderId)
     {

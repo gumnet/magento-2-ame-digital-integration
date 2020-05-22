@@ -323,7 +323,31 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ->setComment("AME Transactions");
             $setup->getConnection()->createTable($table);
         }
-
+        if(version_compare($context->getVersion(), '0.0.15', '<')) {
+            $installer->getConnection()->addColumn(
+                $installer->getTable('ame_transaction'),
+                'updated_at',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+                    'nullable' => false,
+                    'comment' => 'Updated at'
+                ]
+            );
+            $installer->getConnection()->addColumn(
+                $installer->getTable('ame_transaction'),
+                'update_ok',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                    'nullable' => false,
+                    'comment' => 'Update ok',
+                    'default' => 0
+                ]
+            );
+            $sql = "UPDATE ame_transaction SET updated_at = NOW()";
+            $setup->getConnection()->query($sql);
+            $sql = "UPDATE ame_transaction SET update_ok = 0";
+            $setup->getConnection()->query($sql);
+        }
         $installer->endSetup();
     }
 }

@@ -33,7 +33,7 @@ use \Magento\Framework\App\CsrfAwareActionInterface;
 use \Magento\Framework\App\RequestInterface;
 use \Magento\Framework\App\Request\InvalidRequestException;
 
-class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface // \Magento\Framework\App\Action\HttpPostActionInterface
+class Index extends \Magento\Framework\App\Action\Action
 {
     protected $_session;
     protected $_request;
@@ -46,6 +46,7 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     protected $_api;
     protected $_mlogger;
     protected $_email;
+    protected $_gumApi;
 
     public function __construct(\Magento\Framework\App\Action\Context $context,
                                 \Magento\Framework\App\Request\Http $request,
@@ -58,6 +59,7 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
                                 \GumNet\AME\Helper\API $api,
                                 \Psr\Log\LoggerInterface $mlogger,
                                 \GumNet\AME\Helper\MailerAME $email,
+                                \GumNet\AME\Helper\GumApi $gumApi,
                                 array $data = []
                                 )
     {
@@ -71,6 +73,7 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $this->_api = $api;
         $this->_mlogger = $mlogger;
         $this->_email = $email;
+        $this->_gumApi = $gumApi;
         parent::__construct($context);
     }
     public function execute()
@@ -117,6 +120,9 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
             $this->_mlogger->log("INFO", "AME Callback capturing...");
             $capture = $this->_api->captureOrder($ame_order_id);
 
+            $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
+            $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
+            $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
         }
 //        if($input['status']=="CANCELED"){
 //            $this->_mlogger->log("INFO","AME Callback cancel order ".$incrId);
@@ -128,7 +134,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
 //            $this->cancelOrder($order);
 //        }
         $this->_mlogger->log("INFO","AME Callback ended.");
-        $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback AME ID not found",$json);
         die();
     }
     public function cancelOrder($order){
@@ -148,13 +153,5 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     public function isJson($string) {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
-    }
-    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
-    {
-        return null;
-    }
-    public function validateForCsrf(RequestInterface $request): ?bool
-    {
-        return true;
     }
 }

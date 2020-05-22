@@ -1,10 +1,8 @@
-SELECT so.entity_i,ao.increment_id, ao.ame_id,
-so.state, so.status
+SELECT *
 
-FROM ame_order ao,
-sales_order so
+FROM ame_transaction
 
-WHERE so.state IN ('new','processing')
+WHERE WHERE update_ok = 0
 
 ORDER BY ao.updated_at
 LIMIT [LIMIT]

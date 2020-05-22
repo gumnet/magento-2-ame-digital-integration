@@ -29,29 +29,31 @@
 
 namespace GumNet\Tracking\Cron;
 
-class UpdateOrders
+class UpdatePendingTransactions
 {
     protected $_mlogger;
     protected $_order;
     protected $_dbAME;
-    protected $_apiAME;
+    protected $_gumApi;
 
     public function __construct(
         \Psr\Log\LoggerInterface $mlogger,
         \Magento\Sales\Api\Data\OrderInterface $order,
         \GumNet\AME\Helper\DbAME $dbAME,
-        \GumNet\AME\Helper\API $apiAME
+        \GumNet\AME\Helper\GumApi $gumApi
     ) {
         $this->_mlogger = $logger;
         $this->_order = $order;
         $this->_dbAME = $dbAME;
-        $this->_apiAME = $apiAME;
+        $this->_gumApi = $gumApi;
     }
     public function execute()
     {
-        $orders_ame = $this->_dbAME->getFirstUpdatedPendingOrders();
-        foreach($orders_ame as $order_ame){
-            $json = $this->_apiAME->consultOrder($orders_ame['ame_id']);
+        $num = 10;
+        $orders_ame = $this->_dbAME->getFirstPendingTransactions($num);
+        foreach($transactions as $transaction){
+            $this->_gumApi
+                ->captureTransaction($transaction['ame_order_id'],$transaction['ame_transaction_id'],$transaction['amount']);
         }
     }
 }

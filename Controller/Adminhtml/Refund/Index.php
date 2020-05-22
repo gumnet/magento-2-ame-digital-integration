@@ -84,17 +84,4 @@ class Index extends \Magento\Framework\App\Action\Action
         die();
         return;
     }
-    public function createCsrfValidationException(
-        RequestInterface $request
-    ): ?InvalidRequestException {
-        return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function validateForCsrf(RequestInterface $request): ?bool
-    {
-        return true;
-    }
 }

@@ -69,6 +69,10 @@ class DbAME {
         }
         return false;
     }
+    public function getTransactionAmount($ame_transaction_id){
+        $sql = "SELECT amount FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        return $this->_connection->fetchOne($sql);
+    }
     public function getTransactionIdByOrderId($ame_order_id){
         $sql = "SELECT ame_transaction_id FROM ame_transaction WHERE ame_order_id = '".$ame_order_id."'";
         return $this->_connection->fetchOne($sql);
@@ -123,8 +127,8 @@ class DbAME {
         $sql = "SELECT ame_id FROM ame_order WHERE increment_id = '".$incrementId."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getFirstUpdatedPendingOrders($num){
-        $sql = file_get_contents("SQL/getfirstupdatedpendingorders.sql");
+    public function getFirstPendingTransactions($num){
+        $sql = file_get_contents("SQL/getfirstpendingtransactions.sql");
         $sql = str_replace("[LIMIT]",$num,$sql);
         return $this->_connection->fetchAssoc($sql);
     }
