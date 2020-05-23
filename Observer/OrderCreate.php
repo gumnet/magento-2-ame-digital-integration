@@ -35,17 +35,27 @@ use Magento\Sales\Model\Order;
 class OrderCreate implements ObserverInterface
 {
     protected $_ame;
+    protected $_order;
 
     public function __construct(
-        \GumNet\AME\Helper\API $api
+        \GumNet\AME\Helper\API $api,
+        \Magento\Sales\Api\Data\OrderInterface $order
     )
     {
         $this->_ame = $api;
+        $this->_order = $order;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
+        //  Magento 2.2.* compatibility
+        if(!$order){
+            $orderids = $observer->getEvent()->getOrderIds();
+            foreach($orderids as $orderid){
+                $order = $this->_order->load($orderid);
+            }
+        }
         $payment = $order->getPayment();
         $method = $payment->getMethod();
         if($method=="ame") {
