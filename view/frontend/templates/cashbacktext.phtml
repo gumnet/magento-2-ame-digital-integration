@@ -29,7 +29,7 @@
 
 ?>
 <div class="products-list-ame-info">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP6zwAAAgcBApocMXEAAAAASUVORK5CYII=" width="30">
+    <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/logo-ame.svg'); ?>" width="45">
     <span class="product-list-ame-text" style="color: #5f5f5f;"> receba</span>
     <span class="product-list-ame-value" style="color: #f6235e; font-size: 15px">
         R$<?php echo number_format($block->getCashbackValue(),2,",","."); ?>
