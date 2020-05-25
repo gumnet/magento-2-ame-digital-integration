@@ -33,8 +33,8 @@ class Environment implements \Magento\Framework\Option\ArrayInterface
 {
     public function toOptionArray()
     {
+//            ['value' => 0, 'label' => __('Development')],
         return [
-            ['value' => 0, 'label' => __('Development')],
             ['value' => 1, 'label' => __('Validation')],
             ['value' => 2, 'label' => __('Production')],
         ];
