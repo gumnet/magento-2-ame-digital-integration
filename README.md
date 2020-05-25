@@ -9,7 +9,7 @@ composer require gumnet/magento2-ame-integration
 ## Contato
 Para suporte técnico como dúvidas na instalação e/ou problemas nos contate no email: suporte@gum.net.br
 
-Página oficial do desenvolvedor: https://gum.net.br
+Página oficial do desenvolvedor: https://gum.net.br/modulo-magento-2-integracao-com-ame-digital/
 
 ## Importante
 Para o correto funcionamento é necessário entrar em contato com a equipe comercial da AME.
@@ -20,9 +20,7 @@ ana.delima@amedigital.com
 
 Ana Carolina - Gerente de parcerias
 
-Você também pode utilizar o site:
-
-www.amedigital.com
+Você também pode utilizar o site: www.amedigital.com
 
 
 
