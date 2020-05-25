@@ -14,9 +14,16 @@ Página oficial do desenvolvedor: https://gum.net.br
 ## Importante
 Para o correto funcionamento é necessário entrar em contato com a equipe comercial da AME.
 
-Se ainda não fez contato, você pode utilizar o site:
+Se ainda não fez contato, entre em contato por email:
+
+ana.delima@amedigital.com
+
+Ana Carolina - Gerente de parcerias
+
+Você também pode utilizar o site:
 
 www.amedigital.com
+
 
 
 ## Informações de licença
