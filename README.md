@@ -14,9 +14,6 @@ Página oficial do desenvolvedor: https://gum.net.br
 
 
 
-
-
-
 ## Informações de licença
 @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
 
