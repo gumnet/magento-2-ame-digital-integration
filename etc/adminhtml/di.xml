@@ -32,4 +32,11 @@
     <type name="\Magento\Sales\Block\Adminhtml\Order\View">
         <plugin name="GumNet_AME::sendOrderView" type="GumNet\AME\Plugin\PluginBtnOrderView" />
     </type>
+    <type name="Magento\Framework\Notification\MessageList">
+        <arguments>
+            <argument name="messages" xsi:type="array">
+                <item name="AdminQuoteMessages" xsi:type="string">GumNet\AME\Model\Admin\Quote\Messages</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
