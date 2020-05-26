@@ -67,7 +67,7 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
         return $this->_apiAME->getCashbackPercent();
     }
     public function getPrice(){
-        return $this->getOrder()->getBaseSubtotalInclTax();
+        return $this->getOrder()->getGrandTotal();
     }
     public function getOrder()
     {
