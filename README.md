@@ -1,20 +1,31 @@
 # Módulo de integração do Magento 2 
-=================================
+
 Este módulo adiciona a forma de pagamento da AME Digital.
 
-Para o correto funcionamento é necessário entrar em contato com a equipe comercial da AME.
+## Instalação 
 
-Se ainda não fez contato, você pode utilizar o site:
+composer require gumnet/magento2-ame-integration
 
-www.amedigital.com
-
+## Contato
 Para suporte técnico como dúvidas na instalação e/ou problemas nos contate no email: suporte@gum.net.br
 
-Página oficial do desenvolvedor: https://gum.net.br
+Página oficial do desenvolvedor: https://gum.net.br/modulo-magento-2-integracao-com-ame-digital/
+
+## Importante
+Para o correto funcionamento é necessário entrar em contato com a equipe comercial da AME.
+
+Se ainda não fez contato, entre em contato por email:
+
+ana.delima@amedigital.com
+
+Ana Carolina - Gerente de parcerias
+
+Você também pode utilizar o site: www.amedigital.com
 
 
 
 ## Informações de licença
+
 @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
 
 @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
