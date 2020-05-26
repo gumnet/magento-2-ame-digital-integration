@@ -124,7 +124,7 @@ class API
         $shippingAmount = $order->getShippingAmount();
         $productsAmount = $order->getGrandTotal() - $shippingAmount;
         $amount = intval($order->getGrandTotal() * 100);
-        $cashbackAmountValue = intval($this->getCashbackPercent() * $productsAmount);
+        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
 
         $json_array['title'] = "GumNet Pedido " . $order->getIncrementId();
         $json_array['description'] = "Pedido " . $order->getIncrementId();

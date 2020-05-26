@@ -45,12 +45,19 @@
                 </field>
                 <field id="api_user" translate="label" type="text" sortOrder="30" showInDefault="1">
                     <label>API User</label>
+                    <validate>required-entry validate-length minimum-length-10 maximum-length-32
+                    </validate>
                 </field>
                 <field id="api_password" translate="label" type="text" sortOrder="40" showInDefault="1">
                     <label>API Password</label>
+                    <validate>required-entry validate-length minimum-length-10 maximum-length-32
+                    </validate>
                 </field>
                 <field id="cashback_value" translate="label" type="text" sortOrder="50" showInDefault="1">
                     <label>Cashback %</label>
+                    <validate>
+                        required-entry validate-length minimum-length-1 maximum-length-2 validate-zero-or-greater validate-number
+                    </validate>
                 </field>
             </group>
             <group id="address" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -81,6 +88,7 @@
 
                 <field id="debug_email_addresses" translate="label" type="text" sortOrder="80" showInDefault="1">
                     <label>Enviar emails de debug para</label>
+                    <validate>validate-email</validate>
                 </field>
             </group>
 
