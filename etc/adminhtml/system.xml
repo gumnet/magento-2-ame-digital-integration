@@ -56,7 +56,7 @@
                 <field id="cashback_value" translate="label" type="text" sortOrder="50" showInDefault="1">
                     <label>Cashback %</label>
                     <validate>
-                        required-entry validate-length minimum-length-1 maximum-length-2 validate-zero-or-greater validate-number
+                        required-entry validate-number-0-100 validate-number
                     </validate>
                 </field>
             </group>

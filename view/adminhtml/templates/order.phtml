@@ -47,7 +47,6 @@ $_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
 
 $formkey = $_formKey->getFormKey();
 
-
 $json = $_apiAME->consultOrder($_dbAME->getAmeIdByIncrementId($increment_id));
 $json_array = json_decode($json,true);
 $json_string = json_encode($json_array, JSON_PRETTY_PRINT);

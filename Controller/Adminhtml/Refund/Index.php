@@ -75,7 +75,12 @@ class Index extends \Magento\Framework\App\Action\Action
             echo "ERROR";
             die();
         }
-        $json = $refund;
+        $this->_dbAME
+            ->insertRefund($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()),
+                $refund[1],
+                $refund[0]['operationId'],$valor,$refund[0]['status']);
+
+        $json = $refund[0];
         $json_array = json_decode($json,true);
         $json_string = json_encode($json_array, JSON_PRETTY_PRINT);
         echo "<br>\n";

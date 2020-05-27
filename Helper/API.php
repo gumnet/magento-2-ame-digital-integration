@@ -29,6 +29,8 @@
 
 namespace GumNet\AME\Helper;
 
+use \Ramsey\Uuid\Uuid;
+
 class API
 {
     protected $url;
@@ -40,6 +42,8 @@ class API
     protected $_dbAME;
     protected $_email;
     protected $_gumapi;
+    protected $_proxyUrl;
+    protected $_invalidProxies;
 
     public function __construct(\GumNet\AME\Helper\LoggerAME $logger,
                                 \Psr\Log\LoggerInterface $mlogger,
@@ -74,18 +78,42 @@ class API
         }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
+        $this->_proxyUrl = "";
+        $this->_invalidProxies = [];
+    }
+    public function getProxy($force_update=0){
+        if(!$force_update&&$this->_proxyUrl) return $this->_proxyUrl;
+        $valid_proxy=0;
+        while(!$valid_proxy){
+            $proxy = rand(0,count($this->proxyList()-1));
+            $valid_proxy=1;
+            foreach($this->_invalidProxies as $invalidProxy){
+
+            }
+        }
+    }
+    public function proxyList(){
+        $list[0]="ameproxy0.gum.net.br";
+        $list[1]="ameproxy1.gum.net.br";
+        $list[2]="ameproxy2.gum.net.br";
+//        $list[3]="ameproxy3.gum.net.br";
     }
     public function refundOrder($ame_id, $amount)
     {
         echo "Entrou em refund order<br>";
         $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
-        $url = $this->url . "/payments/" . $transaction_id . "/refunds/" . $transaction_id;
+        $refund_id = Uuid::uuid4()->toString();
+        while($this->_dbAME->refundIdExists($refund_id)){
+            $refund_id = Uuid::uuid4()->toString();
+        }
+        $url = $this->url . "/payments/" . $transaction_id . "/refunds/" . $refund_id;
         $json_array['amount'] = $amount;
         $json = json_encode($json_array);
         echo $json . "<br>";
-        $result = $this->ameRequest($url, "PUT", $json);
-        echo $result . "<br>";
-        if ($this->hasError($result, $url, $json)) return false;
+        $result[0] = $this->ameRequest($url, "PUT", $json);
+        echo $result[0] . "<br>";
+        if ($this->hasError($result[0], $url, $json)) return false;
+        $result[1] = $refund_id;
         return $result;
     }
     public function cancelOrder($ame_id)

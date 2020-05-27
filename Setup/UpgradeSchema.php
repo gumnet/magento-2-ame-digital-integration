@@ -348,6 +348,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $sql = "UPDATE ame_transaction SET update_ok = 0";
             $setup->getConnection()->query($sql);
         }
+        if(version_compare($context->getVersion(), '0.0.20', '<')) {
+            $installer->getConnection()->changeColumn(
+                $installer->getTable('ame_refund'),
+                'ame_id',
+                'ame_transaction_id',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    'length' => 65535
+                ]
+            );
+        }
         $installer->endSetup();
     }
 }

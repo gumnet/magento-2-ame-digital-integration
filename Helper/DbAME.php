@@ -42,6 +42,23 @@ class DbAME {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
     }
+    public function insertRefund($ame_order_id,$refund_id,$operation_id,$amount,$status){
+        $transaction_id = $this->getTransactionIdByOrderId($ame_order_id);
+        $sql = "INSERT INTO ame_refund (ame_transaction_id,refund_id,operation_id,amount,status,created_at,refunded_at)
+                VALUES ('".$transaction_id."','".$refund_id."','".$operation_id."',".$amount.",'".$status."',NOW(),NOW())";
+        $this->_connection->query($sql);
+        return true;
+    }
+    public function refundIdExists($refund_id){
+        $sql = "SELECT refund_id FROM ame_refund WHERE refund_id = '".$refund_id."'";
+        $result = $this->_connection->fetchOne($sql);
+        if($result){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
     public function insertOrder($order,$result_array){
         $sql = "INSERT INTO ame_order (increment_id,ame_id,amount,cashback_amount,
                        qr_code_link,deep_link)
