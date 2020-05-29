@@ -30,7 +30,7 @@
  -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <tab id="ame_tab" translate="label" sortOrder="1000">
+        <tab id="ame_tab" translate="label" sortOrder="400">
             <label>AME</label>
         </tab>
         <section id="ame" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -45,13 +45,11 @@
                 </field>
                 <field id="api_user" translate="label" type="text" sortOrder="30" showInDefault="1">
                     <label>API User</label>
-                    <validate>required-entry validate-length minimum-length-36 maximum-length-36
-                    </validate>
+                    <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="api_password" translate="label" type="text" sortOrder="40" showInDefault="1">
                     <label>API Password</label>
-                    <validate>required-entry validate-length minimum-length-36 maximum-length-36
-                    </validate>
+                    <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="cashback_value" translate="label" type="text" sortOrder="50" showInDefault="1">
                     <label>Cashback %</label>
