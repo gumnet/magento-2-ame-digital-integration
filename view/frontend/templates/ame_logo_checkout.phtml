@@ -27,24 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Model;
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$assetRepo = $objectManager->get('Magento\Framework\View\Asset\Repository');
+$ame_logo = $assetRepo->getUrl("GumNet_AME::images/ame-logo.png");
 
-/**
- * Pay In Store payment method model
- */
-class AME extends \Magento\Payment\Model\Method\AbstractMethod
-{
-    /**
-     * Payment code
-     *
-     * @var string
-     */
-    protected $_code = 'ame';
-    protected $_methodCode = 'ame';
-    /**
-     * Availability option
-     *
-     * @var bool
-     */
-    protected $_isOffline = true;
-}
+?>
+<script>
+window.ameLogo = '<?php echo $ame_logo; ?>';
+</script>

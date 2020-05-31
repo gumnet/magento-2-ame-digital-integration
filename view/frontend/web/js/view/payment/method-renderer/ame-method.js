@@ -9,13 +9,14 @@ define(
             defaults: {
                 template: 'GumNet_AME/payment/ame'
             },
+            getLogoImagePath: function () {
+                return window.ameLogo;
+            },
 
             /** Returns send check to info */
             getMailingAddress: function() {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
             },
-
-
         });
     }
 );
