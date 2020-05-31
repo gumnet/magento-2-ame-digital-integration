@@ -27,13 +27,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Controller\Index;
+namespace GumNet\AME\Controller\Step2;
 
 use \Magento\Framework\App\CsrfAwareActionInterface;
 use \Magento\Framework\App\RequestInterface;
 use \Magento\Framework\App\Request\InvalidRequestException;
 
-class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
+class Index extends \Magento\Framework\App\Action\Action
 {
     protected $_session;
     protected $_request;
@@ -47,7 +47,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     protected $_mlogger;
     protected $_email;
     protected $_gumApi;
-    protected $_storeManager;
 
     public function __construct(\Magento\Framework\App\Action\Context $context,
                                 \Magento\Framework\App\Request\Http $request,
@@ -61,7 +60,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
                                 \Psr\Log\LoggerInterface $mlogger,
                                 \GumNet\AME\Helper\MailerAME $email,
                                 \GumNet\AME\Helper\GumApi $gumApi,
-                                \Magento\Store\Model\StoreManagerInterface $storeManager,
                                 array $data = []
                                 )
     {
@@ -76,65 +74,36 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $this->_mlogger = $mlogger;
         $this->_email = $email;
         $this->_gumApi = $gumApi;
-        $this->_storeManager = $storeManager;
         parent::__construct($context);
     }
     public function execute()
     {
-        $this->_mlogger->log("INFO","AME Callback starting...");
-        $json = file_get_contents('php://input');
-//        $json = fopen('php://input','r');
-        // verify if is json
-        $this->_dbAME->insertCallback($json);
-        if(!$this->isJson($json)){
-            $this->_mlogger->log("ERROR","AME Callback is not json");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback is not json",$json);
-            return;
+        $this->_mlogger->log("INFO","AME Callback step 2 starting...");
+        $hash = $this->_request->getParam('hash');
+        $callback2_hash = $this->_dbAME->getCallback2Hash();
+        if($hash != $callback2_hash){
+            $this->_mlogger->log("ERROR","AME Callback step 2 wrong hash");
+            die();
         }
-        $input = json_decode($json,true);
-        $this->_mlogger->log("INFO",print_r($input,true));
-        // verify if id exists
-        if(!array_key_exists('id',$input)){
-            $this->_mlogger->log("ERROR","AME Callback AME ID not found in JSON");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback AME ID not found",$json);
-            return;
-        }
-        $ame_order_id = $input['attributes']['orderId'];
+        $ame_transaction_id = $this->_request->getParam('id');
+        $ame_order_id = $this->_dbAME->getAmeOrderIdByTransactionId($ame_transaction_id);
         $incrId = $this->_dbAME->getOrderIncrementId($ame_order_id);
-        if(!$incrId){
-            $this->_mlogger->log("ERROR","AME Callback Increment ID not found in the database");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback Increment ID not found",$json);
-            return;
-        }
-        if($input['status']=="AUTHORIZED") {
-            $this->_dbAME->insertTransaction($input);
-            $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
-            $this->_mlogger->log("INFO","AME Callback Calling step 2");
-            $hash = $this->_dbAME->getCallback2Hash();
-            $url = $this->getCallbackUrl().'/step2/index/hash/'.$hash.'/id/'.$ame_transaction_id;
-            $this->_mlogger->log("INFO","Step 2 URL: ".$url);
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            $result = curl_exec($ch);
-            $this->_mlogger->log("INFO","Step 2 call OK");
-        }
-        else{
-            $this->_mlogger->log("ERROR","Wrong Order status: ".$input['status']);
-        }
-//        if($input['status']=="CANCELED"){
-//            $this->_mlogger->log("INFO","AME Callback cancel order ".$incrId);
-//            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback ATTENTION cancel order ".$incrId,$json);
-//            $this->cancelOrder($order);
-//        }
-//        if($input['status']=="ERROR"||$input['status']=="DENIED"){
-//            $this->_mlogger->log("INFO","AME Callback error/denied - cancel order ".$incrId);
-//            $this->cancelOrder($order);
-//        }
-        $this->_mlogger->log("INFO","AME Callback ended.");
+        $this->_mlogger->log("INFO","AME Callback getting Magento Order for ".$incrId);
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $orderInterface = $objectManager->create('Magento\Sales\Api\Data\OrderInterface');
+        $order = $orderInterface->loadByIncrementId($incrId);
+        $orderId = $order->getId();
+        $this->_mlogger->log("INFO","Order ID: ".$orderId);
+        $order = $this->_orderRepository->get($orderId);
+        $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
+        $this->invoiceOrder($order);
+        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$ame_order_id);
+        $this->_mlogger->log("INFO", "AME Callback capturing...");
+        $capture = $this->_api->captureOrder($ame_order_id);
+        $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
+        $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
+        $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
+        $this->_mlogger->log("INFO","AME Callback step 2 ended.");
         die();
     }
     public function cancelOrder($order){
@@ -154,25 +123,5 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     public function isJson($string) {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
-    }
-    /**
-     * @inheritDoc
-     */
-    public function createCsrfValidationException(
-        RequestInterface $request
-    ): ?InvalidRequestException {
-        return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function validateForCsrf(RequestInterface $request): ?bool
-    {
-        return true;
-    }
-    public function getCallbackUrl()
-    {
-        return $this->_storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
 }

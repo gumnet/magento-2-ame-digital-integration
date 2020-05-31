@@ -42,6 +42,14 @@ class DbAME {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
     }
+    public function getAmeOrderIdByTransactionId($ame_transaction_id){
+        $sql = "SELECT ame_order_id FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        return $this->_connection->fetchOne($sql);
+    }
+    public function getCallback2Hash(){
+        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'callback2_hash'";
+        return $this->_connection->fetchOne($sql);
+    }
     public function insertRefund($ame_order_id,$refund_id,$operation_id,$amount,$status){
         $transaction_id = $this->getTransactionIdByOrderId($ame_order_id);
         $sql = "INSERT INTO ame_refund (ame_transaction_id,refund_id,operation_id,amount,status,created_at,refunded_at)
@@ -62,7 +70,7 @@ class DbAME {
     public function insertOrder($order,$result_array){
         $sql = "INSERT INTO ame_order (increment_id,ame_id,amount,cashback_amount,
                        qr_code_link,deep_link)
-                VALUES (" . $order->getIncrementId() . ",'" . $result_array['id'] . "',
+                VALUES ('" . $order->getIncrementId() . "','" . $result_array['id'] . "',
                         " . $result_array['amount'] . ",
                         0,
                         '" . $result_array['qrCodeLink'] . "',

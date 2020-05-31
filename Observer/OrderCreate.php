@@ -59,7 +59,7 @@ class OrderCreate implements ObserverInterface
         $payment = $order->getPayment();
         $method = $payment->getMethod();
         if($method=="ame") {
-            $order->setState('payment_review')->setStatus('payment_review');
+            $order->setState('new')->setStatus('pending');
             $order->save();
             $this->_ame->createOrder($order);
         }

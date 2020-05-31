@@ -359,6 +359,21 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ]
             );
         }
+        if(version_compare($context->getVersion(), '0.0.22', '<')) {
+            $sql = "INSERT INTO ame_config (ame_option,ame_value) VALUES ('callback2_hash','".rand(1000000000,10000000000)."')";
+            $setup->getConnection()->query($sql);
+        }
+        if(version_compare($context->getVersion(), '0.0.23', '<')) {
+            $installer->getConnection()->changeColumn(
+                $installer->getTable('ame_order'),
+                'increment_id',
+                'increment_id',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    'length' => 255
+                ]
+            );
+        }
         $installer->endSetup();
     }
 }
