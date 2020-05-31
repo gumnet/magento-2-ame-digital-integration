@@ -68,7 +68,7 @@ $json_string = nl2br($json_string);
         <span>Capturar</span>
     </button>
 <?php }
-        if(!$order->hasInvoices()) { ?>
+        if(!$order->hasInvoices()&&$_dbAME->getTransactionIdByOrderId($order->getIncrementId())) { ?>
     <button id="cancelar" title="Cancelar" type="button" class="action-default scalable ship primary"
             onclick="window.open(&#039;<?php echo $admin_url; ?>../ameroutes/cancel/index/id/<?php echo $id; ?>/&#039;,&#039;_blank&#039;)"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
@@ -76,7 +76,7 @@ $json_string = nl2br($json_string);
     </button>
 <?php }
         if($_dbAME->getTransactionIdByOrderId($order->getIncrementId())
-            &&$order->hasInvoices()) { ?>
+            &&$order->getState()!='new') { ?>
     <form method="post" action="<?php echo $admin_url; ?>../ameroutes/refund/index/id/<?php echo $id; ?>" target="_blank">
     <button id="refund" title="Reembolsar" type="submit" class="action-default scalable ship primary"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
@@ -107,10 +107,12 @@ $json_string = nl2br($json_string);
                         <th><?= $block->escapeHtml(__('AME Transaction ID')) ?></th>
                         <td><?= $block->escapeHtml($_dbAME->getTransactionIdByOrderId($_dbAME->getAmeIdByIncrementId($increment_id))); ?></td>
                     </tr>
+<?php /*
                     <tr>
                         <th>Consulta JSON</th>
                         <td style="text-align: left!important;"><span id="json_string" style="text-align: left!important;"><?php echo $json_string; ?></span></td>
                     </tr>
+*/ ?>
                     <?= $block->getChildHtml() ?>
                 </table>
             </div>

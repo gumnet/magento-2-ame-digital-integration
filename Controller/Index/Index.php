@@ -109,18 +109,20 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         if($input['status']=="AUTHORIZED") {
             $this->_dbAME->insertTransaction($input);
             $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
-            $this->_mlogger->log("INFO","AME Callback Calling step 2");
-            $hash = $this->_dbAME->getCallback2Hash();
-            $url = $this->getCallbackUrl().'/step2/index/hash/'.$hash.'/id/'.$ame_transaction_id;
-            $this->_mlogger->log("INFO","Step 2 URL: ".$url);
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            $result = curl_exec($ch);
-            $this->_mlogger->log("INFO","Step 2 call OK");
+            if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
+                $this->_mlogger->log("INFO","AME Callback Calling step 2");
+                $hash = $this->_dbAME->getCallback2Hash();
+                $url = $this->getCallbackUrl() . '/step2/index/hash/' . $hash . '/id/' . $ame_transaction_id;
+                $this->_mlogger->log("INFO", "Step 2 URL: " . $url);
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                $result = curl_exec($ch);
+                $this->_mlogger->log("INFO", "Step 2 call OK");
+            }
         }
         else{
             $this->_mlogger->log("ERROR","Wrong Order status: ".$input['status']);
