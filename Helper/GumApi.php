@@ -50,7 +50,15 @@ class GumApi
     }
     public function createOrder($input,$result)
     {
-        $this->gumRequest("createorder",$result,$input);
+        $input_array = json_decode($input,true);
+        $input1['amount'] = $input_array['amount'];
+        $json_input = json_encode($input1);
+        $result_array = json_decode($result,true);
+        $result1['id'] = $result_array['id'];
+        $result1['amount'] = $result_array['amount'];
+        $json_result = json_encode($result1);
+
+        $this->gumRequest("createorder",$json_result,$json_input);
         return true;
     }
     public function gumRequest($action,$result,$input=""){
