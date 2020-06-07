@@ -29,30 +29,61 @@
 
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $_request = $objectManager->get('\Magento\Framework\App\Request\Http');
+$_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
+$_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
+$_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
+$_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
+$_invoiceService = $objectManager->get('\Magento\Sales\Model\Service\InvoiceService');
+
+$_transactionFactory = $objectManager->get('\Magento\Framework\DB\TransactionFactory');
 
 $id = $_request->getParam('id');
 
-$_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
+
 $order = $_order->get($id);
 $increment_id = $order->getIncrementId();
 
-$_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
-
-$ame_transaction_id = $_dbAME->getTransactionIdByOrderId($_dbAME->getAmeIdByIncrementId($increment_id));
+$ame_order_id = $_dbAME->getAmeIdByIncrementId($increment_id);
+$ame_transaction_id = $_dbAME->getTransactionIdByOrderId($ame_order_id);
+$order_amount = $_dbAME->getTransactionAmount($ame_transaction_id);
 
 $admin_url = $this->helper('Magento\Backend\Helper\Data')->getHomePageUrl();
 
-$_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
-
-$_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
-
 $formkey = $_formKey->getFormKey();
 
-$json = $_apiAME->consultOrder($_dbAME->getAmeIdByIncrementId($increment_id));
-$json_array = json_decode($json,true);
-$json_string = json_encode($json_array, JSON_PRETTY_PRINT);
-$json_string = str_replace(" ","&nbsp;",$json_string);
-$json_string = nl2br($json_string);
+
+$capture = $_apiAME->captureOrder($ame_order_id);
+
+if($capture) {
+    $invoice = $_invoiceService->prepareInvoice($order);
+    $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+    $invoice->register();
+    $transaction = $_transactionFactory->create()
+        ->addObject($invoice)
+        ->addObject($invoice->getOrder());
+    $transaction->save();
+    $order->setState('processing')->setStatus('processing');
+    $order->save();
+}
+
+if(!$capture){
+    $mensagem = "Aconteceu um erro capturando seu pedido.";
+}
+else{
+    $mensagem = "Pedido capturado com sucesso.";
+}
+
+function invoiceOrder($order){
+    $invoice = $_invoiceService->prepareInvoice($order);
+    $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+    $invoice->register();
+    $transaction = $_transactionFactory->create()
+        ->addObject($invoice)
+        ->addObject($invoice->getOrder());
+    $transaction->save();
+    $order->setState('processing')->setStatus('processing');
+    $order->save();
+}
 
 if(!$ame_transaction_id||$order->getState()=='new'){
     $valor_reembolsado = 0;
@@ -62,7 +93,6 @@ else{
     $valor_total = $_dbAME->getTransactionAmount($ame_transaction_id);
     $valor_reembolsado = $_dbAME->getRefundedSumByTransactionId($ame_transaction_id);
 }
-
 
 
 ?>
@@ -103,9 +133,12 @@ else{
         <input type="text" name="valor" placeholder="valor em reais">
     </form>
 <?php } ?>
+
+
+
 <section class="admin__page-section order-view-account-information">
     <div class="admin__page-section-title">
-        <span class="title"><?= $block->escapeHtml(__('Pedido AME - Detalhes')); ?></span>
+        <span class="title"><?= $block->escapeHtml(__('Pedido AME - Capturar')); ?></span>
     </div>
     <div class="admin__page-section-content">
         <div class="admin__page-section-item order-information">
@@ -140,16 +173,15 @@ else{
                         <th><?= $block->escapeHtml(__('Valor disponível para reembolso')) ?></th>
                         <td><?= $block->escapeHtml(number_format(($valor_total-$valor_reembolsado)/100,2,",",".")); ?></td>
                     </tr>
-                    <?php /*
                     <tr>
-                        <th>Consulta JSON</th>
-                        <td style="text-align: left!important;"><span id="json_string" style="text-align: left!important;"><?php echo $json_string; ?></span></td>
+                        <th><?= $block->escapeHtml(__('Captura - mensagem')) ?></th>
+                        <td><?= $block->escapeHtml($mensagem); ?></td>
                     </tr>
-*/ ?>
                     <?= $block->getChildHtml() ?>
                 </table>
             </div>
         </div>
     </div>
 </section>
+
 

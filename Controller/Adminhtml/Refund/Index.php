@@ -29,64 +29,35 @@
 
 namespace GumNet\AME\Controller\Adminhtml\Refund;
 
-use \Zend\Barcode\Barcode;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\View\Result\Page;
+use Magento\Framework\View\Result\PageFactory;
 
-use \Magento\Framework\App\CsrfAwareActionInterface;
-use \Magento\Framework\App\Request\InvalidRequestException;
-use \Magento\Framework\App\RequestInterface;
-
-class Index extends \Magento\Framework\App\Action\Action
+/**
+ * Class Index
+ */
+class Index extends Action // implements HttpGetActionInterface
 {
-    protected $resultPageFactory;
-    protected $request;
-    protected $orderRepository;
-    protected $_apiAME;
-    protected $_dbAME;
+    const MENU_ID = 'GumNet_AME::refund_index';
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\API $apiAME,
-                                \GumNet\AME\Helper\DbAME $dbAME
-                                )
-    {
-        $this->resultPageFactory = $resultPageFactory;
-        $this->request = $request;
-        $this->orderRepository = $orderRepository;
-        $this->_apiAME = $apiAME;
-        $this->_dbAME = $dbAME;
+    protected $resultPageFactory;
+
+    public function __construct(
+        Context $context,
+        PageFactory $resultPageFactory
+    ) {
+
         parent::__construct($context);
+        $this->resultPageFactory = $resultPageFactory;
+        $this->_isScopePrivate = true;
     }
     public function execute()
     {
-        $id = $this->request->getParam('id');
-        $valor = $this->request->getParam('valor');
-        $valor = str_replace(",",".",$valor);
-        $valor = $valor * 100;
-        $order = $this->orderRepository->get($id);
-        echo "Painel AME - reembolsar pedido<br><br>\r\n";
-        echo "Pedido Magento: ".$order->getIncrementId()."<br>\r\n";
-        echo "Pedido AME: ".$this->_dbAME->getAmeIdByIncrementId($order->getIncrementId())."<br>\r\n";
-        echo "Valor: ".$valor."<br>";
-        $refund = $this->_apiAME->refundOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()),$valor);
-        echo "Refund order executado<br>";
-        if(!$refund){
-            echo "ERROR";
-            die();
-        }
-        $this->_dbAME
-            ->insertRefund($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()),
-                $refund[1],
-                $refund[0]['operationId'],$valor,$refund[0]['status']);
-
-        $json = $refund[0];
-        $json_array = json_decode($json,true);
-        $json_string = json_encode($json_array, JSON_PRETTY_PRINT);
-        echo "<br>\n";
-        echo nl2br($json_string);
-        echo "<br>\n";
-        die();
-        return;
+        $resultPage = $this->resultPageFactory->create();
+//        $resultPage->setActiveMenu(static::MENU_ID);
+        $resultPage->getConfig()->getTitle()->prepend(__('AME - Reembolso'));
+        return $resultPage;
     }
 }

@@ -29,7 +29,6 @@
 
 namespace GumNet\AME\Block;
 
-// class QrCode extends \Magento\Framework\View\Element\Template
 class QrCode extends \Magento\Checkout\Block\Onepage\Success
 {
     protected $checkoutSession;

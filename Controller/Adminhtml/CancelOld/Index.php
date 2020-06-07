@@ -29,34 +29,50 @@
 
 namespace GumNet\AME\Controller\Adminhtml\Cancel;
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Action\HttpGetActionInterface;
-use Magento\Framework\View\Result\Page;
-use Magento\Framework\View\Result\PageFactory;
+use \Zend\Barcode\Barcode;
 
-/**
- * Class Index
- */
-class Index extends Action // implements HttpGetActionInterface
+class Index extends \Magento\Framework\App\Action\Action
 {
-    const MENU_ID = 'GumNet_AME::order_index';
-
     protected $resultPageFactory;
+    protected $request;
+    protected $orderRepository;
+    protected $_apiAME;
+    protected $_dbAME;
 
-    public function __construct(
-        Context $context,
-        PageFactory $resultPageFactory
-    ) {
-        parent::__construct($context);
+    public function __construct(\Magento\Framework\App\Action\Context $context,
+                                \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+                                \Magento\Framework\App\Request\Http $request,
+                                \Magento\Sales\Model\OrderRepository $orderRepository,
+                                \GumNet\AME\Helper\API $apiAME,
+                                \GumNet\AME\Helper\DbAME $dbAME
+                                )
+    {
         $this->resultPageFactory = $resultPageFactory;
-        $this->_isScopePrivate = true;
+        $this->request = $request;
+        $this->orderRepository = $orderRepository;
+        $this->_apiAME = $apiAME;
+        $this->_dbAME = $dbAME;
+        parent::__construct($context);
     }
     public function execute()
     {
-        $resultPage = $this->resultPageFactory->create();
-//        $resultPage->setActiveMenu(static::MENU_ID);
-        $resultPage->getConfig()->getTitle()->prepend(__('AME Order Cancel'));
-        return $resultPage;
+        $id = $this->request->getParam('id');
+        $order = $this->orderRepository->get($id);
+        echo "Painel AME <br><br>\r";
+        echo "Pedido Magento: ".$order->getIncrementId()."<br>\r";
+        echo "Pedido AME: ".$this->_dbAME->getAmeIdByIncrementId($order->getIncrementId())."<br>\r";
+        $cancel = $this->_apiAME->cancelOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()));
+        if(!$cancel){
+            echo "ERROR";
+            die();
+        }
+        $json = $cancel;
+        $json_array = json_decode($json,true);
+        $json_string = json_encode($json_array, JSON_PRETTY_PRINT);
+        echo "<br>\n";
+        echo nl2br($json_string);
+        echo "<br>\n";
+        die();
+        return;
     }
 }

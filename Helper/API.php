@@ -72,6 +72,7 @@ class API
         }
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
             $this->url = "https://api.hml.amedigital.com/api";
+//            $this->url = "https://ame19gwci.gum.net.br:63333/api";
         }
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
             $this->url = "https://api.amedigital.com/api";
@@ -100,18 +101,26 @@ class API
     }
     public function refundOrder($ame_id, $amount)
     {
-        echo "Entrou em refund order<br>";
+        $this->_mlogger->info("AME REFUND ORDER:" . $ame_id);
+        $this->_mlogger->info("AME REFUND amount:" . $amount);
+
         $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
+        $this->_mlogger->info("AME REFUND TRANSACTION:" . $transaction_id);
+
         $refund_id = Uuid::uuid4()->toString();
         while($this->_dbAME->refundIdExists($refund_id)){
             $refund_id = Uuid::uuid4()->toString();
         }
+        $this->_mlogger->info("AME REFUND ID:" . $refund_id);
         $url = $this->url . "/payments/" . $transaction_id . "/refunds/" . $refund_id;
+        $this->_mlogger->info("AME REFUND URL:" . $url);
+//        echo $url;
         $json_array['amount'] = $amount;
         $json = json_encode($json_array);
-        echo $json . "<br>";
+        $this->_mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
-        echo $result[0] . "<br>";
+//        echo $result[0];
+        $this->_mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) return false;
         $result[1] = $refund_id;
         return $result;
@@ -120,7 +129,7 @@ class API
     {
         $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
         if (!$transaction_id) {
-            echo "Transaction ID not found";
+//            echo "Transaction ID not found";
             return false;
         }
         $url = $this->url . "/wallet/user/payments/" . $transaction_id . "/cancel";

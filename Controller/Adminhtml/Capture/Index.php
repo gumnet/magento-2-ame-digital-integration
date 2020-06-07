@@ -27,52 +27,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 namespace GumNet\AME\Controller\Adminhtml\Capture;
 
-use \Zend\Barcode\Barcode;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\View\Result\Page;
+use Magento\Framework\View\Result\PageFactory;
 
-class Index extends \Magento\Framework\App\Action\Action
+/**
+ * Class Index
+ */
+class Index extends Action // implements HttpGetActionInterface
 {
-    protected $resultPageFactory;
-    protected $request;
-    protected $orderRepository;
-    protected $_apiAME;
-    protected $_dbAME;
+    const MENU_ID = 'GumNet_AME::order_index';
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\API $apiAME,
-                                \GumNet\AME\Helper\DbAME $dbAME
-                                )
-    {
-        $this->resultPageFactory = $resultPageFactory;
-        $this->request = $request;
-        $this->orderRepository = $orderRepository;
-        $this->_apiAME = $apiAME;
-        $this->_dbAME = $dbAME;
+    protected $resultPageFactory;
+
+    public function __construct(
+        Context $context,
+        PageFactory $resultPageFactory
+    ) {
+
         parent::__construct($context);
+        $this->resultPageFactory = $resultPageFactory;
+        $this->_isScopePrivate = true;
     }
     public function execute()
     {
-        $id = $this->request->getParam('id');
-        $order = $this->orderRepository->get($id);
-        echo "Painel AME - capturar pedido<br><br>\r";
-        echo "Pedido Magento: ".$order->getIncrementId()."<br>\r";
-        echo "Pedido AME: ".$this->_dbAME->getAmeIdByIncrementId($order->getIncrementId())."<br>\r";
-        $capture = $this->_apiAME->captureOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()));
-        if(!$capture){
-            echo "ERROR";
-            die();
-        }
-        $json_array = $capture;
-        $json_string = json_encode($json_array, JSON_PRETTY_PRINT);
-        echo "<br>\n";
-        echo nl2br($json_string);
-        echo "<br>\n";
-        die();
-        return;
+        $resultPage = $this->resultPageFactory->create();
+//        $resultPage->setActiveMenu(static::MENU_ID);
+        $resultPage->getConfig()->getTitle()->prepend(__('AME Order Capture'));
+        return $resultPage;
     }
 }

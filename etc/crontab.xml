@@ -30,7 +30,7 @@
  -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="default">
-        <job instance="GumNet\AME\Cron\UpdateOrders" method="execute" name="gumnet_ame_updateorders_cron">
+        <job instance="GumNet\AME\Cron\UpdatePendingTransactions" method="execute" name="gumnet_ame_updateorders_cron">
             <schedule>13,26,39,52 * * * *</schedule>
         </job>
     </group>

@@ -29,30 +29,62 @@
 
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $_request = $objectManager->get('\Magento\Framework\App\Request\Http');
+$_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
+$_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
+$_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
+$_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
 
 $id = $_request->getParam('id');
 
-$_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
+
 $order = $_order->get($id);
 $increment_id = $order->getIncrementId();
 
-$_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
-
-$ame_transaction_id = $_dbAME->getTransactionIdByOrderId($_dbAME->getAmeIdByIncrementId($increment_id));
+$ame_order_id = $_dbAME->getAmeIdByIncrementId($increment_id);
+$ame_transaction_id = $_dbAME->getTransactionIdByOrderId($ame_order_id);
+$order_amount = $_dbAME->getTransactionAmount($ame_transaction_id);
 
 $admin_url = $this->helper('Magento\Backend\Helper\Data')->getHomePageUrl();
 
-$_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
-
-$_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
-
 $formkey = $_formKey->getFormKey();
 
-$json = $_apiAME->consultOrder($_dbAME->getAmeIdByIncrementId($increment_id));
-$json_array = json_decode($json,true);
-$json_string = json_encode($json_array, JSON_PRETTY_PRINT);
-$json_string = str_replace(" ","&nbsp;",$json_string);
-$json_string = nl2br($json_string);
+$valor = $_request->getParam('valor');
+
+$valor0 = str_replace(",",".",$valor);
+$valor = $valor0 * 100;
+
+if(!is_numeric($valor0)||$valor0<=0){
+    $mensagem = "Valor inválido. Utilize um número positivo.";
+}
+else if($valor>$order_amount){
+    $mensagem = "Valor superior ao valor total do pedido. Não é possível fazer o reembolso.";
+}
+else {
+    $already_refunded = $_dbAME->getRefundedSumByTransactionId($ame_transaction_id);
+    if ($valor > $order_amount - $already_refunded) {
+        $mensagem = "Valor superior ao valor restante do pedido. Não é possível fazer o reembolso.";
+    }
+    else{
+        // Executa aqui
+        $refund = $_apiAME->refundOrder($_dbAME->getAmeIdByIncrementId($order->getIncrementId()),$valor);
+        if(!$refund){
+            $mensagem = "Houve um erro executando o reembolso.";
+        }
+        else {
+            $json = $refund[0];
+            $json_array = json_decode($json, true);
+            $_dbAME
+                ->insertRefund($_dbAME->getAmeIdByIncrementId($order->getIncrementId()),
+                    $refund[1],
+                    $json_array['operationId'],
+                    $valor,
+                    $json_array['status']);
+            $mensagem = "Reembolso executado com sucesso";
+        }
+    }
+}
+
+
 
 if(!$ame_transaction_id||$order->getState()=='new'){
     $valor_reembolsado = 0;
@@ -62,7 +94,6 @@ else{
     $valor_total = $_dbAME->getTransactionAmount($ame_transaction_id);
     $valor_reembolsado = $_dbAME->getRefundedSumByTransactionId($ame_transaction_id);
 }
-
 
 
 ?>
@@ -80,7 +111,7 @@ else{
 <?php
         if($order->getState()=='new'&&!$_dbAME->isCaptured($ame_transaction_id)) { ?>
     <button id="capturar" title="Capturar" type="button" class="action-default scalable ship primary"
-            onclick="clickLoader('<?php echo $admin_url; ?>../ameroutes/capture/index/id/<?php echo $id; ?>/')"
+            onclick="clickLoader('<?php echo $admin_url; ?>../ameroutes/capture/index/id/<?php echo $id; ?>')"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
         <span>Capturar</span>
     </button>
@@ -103,9 +134,12 @@ else{
         <input type="text" name="valor" placeholder="valor em reais">
     </form>
 <?php } ?>
+
+
+
 <section class="admin__page-section order-view-account-information">
     <div class="admin__page-section-title">
-        <span class="title"><?= $block->escapeHtml(__('Pedido AME - Detalhes')); ?></span>
+        <span class="title"><?= $block->escapeHtml(__('Pedido AME - Reembolsar')); ?></span>
     </div>
     <div class="admin__page-section-content">
         <div class="admin__page-section-item order-information">
@@ -140,16 +174,15 @@ else{
                         <th><?= $block->escapeHtml(__('Valor disponível para reembolso')) ?></th>
                         <td><?= $block->escapeHtml(number_format(($valor_total-$valor_reembolsado)/100,2,",",".")); ?></td>
                     </tr>
-                    <?php /*
                     <tr>
-                        <th>Consulta JSON</th>
-                        <td style="text-align: left!important;"><span id="json_string" style="text-align: left!important;"><?php echo $json_string; ?></span></td>
+                        <th><?= $block->escapeHtml(__('Reembolso - mensagem')) ?></th>
+                        <td><?= $block->escapeHtml($mensagem); ?></td>
                     </tr>
-*/ ?>
                     <?= $block->getChildHtml() ?>
                 </table>
             </div>
         </div>
     </div>
 </section>
+
 

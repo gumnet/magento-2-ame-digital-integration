@@ -34,13 +34,25 @@ class DbAME {
     protected $_connection;
     protected $_mlogger;
 
-
     public function __construct(\Magento\Framework\App\ResourceConnection $resource,
                                 \Psr\Log\LoggerInterface $mlogger
                                 )
     {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
+    }
+    public function setTransactionUpdated($ame_transaction_id){
+        $sql = "UPDATE ame_transaction SET updated_at = NOW() WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $rs_query = $this->_connection->query($sql);
+    }
+    public function setCaptured($ame_transaction_id){
+        $sql = "UPDATE ame_transaction SET capture_ok = 1 WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $rs_query = $this->_connection->query($sql);
+    }
+    public function getRefundedSumByTransactionId($ame_transaction_id){
+        $sql = "SELECT SUM(amount) soma FROM ame_refund WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $soma = $this->_connection->fetchOne($sql);
+        return $soma;
     }
     public function getAmeOrderIdByTransactionId($ame_transaction_id){
         $sql = "SELECT ame_order_id FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
@@ -49,6 +61,10 @@ class DbAME {
     public function getCallback2Hash(){
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'callback2_hash'";
         return $this->_connection->fetchOne($sql);
+    }
+    public function setCaptured2($ame_transaction_id){
+        $sql = "UPDATE ame_transaction SET update_ok = 1 WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $rs_query = $this->_connection->query($sql);
     }
     public function insertRefund($ame_order_id,$refund_id,$operation_id,$amount,$status){
         $transaction_id = $this->getTransactionIdByOrderId($ame_order_id);
@@ -93,6 +109,10 @@ class DbAME {
             return $token;
         }
         return false;
+    }
+    public function getOrderAmount($ame_order_id){
+        $sql = "SELECT amount FROM ame_order WHERE ame_id = '".$ame_order_id."'";
+        return $this->_connection->fetchOne($sql);
     }
     public function getTransactionAmount($ame_transaction_id){
         $sql = "SELECT amount FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
@@ -152,10 +172,23 @@ class DbAME {
         $sql = "SELECT ame_id FROM ame_order WHERE increment_id = '".$incrementId."'";
         return $this->_connection->fetchOne($sql);
     }
+    public function setCanceled($ame_transaction_id){
+        $sql = "UPDATE ame_transaction SET capture_ok = 2 WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $this->_connection->query($sql);
+    }
+    public function getFirstPendingCaptureTransactions($num){
+        $sql = file_get_contents("SQL/getfirstpendingcapturetransactions.sql");
+        $sql = str_replace("[LIMIT]",$num,$sql);
+        return $this->_connection->fetchAssoc($sql);
+    }
     public function getFirstPendingTransactions($num){
         $sql = file_get_contents("SQL/getfirstpendingtransactions.sql");
         $sql = str_replace("[LIMIT]",$num,$sql);
         return $this->_connection->fetchAssoc($sql);
+    }
+    public function isCaptured($ame_transaction_id){
+        $sql = "SELECT capture_ok FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        return $this->_connection->fetchOne($sql);
     }
     public function insertCallback($json){
         $sql = "INSERT INTO ame_callback (json,created_at) VALUES ('".$json."',NOW())";
@@ -166,3 +199,4 @@ class DbAME {
         return $this->_connection->fetchOne($sql);
     }
 }
+

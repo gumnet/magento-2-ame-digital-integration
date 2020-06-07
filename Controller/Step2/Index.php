@@ -96,13 +96,16 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_mlogger->log("INFO","Order ID: ".$orderId);
         $order = $this->_orderRepository->get($orderId);
         $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
-        $this->invoiceOrder($order);
         $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$ame_order_id);
         $this->_mlogger->log("INFO", "AME Callback capturing...");
         $capture = $this->_api->captureOrder($ame_order_id);
+        if(!$capture) die();
+        $this->invoiceOrder($order);
+        $this->_dbAME->setCaptured($ame_transaction_id);
         $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
         $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
-        $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
+        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
+        if($capture2) $this->_dbAME->setCaptured2($ame_transaction_id);
         $this->_mlogger->log("INFO","AME Callback step 2 ended.");
         die();
     }
