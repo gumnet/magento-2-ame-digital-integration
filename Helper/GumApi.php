@@ -43,6 +43,14 @@ class GumApi
         $this->_scopeConfig = $scopeConfig;
         $this->url = "https://apiame.gum.net.br";
     }
+    
+    public function refundTransaction($ame_transaction_id,$ame_refund_id,$amount)
+    {
+        $result = $ame_refund_id . "|" . $amount;
+        return $this->gumRequest("refundtransaction",$result,$ame_transaction_id);
+    }
+    
+    
     public function captureTransaction($ame_transaction_id,$ame_order_id,$amount)
     {
         $result = $ame_transaction_id . "|".$amount;

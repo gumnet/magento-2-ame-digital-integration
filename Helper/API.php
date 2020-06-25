@@ -76,6 +76,7 @@ class API
         }
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
             $this->url = "https://api.amedigital.com/api";
+//            $this->url = "https://ame19gwci.gum.net.br:63333/api";
         }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
@@ -112,7 +113,7 @@ class API
             $refund_id = Uuid::uuid4()->toString();
         }
         $this->_mlogger->info("AME REFUND ID:" . $refund_id);
-        $url = $this->url . "/payments/" . $transaction_id . "/refunds/" . $refund_id;
+        $url = $this->url . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
         $this->_mlogger->info("AME REFUND URL:" . $url);
 //        echo $url;
         $json_array['amount'] = $amount;
@@ -161,13 +162,13 @@ class API
         $shippingAmount = $order->getShippingAmount();
         $productsAmount = $order->getGrandTotal() - $shippingAmount;
         $amount = intval($order->getGrandTotal() * 100);
-        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
+//        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
 
         $json_array['title'] = "GumNet Pedido " . $order->getIncrementId();
         $json_array['description'] = "Pedido " . $order->getIncrementId();
         $json_array['amount'] = $amount;
         $json_array['currency'] = "BRL";
-        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
+//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
         $json_array['attributes']['items'] = [];
 
@@ -186,8 +187,8 @@ class API
         if($total_discount){
 //            $amount = intval($products_amount + $shippingAmount * 100);
 //            $json_array['amount'] = $amount;
-            $cashbackAmountValue = intval($this->getCashbackPercent() * $products_amount * 0.01);
-            $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
+//            $cashbackAmountValue = intval($this->getCashbackPercent() * $products_amount * 0.01);
+//            $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         }
 
         $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
@@ -209,6 +210,7 @@ class API
         $json_array['attributes']['customPayload']['shippingAddress']['state'] = $this->codigoUF($order->getShippingAddress()->getRegion());
 
         $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
+        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
         $json_array['attributes']['paymentOnce'] = true;
         $json_array['attributes']['riskHubProvider'] = "SYNC";
         $json_array['attributes']['origin'] = "ECOMMERCE";
@@ -250,10 +252,10 @@ class API
         }
         return false;
     }
-    public function getCashbackPercent()
-    {
-        return $this->_scopeConfig->getValue('ame/general/cashback_value', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-    }
+//    public function getCashbackPercent()
+//    {
+//        return $this->_scopeConfig->getValue('ame/general/cashback_value', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+//    }
     public function getStoreName()
     {
         return $this->_scopeConfig->getValue('ame/general/store_name', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
@@ -317,6 +319,7 @@ class API
         $result = curl_exec($ch);
         if ($this->hasError($result, $url, $post)) return false;
         $result_array = json_decode($result, true);
+        if(!array_key_exists('access_token',$result_array)) return false;
         $this->_logger->log($result, "info", $url, $username . ":" . $password);
 
         $expires_in = (int)time() + intval($result_array['expires_in']);

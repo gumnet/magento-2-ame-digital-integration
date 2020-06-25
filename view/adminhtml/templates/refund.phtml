@@ -30,6 +30,8 @@
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $_request = $objectManager->get('\Magento\Framework\App\Request\Http');
 $_apiAME = $objectManager->get('\GumNet\AME\Helper\API');
+$_gumApi = $objectManager->get('\GumNet\AME\Helper\GumApi');
+
 $_formKey = $objectManager->get('\Magento\Framework\Data\Form\FormKey');
 $_order = $objectManager->get('\Magento\Sales\Api\OrderRepositoryInterface');
 $_dbAME = $objectManager->get('\GumNet\AME\Helper\DbAME');
@@ -80,11 +82,11 @@ else {
                     $valor,
                     $json_array['status']);
             $mensagem = "Reembolso executado com sucesso";
+            $_gumApi->refundTransaction($_dbAME->getAmeIdByIncrementId($order->getIncrementId()),
+                $refund[1],$valor);
         }
     }
 }
-
-
 
 if(!$ame_transaction_id||$order->getState()=='new'){
     $valor_reembolsado = 0;

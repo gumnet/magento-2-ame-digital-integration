@@ -61,7 +61,8 @@ class MailerAME extends AbstractHelper
     }
     public function mailSender($to,$subject,$message)
     {
-        $headers = "From: GumNet <contato@gumnet.com.br>\r\n";
+        $email = $this->_scopeConfig->getValue('trans_email/ident_support/email',\Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $headers = "From: Magento Debug <".$email.">\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         mail($to,$subject,$message,$headers);

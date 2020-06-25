@@ -35,4 +35,7 @@
     <event name="checkout_onepage_controller_success_action">
         <observer name="ame_order_create" instance="GumNet\AME\Observer\OrderCreate"  />
     </event>
+    <event name="sales_order_creditmemo_refund">
+        <observer name="ame_credit_memo" instance="GumNet\AME\Observer\CreditMemoObserver"  />
+    </event>
 </config>

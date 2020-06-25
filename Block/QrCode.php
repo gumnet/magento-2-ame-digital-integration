@@ -55,16 +55,23 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
         $this->_apiAME = $apiAME;
     }
     public function getCashbackValue(){
-        $total_discount = 0;
-        $items = $this->getOrder()->getAllItems();
-        foreach ($items as $item) {
-            $total_discount = $total_discount + $item->getDiscountAmount();
-        }
-        return ($this->getPrice()-abs($total_discount)) * $this->getCashbackPercent() * 0.01;
+        $increment_id = $this->getOrderId();
+        $sql = "SELECT cashback_amount FROM ame_order WHERE increment_id = ".$increment_id;
+        $value = $this->_connection->fetchOne($sql);
+        return $value * 0.01;
     }
-    public function getCashbackPercent(){
-        return $this->_apiAME->getCashbackPercent();
-    }
+
+//    public function getCashbackValue(){
+//        $total_discount = 0;
+//        $items = $this->getOrder()->getAllItems();
+//        foreach ($items as $item) {
+//            $total_discount = $total_discount + $item->getDiscountAmount();
+//        }
+//        return ($this->getPrice()-abs($total_discount)) * $this->getCashbackPercent() * 0.01;
+//    }
+//    public function getCashbackPercent(){
+//        return $this->_apiAME->getCashbackPercent();
+//    }
     public function getPrice(){
         return $this->getOrder()->getGrandTotal();
     }

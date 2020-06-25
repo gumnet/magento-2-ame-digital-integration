@@ -88,7 +88,7 @@ class DbAME {
                        qr_code_link,deep_link)
                 VALUES ('" . $order->getIncrementId() . "','" . $result_array['id'] . "',
                         " . $result_array['amount'] . ",
-                        0,
+                        " . $result_array['attributes']['cashbackAmountValue']. ",
                         '" . $result_array['qrCodeLink'] . "',
                         '" . $result_array['deepLink'] . "')";
         $this->_connection->query($sql);

@@ -27,41 +27,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Plugin;
+namespace GumNet\AME\Observer;
 
-use Magento\Backend\Model\UrlInterface;
-use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
 
-class PluginBtnOrderView
+class CreditMemoObserver implements ObserverInterface
 {
-    protected $object_manager;
-    protected $_backendUrl;
-    protected $_scopeConfig;
+    protected $_apiAME;
+    protected $_order;
+    protected $_gumAPI;
+    protected $_dbAME;
 
     public function __construct(
-        ObjectManagerInterface $om,
-        UrlInterface $backendUrl,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    ) {
-        $this->object_manager = $om;
-        $this->_backendUrl = $backendUrl;
-        $this->_scopeConfig = $scopeConfig;
-
-    }
-    public function beforeSetLayout( \Magento\Sales\Block\Adminhtml\Order\View $subject )
+        \GumNet\AME\Helper\API $api,
+        \Magento\Sales\Api\Data\OrderInterface $order,
+        \GumNet\AME\Helper\GumApi $gumAPI,
+        \GumNet\AME\Helper\DbAME $dbAME
+    )
     {
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) != 2) {
-            $sendOrder = $this->_backendUrl->getUrl('ameroutes/order/index/id/' . $subject->getOrderId());
-            $subject->addButton(
-                'sendorderame',
-                [
-                    'label' => __('AME'),
-                    'onclick' => "window.open('" . $sendOrder . "','_blank')",
-                    'class' => 'ship primary'
-                ]
-            );
-        }
-        return null;
+        $this->_apiAME = $api;
+        $this->_order = $order;
+        $this->_gumAPI = $gumAPI;
+        $this->_dbAME = $dbAME;
     }
 
+    public function execute(\Magento\Framework\Event\Observer $observer)
+    {
+        $refund = $observer->getEvent()->getCreditmemo();
+        $order = $refund->getOrder();
+        $payment = $order->getPayment();
+        $method = $payment->getMethod();
+        if($method=="ame") {
+            $valor = $refund->getGrandTotal() * 100;
+            $refund = $this->_apiAME->refundOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $valor);
+            if ($refund) {
+                $refund[0] = json_decode($refund[0], true);
+                $this->_dbAME->insertRefund($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $refund[1], $refund[0]['operationId'], $valor, $refund[0]['status']);
+            } else {
+                throw new LocalizedException(__('Houve um erro efetuando o reembolso.'));
+            }
+        }
+        return $this;
+
+    }
 }
