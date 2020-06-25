@@ -1,7 +1,7 @@
 {
   "name": "gumnet/magento2-ame-integration",
   "description": "Magento 2 AME Digital Integration",
-  "version": "0.0.25",
+  "version": "1.0.0",
   "require": {
     "php": ">=7.0.0",
     "ramsey/uuid": ">=3.0.0"
