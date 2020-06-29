@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
@@ -27,16 +26,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-    <module name="GumNet_AME" setup_version="1.0.1">
-        <sequence>
-            <module name="Magento_Sales"/>
-            <module name="Magento_Payment"/>
-            <module name="Magento_Checkout"/>
-            <module name="Magento_Directory" />
-            <module name="Magento_Config" />
-        </sequence>
-    </module>
-</config>
+
+namespace GumNet\AME\Controller\PaymentConfirmation;
+
+use \Magento\Framework\App\RequestInterface;
+
+class Index extends \Magento\Framework\App\Action\Action
+{
+    protected $_request;
+    protected $_orderRepository;
+
+    public function __construct(\Magento\Framework\App\Action\Context $context,
+                                \Magento\Framework\App\Request\Http $request,
+                                \Magento\Sales\Model\OrderRepository $orderRepository,
+                                array $data = []
+                                )
+    {
+        $this->_request = $request;
+        $this->_orderRepository = $orderRepository;
+        parent::__construct($context);
+    }
+    public function execute()
+    {
+        $id = $this->_request->getParam('id');
+        if (!$id) die();
+        $order = $this->_orderRepository->get($id);
+        if ($order->hasInvoices()) {
+            echo 1;
+        } else {
+            echo 0;
+        }
+        die();
+    }
+}

@@ -395,7 +395,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'default'  => \Magento\Framework\DB\Ddl\Table::TIMESTAMP_INIT
                 ]
             );
-            $installer->endSetup();
         }
+        if(version_compare($context->getVersion(), '1.0.1', '<')) {
+            $installer->getConnection()->addColumn(
+                $installer->getTable('ame_transaction'),
+                'ame_capture_id',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    'length' => 65535,
+                    'nullable' => false,
+                    'comment' => 'AME Capture ID',
+                    'default' => ''
+                ]
+            );
+        }
+        $installer->endSetup();
     }
 }

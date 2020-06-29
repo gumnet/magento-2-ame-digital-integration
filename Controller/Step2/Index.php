@@ -100,8 +100,10 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_mlogger->log("INFO", "AME Callback capturing...");
         $capture = $this->_api->captureOrder($ame_order_id);
         if(!$capture) die();
+        $json_capture = json_encode($capture);
+        $this->_mlogger->log("INFO","AME Callback Capture response:".$json_capture);
         $this->invoiceOrder($order);
-        $this->_dbAME->setCaptured($ame_transaction_id);
+        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
         $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
         $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
         $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);

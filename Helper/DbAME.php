@@ -45,8 +45,10 @@ class DbAME {
         $sql = "UPDATE ame_transaction SET updated_at = NOW() WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
     }
-    public function setCaptured($ame_transaction_id){
+    public function setCaptured($ame_transaction_id,$ame_capture_id){
         $sql = "UPDATE ame_transaction SET capture_ok = 1 WHERE ame_transaction_id = '".$ame_transaction_id."'";
+        $rs_query = $this->_connection->query($sql);
+        $sql = "UPDATE ame_transaction SET ame_capture_id = '".$ame_capture_id."' WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
     }
     public function getRefundedSumByTransactionId($ame_transaction_id){
@@ -84,11 +86,17 @@ class DbAME {
         }
     }
     public function insertOrder($order,$result_array){
+        if(array_key_exists('cashbackAmountValue',$result_array['attributes'])){
+            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        }
+        else{
+            $cashbackAmountValue = 0;
+        }
         $sql = "INSERT INTO ame_order (increment_id,ame_id,amount,cashback_amount,
                        qr_code_link,deep_link)
                 VALUES ('" . $order->getIncrementId() . "','" . $result_array['id'] . "',
                         " . $result_array['amount'] . ",
-                        " . $result_array['attributes']['cashbackAmountValue']. ",
+                        " . $cashbackAmountValue . ",
                         '" . $result_array['qrCodeLink'] . "',
                         '" . $result_array['deepLink'] . "')";
         $this->_connection->query($sql);

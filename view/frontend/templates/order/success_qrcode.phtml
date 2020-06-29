@@ -47,8 +47,10 @@ if($block->getPaymentMethod()=="ame") {
                 Valor da compra:</div>
             <div id="success_ame_value">R$<?php echo number_format($block->getPrice()-abs($total_discount),
                     2,",","."); ?></div><br>
+            <?php if($block->getCashbackValue()){ ?>
             <div id="success_ame_cashback_txt">Receba de volta <div id="success_ame_cashback_value">
                     <?php echo number_format($block->getCashbackValue(),2,",","."); ?></div> em até 30 dias.</div><br>
+                    <?php } ?>
             <div id="success_ame_facil">Pagar com a AME é fácil e rápido!</div>
             <img id="success_ame_qrcode" src='<?php echo $block->getQrCodeLink(); ?>'/>
             <div id="success_ame_info">1. Abra o aplicativo Ame Digital. Se você ainda não tem, <br>baixe no
@@ -72,5 +74,33 @@ if($block->getPaymentMethod()=="ame") {
             }
         </script>
     </div>
+<script>
+requirejs(['jquery'], function($){
+    var updatePaymentLoop = setInterval(updatePaymentConfirmation,3000);
+
+    function paymentConfirmed(){
+        $('#success_ame_external').remove();
+        $('#checkout-success').text("Recebemos seu pagamento. Aguarde atualizações em seu email cadastrado. Muito obrigado pela compra!");
+    }
+    function updatePaymentConfirmation()
+    {
+        $.ajax({
+            url: "/m2amecallbackendpoint/paymentconfirmation/index/id/<?php echo $block->getOrder()->getEntityId();?>",
+            context: document.body
+        }).done(function (resposta) {
+            console.log(resposta);
+            if (resposta === "1") {
+                paymentConfirmed();
+                clearInterval(updatePaymentLoop);
+            }
+        });
+    }
+});
+
+</script>
+
+
+
+
     <?php
 }
