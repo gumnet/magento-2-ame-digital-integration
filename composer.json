@@ -1,8 +1,7 @@
 {
   "name": "gumnet/magento2-ame-integration",
   "description": "Magento 2 AME Digital Integration",
-  "homepage": "https://gum.net.br",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "require": {
     "php": ">=7.0.0",
     "ramsey/uuid": ">=3.0.0",
