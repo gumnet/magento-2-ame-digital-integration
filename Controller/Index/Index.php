@@ -33,7 +33,7 @@ use \Magento\Framework\App\CsrfAwareActionInterface;
 use \Magento\Framework\App\RequestInterface;
 use \Magento\Framework\App\Request\InvalidRequestException;
 
-class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
+class Index extends \Magento\Framework\App\Action\Action
 {
     protected $_session;
     protected $_request;
@@ -156,25 +156,5 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     public function isJson($string) {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
-    }
-    /**
-     * @inheritDoc
-     */
-    public function createCsrfValidationException(
-        RequestInterface $request
-    ): ?InvalidRequestException {
-        return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function validateForCsrf(RequestInterface $request): ?bool
-    {
-        return true;
-    }
-    public function getCallbackUrl()
-    {
-        return $this->_storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
 }
