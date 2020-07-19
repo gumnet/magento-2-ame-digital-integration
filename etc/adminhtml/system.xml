@@ -34,21 +34,21 @@
             <label>AME</label>
         </tab>
         <section id="ame" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-            <label>AME Configuration</label>
+            <label>Configuração AME</label>
             <tab>ame_tab</tab>
             <resource>GumNet_AME::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>General</label>
+                <label>Geral</label>
                 <field id="environment" translate="label" type="select" sortOrder="20" showInDefault="1">
-                    <label>Environment</label>
+                    <label>Ambiente</label>
                     <source_model>GumNet\AME\Model\Config\Environment</source_model>
                 </field>
                 <field id="api_user" translate="label" type="text" sortOrder="30" showInDefault="1">
-                    <label>API User</label>
+                    <label>Usuário API</label>
                     <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="api_password" translate="label" type="text" sortOrder="40" showInDefault="1">
-                    <label>API Password</label>
+                    <label>Senha API</label>
                     <validate>required-entry validate-uuid</validate>
                 </field>
 <!--
@@ -59,9 +59,17 @@
                     </validate>
                 </field>
 -->
+                <field id="order_status_created" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Status de ordem criada</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                </field>
+                <field id="order_status_payment_received" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Status de pagamento confirmado</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                </field>
             </group>
             <group id="address" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Address</label>
+                <label>Definições do Endereço</label>
                 <field id="street" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>Rua</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
@@ -73,6 +81,13 @@
                 <field id="neighborhood" translate="label" type="select" sortOrder="30" showInDefault="1">
                     <label>Bairro</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+            </group>
+            <group id="exhibition" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Configurações de exibição</label>
+                <field id="show_cashback_products_list" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Exibir informações de cashback na lista de produtos</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
             <group id="debug" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -91,9 +106,6 @@
                     <validate>validate-email</validate>
                 </field>
             </group>
-
-
-
         </section>
         <section id="payment">
             <group id="ame" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">

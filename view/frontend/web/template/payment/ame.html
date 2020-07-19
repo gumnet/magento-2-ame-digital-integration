@@ -7,6 +7,7 @@
         <label data-bind="attr: {'for': getCode()}" class="label"><!-- <span data-bind="text: getTitle()"></span> -->
             <img data-bind="attr: {src: getLogoImagePath()}"  class="amepayment-icon"/>
         </label>
+        <span data-bind="html: setCashbackTxt()"></span>
     </div>
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->

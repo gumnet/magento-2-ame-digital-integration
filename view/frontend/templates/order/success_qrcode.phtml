@@ -79,8 +79,11 @@ requirejs(['jquery'], function($){
     var updatePaymentLoop = setInterval(updatePaymentConfirmation,3000);
 
     function paymentConfirmed(){
-        $('#success_ame_external').remove();
-        $('#checkout-success').text("Recebemos seu pagamento. Aguarde atualizações em seu email cadastrado. Muito obrigado pela compra!");
+        var msgPagamentoConfirmado = "<br><br><br>Recebemos seu pagamento.<br><br>Muito obrigado pela compra!<br><br>Enviaremos atualizações para seu email cadastrado.<br><br><br>";
+        $('#success_ame_facil').remove();
+        $('#success_ame_qrcode').remove();
+        $('#success_ame_info').remove();
+        $('#success_ame_cashback_txt').html($('#success_ame_cashback_txt').html() + msgPagamentoConfirmado);
     }
     function updatePaymentConfirmation()
     {

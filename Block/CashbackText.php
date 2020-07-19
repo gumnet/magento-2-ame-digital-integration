@@ -34,25 +34,32 @@ class CashbackText extends \Magento\Framework\View\Element\Template
     protected $_scopeConfig;
     protected $_helper;
     protected $_registry;
+    protected $_api;
 
     public function __construct(\Magento\Framework\View\Element\Template\Context $context,
                                 \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
                                 \Magento\Catalog\Helper\Data $helper,
-                                \Magento\Framework\Registry $registry
+                                \Magento\Framework\Registry $registry,
+                                \GumNet\AME\Helper\API $_api
                                 )
     {
         $this->_scopeConfig = $scopeConfig;
         $this->_helper = $helper;
         $this->_registry = $registry;
+        $this->_api = $_api;
         parent::__construct($context);
+    }
+    public function isShowCashbackProductsListEnabled()
+    {
+        return $this->_scopeConfig->getValue("ame/exhibition/show_cashback_products_list", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
     public function getCashbackPercent()
     {
-        return $this->_scopeConfig->getValue("ame/general/cashback_value", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+//        return $this->_scopeConfig->getValue("ame/general/cashback_value", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        return $this->_api->getCashbackPercent();
     }
     public function getCashbackValue(){
         $product = $this->getKey();
-//        return 1;
         return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
     }
 }

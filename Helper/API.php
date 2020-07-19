@@ -42,7 +42,6 @@ class API
     protected $_dbAME;
     protected $_email;
     protected $_gumapi;
-    protected $_proxyUrl;
     protected $_invalidProxies;
 
     public function __construct(\GumNet\AME\Helper\LoggerAME $logger,
@@ -80,25 +79,58 @@ class API
         }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
-        $this->_proxyUrl = "";
         $this->_invalidProxies = [];
     }
-    public function getProxy($force_update=0){
-        if(!$force_update&&$this->_proxyUrl) return $this->_proxyUrl;
-        $valid_proxy=0;
-        while(!$valid_proxy){
-            $proxy = rand(0,count($this->proxyList()-1));
-            $valid_proxy=1;
-            foreach($this->_invalidProxies as $invalidProxy){
-
-            }
+    public function getCashBackPercent(){
+        $cashback_updated_at = $this->_dbAME->getCashbackUpdatedAt();
+        if(time()<$cashback_updated_at + 3600){
+            return $this->_dbAME->getCashbackPercent();
+        }
+        else{
+            return $this->generateCashbackFromOrder();
         }
     }
-    public function proxyList(){
-        $list[0]="ameproxy0.gum.net.br";
-        $list[1]="ameproxy1.gum.net.br";
-        $list[2]="ameproxy2.gum.net.br";
-//        $list[3]="ameproxy3.gum.net.br";
+    public function generateCashbackFromOrder(){
+        $url = $this->url . "/orders";
+        $pedido = rand(1000,1000000);
+        $json_array['title'] = "Pedido " . $pedido;
+        $json_array['description'] = "Pedido " . $pedido;
+        $json_array['amount'] = 10000;
+        $json_array['currency'] = "BRL";
+//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
+        $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
+        $json_array['attributes']['items'] = [];
+
+        $array_items['description'] = "Produto - SKU " . "38271686";
+        $array_items['quantity'] = 1;
+        $array_items['amount'] = 9800;
+        array_push($json_array['attributes']['items'], $array_items);
+        $json_array['attributes']['customPayload']['ShippingValue'] = 200;
+        $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
+        $json_array['attributes']['customPayload']['shippingAddress']['number'] = "234";
+        $json_array['attributes']['customPayload']['shippingAddress']['city'] = "Niteroi";
+        $json_array['attributes']['customPayload']['shippingAddress']['street'] = "Rua Presidente Backer";
+        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = "24220-041";
+        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = "Icarai";
+        $json_array['attributes']['customPayload']['shippingAddress']['state'] = "RJ";
+        $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
+        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
+        $json_array['attributes']['paymentOnce'] = true;
+        $json_array['attributes']['riskHubProvider'] = "SYNC";
+        $json_array['attributes']['origin'] = "ECOMMERCE";
+        $json = json_encode($json_array);
+        $result = $this->ameRequest($url, "POST", $json);
+        $result_array = json_decode($result, true);
+        if ($this->hasError($result, $url, $json)) return false;
+        if(array_key_exists('cashbackAmountValue',$result_array['attributes'])){
+            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        }
+        else{
+            $cashbackAmountValue = 0;
+        }
+        $cashback_percent = $cashbackAmountValue/100;
+        $this->_dbAME->setCashbackPercent($cashback_percent);
+        return $cashback_percent;
     }
     public function refundOrder($ame_id, $amount)
     {
@@ -164,7 +196,7 @@ class API
         $amount = intval($order->getGrandTotal() * 100);
 //        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
 
-        $json_array['title'] = "GumNet Pedido " . $order->getIncrementId();
+        $json_array['title'] = "Pedido " . $order->getIncrementId();
         $json_array['description'] = "Pedido " . $order->getIncrementId();
         $json_array['amount'] = $amount;
         $json_array['currency'] = "BRL";

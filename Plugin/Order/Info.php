@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020 GumNet (https://gum.net.br)
@@ -27,15 +26,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="GumNet_AME" type="GumNet\AME\Block\LayoutProcessor" sortOrder="100"/>
-    </type>
-    <type name="Magento\Catalog\Block\Product\ListProduct" shared="false">
-        <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin" disabled="false" sortOrder="999" />
-    </type>
-    <type name="Magento\Sales\Block\Order\Info">
-        <plugin name="gumnet_ame_order_qrcode_plugin" type="GumNet\AME\Plugin\Order\Info" disabled="false" sortOrder="999" />
-    </type>
-</config>
+
+namespace GumNet\AME\Plugin\Order;
+
+class Info
+{
+    protected $dbAME;
+    protected $orderRepository;
+    protected $request;
+
+    public function __construct(
+        \GumNet\AME\Helper\DbAME $dbAME,
+        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
+        \Magento\Framework\App\Request\Http $request
+    ) {
+        $this->dbAME = $dbAME;
+        $this->orderRepository = $orderRepository;
+        $this->request = $request;
+    }
+    public function afterGetPaymentInfoHtml($payment_info_html){
+        $orderId = $this->request->getParam('order_id');
+        $order = $this->orderRepository->get($orderId);
+        $increment_id = $order->getIncrementId();
+        $qrcode = $this->dbAME->getQrCodeLink($increment_id);
+        $payment_info_html .= "<br>";
+        $payment_info_html .= "<img src='".$qrcode."' alt='qrcode'>";
+        return $payment_info_html;
+    }
+}

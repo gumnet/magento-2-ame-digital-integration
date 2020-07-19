@@ -409,6 +409,12 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ]
             );
         }
+        if(version_compare($context->getVersion(), '1.0.5', '<')) {
+            $sql = "INSERT INTO ame_config (ame_option,ame_value) VALUES ('cashback_percent','0')";
+            $setup->getConnection()->query($sql);
+            $sql = "INSERT INTO ame_config (ame_option,ame_value) VALUES ('cashback_updated_at','0')";
+            $setup->getConnection()->query($sql);
+        }
         $installer->endSetup();
     }
 }
