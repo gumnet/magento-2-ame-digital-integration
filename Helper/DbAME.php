@@ -41,6 +41,24 @@ class DbAME {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
     }
+    public function setCashbackPercent($cashback_percent){
+        $sql = "UPDATE ame_config SET ame_value = '".$cashback_percent."' WHERE ame_option = 'cashback_percent'";
+        $this->_connection->query($sql);
+        $sql = "UPDATE ame_config SET ame_value = '".time()."' WHERE ame_option = 'cashback_updated_at'";
+        $this->_connection->query($sql);
+    }
+    public function getCashbackUpdatedAt(){
+        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'cashback_updated_at'";
+        return $this->_connection->fetchOne($sql);
+    }
+    public function getCashbackPercent(){
+        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'cashback_percent'";
+        return $this->_connection->fetchOne($sql);
+    }
+    public function getQrCodeLink($increment_id){
+        $sql = "SELECT qr_code_link FROM ame_order WHERE increment_id = ".$increment_id;
+        return $this->_connection->fetchOne($sql);
+    }
     public function setTransactionUpdated($ame_transaction_id){
         $sql = "UPDATE ame_transaction SET updated_at = NOW() WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);

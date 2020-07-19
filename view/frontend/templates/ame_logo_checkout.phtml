@@ -31,7 +31,15 @@ $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $assetRepo = $objectManager->get('Magento\Framework\View\Asset\Repository');
 $ame_logo = $assetRepo->getUrl("GumNet_AME::images/ame-logo.png");
 
+$checkoutSession = $objectManager->get('Magento\Checkout\Model\Session');
+$grandTotal = $checkoutSession->getQuote()->getGrandTotal();
+$api = $objectManager->get('GumNet\AME\Helper\API');
+$cashbackPercent = $api->getCashbackPercent();
+$cashbackValue = $grandTotal * $cashbackPercent * 0.01;
+
+$cashback_text = "&nbsp;&nbsp;Receba R$".number_format($cashbackValue,"2",",",".")." de volta com a AME Digital";
 ?>
 <script>
 window.ameLogo = '<?php echo $ame_logo; ?>';
+window.cashbackTxt = '<?php echo $cashback_text;?>';
 </script>
