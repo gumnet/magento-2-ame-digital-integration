@@ -44,11 +44,11 @@
                     <source_model>GumNet\AME\Model\Config\Environment</source_model>
                 </field>
                 <field id="api_user" translate="label" type="text" sortOrder="30" showInDefault="1">
-                    <label>Usuário API</label>
+                    <label>Application Key</label>
                     <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="api_password" translate="label" type="text" sortOrder="40" showInDefault="1">
-                    <label>Senha API</label>
+                    <label>Application Token</label>
                     <validate>required-entry validate-uuid</validate>
                 </field>
 <!--
@@ -117,11 +117,6 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="order_status" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>New Order Status</label>
-                    <source_model>GumNet\AME\Model\Config\Source\Order\Status\Pendingpayment</source_model>
-                </field>
-
                 <field id="allowspecific" translate="label" type="allowspecific" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
