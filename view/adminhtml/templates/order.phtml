@@ -77,14 +77,12 @@ else{
         location.href = url;
     }
 </script>
-<?php
-        if($order->getState()=='new'&&!$_dbAME->isCaptured($ame_transaction_id)) { ?>
     <button id="capturar" title="Capturar" type="button" class="action-default scalable ship primary"
             onclick="clickLoader('<?php echo $admin_url; ?>../ameroutes/capture/index/id/<?php echo $id; ?>/')"
             data-ui-id="sales-order-view-ship-button-sendorderame-button" >
         <span>Capturar</span>
     </button>
-<?php }
+<?php
         if($order->getState()=='new'&&!$_dbAME->isCaptured($ame_transaction_id)) { ?>
     <button id="cancelar" title="Cancelar" type="button" class="action-default scalable ship primary"
             onclick="clickLoader('<?php echo $admin_url; ?>../ameroutes/cancel/index/id/<?php echo $id; ?>/')"
