@@ -10,14 +10,14 @@ define(
                 template: 'GumNet_AME/payment/ame'
             },
             getLogoImagePath: function () {
-                return window.ameLogo;
+                return document.getElementById('ameLogoHtml').innerHTML;
             },
             /** Returns send check to info */
             getMailingAddress: function() {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
             },
             setCashbackTxt: function() {
-                return window.cashbackTxt;
+                return document.getElementById('cashbackTxtHtml').innerHTML;
             }
         });
     }

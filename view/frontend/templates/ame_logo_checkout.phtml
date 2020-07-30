@@ -41,9 +41,5 @@ $cashback_text = "";
 
 $cashback_text = "&nbsp;&nbsp;Receba R$".number_format($cashbackValue,"2",",",".")." de volta com a AME Digital";
 ?>
-<script>
-    requirejs(['jquery'], function( $ ) {
-        window.ameLogo = '<?php echo $ame_logo; ?>';
-        window.cashbackTxt = '<?php echo $cashback_text;?>';
-    }
-</script>
+<div id="ameLogoHtml" style="display: none;"><?php echo $ame_logo; ?></div>
+<div id="cashbackTxtHtml" style="display: none;"><?php echo $cashback_text; ?></div>
