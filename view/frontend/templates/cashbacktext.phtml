@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-if($block->isShowCashbackProductsListEnabled()){
+if($block->isShowCashbackProductsListEnabled()&&$block->getCashbackPercent()){
 ?>
 <div class="products-list-ame-info">
     <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/logo-ame.svg'); ?>" width="45">
