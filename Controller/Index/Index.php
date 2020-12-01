@@ -84,11 +84,9 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $this->_mlogger->log("INFO","AME Callback starting...");
         $json = file_get_contents('php://input');
 //        $json = fopen('php://input','r');
-        // verify if is json
         $this->_dbAME->insertCallback($json);
         if(!$this->isJson($json)){
             $this->_mlogger->log("ERROR","AME Callback is not json");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback is not json",$json);
             return;
         }
         $input = json_decode($json,true);
@@ -96,14 +94,12 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         // verify if id exists
         if(!array_key_exists('id',$input)){
             $this->_mlogger->log("ERROR","AME Callback AME ID not found in JSON");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback AME ID not found",$json);
             return;
         }
         $ame_order_id = $input['attributes']['orderId'];
         $incrId = $this->_dbAME->getOrderIncrementId($ame_order_id);
         if(!$incrId){
             $this->_mlogger->log("ERROR","AME Callback Increment ID not found in the database");
-            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback Increment ID not found",$json);
             return;
         }
         if($input['status']=="AUTHORIZED") {
@@ -129,7 +125,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         }
 //        if($input['status']=="CANCELED"){
 //            $this->_mlogger->log("INFO","AME Callback cancel order ".$incrId);
-//            $this->_mailerAME->mailSender("gustavo@gumnet.com.br","AME Callback ATTENTION cancel order ".$incrId,$json);
 //            $this->cancelOrder($order);
 //        }
 //        if($input['status']=="ERROR"||$input['status']=="DENIED"){

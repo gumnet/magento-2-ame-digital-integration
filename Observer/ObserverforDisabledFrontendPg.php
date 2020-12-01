@@ -46,13 +46,14 @@ class ObserverforDisabledFrontendPg implements ObserverInterface
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-//        $result = $observer->getEvent()->getResult();
-//        $method_instance = $observer->getEvent()->getMethodInstance();
-//        $quote = $observer->getEvent()->getQuote();
-//        if ($method_instance->getCode() == 'ame' &&
-//            in_array($this->_appState->getAreaCode(), $this->getDisableAreas())) {
+        $result = $observer->getEvent()->getResult();
+        $method_instance = $observer->getEvent()->getMethodInstance();
+        $quote = $observer->getEvent()->getQuote();
+        if ($method_instance->getCode() == 'ame'
+//            &&
+            ) {
 //            $result->setData('is_available', false);
-//        }
+        }
     }
     protected function getDisableAreas()
     {
