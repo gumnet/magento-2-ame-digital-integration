@@ -63,7 +63,8 @@ class Messages implements MessageInterface
     public function getText()
     {
         $message = __('Módulo AME - nova versão identificada - '.$this->getLatestVersion().'<br>
-        Contato: suporte@gum.net.br');
+        Faça o update via composer: composer update gumnet/magento2-ame-integration <br>
+        Contato: Gustavo Ulyssea - suporte@gum.net.br');
         return $message;
     }
     public function getIdentity()
@@ -72,20 +73,20 @@ class Messages implements MessageInterface
     }
     public function isDisplayed()
     {
-        if(!$this->hasCookie()) {
+//        if(!$this->hasCookie()) {
             $current_version = $this->getCurrentVersion();
             $latest_version = $this->getLatestVersion();
             if (version_compare($current_version, $latest_version, "<")) {
-                $this->setCookie();
+//                $this->setCookie();
                 return true;
             } else return false;
-        }
-        else return false;
+//        }
+//        else return false;
     }
     public function setCookie(){
         $metadata = $this->_cookieMetadataFactory
             ->createPublicCookieMetadata()
-            ->setDuration(31536000);
+            ->setDuration(3600);
         $this->_cookieManager->setPublicCookie(
             $this->cookie_name,
             "1",
@@ -98,7 +99,7 @@ class Messages implements MessageInterface
     }
     public function getSeverity()
     {
-        return \Magento\Framework\Notification\MessageInterface::SEVERITY_NOTICE;
+        return \Magento\Framework\Notification\MessageInterface::SEVERITY_MINOR;
     }
     public function getCurrentVersion(){
         return $this->_moduleLIst->getOne('GumNet_AME')['setup_version'];
