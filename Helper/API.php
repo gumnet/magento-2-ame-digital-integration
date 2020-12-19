@@ -74,8 +74,8 @@ class API
 //            $this->url = "https://ame19gwci.gum.net.br:63333/api";
         }
         if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
-            $this->url = "https://api.amedigital.com/api";
-//            $this->url = "https://ame19gwci.gum.net.br:63333/api";
+//            $this->url = "https://api.amedigital.com/api";
+            $this->url = "https://ame19gwci.gum.net.br:63333/api";
         }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
