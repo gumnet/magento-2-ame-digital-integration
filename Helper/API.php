@@ -55,7 +55,7 @@ class API
                                 \GumNet\AME\Helper\Mlogger $nmlogger
     )
     {
-        $this->url = "https://api.hml.amedigital.com/api";
+//        $this->url = "https://api.hml.amedigital.com/api";
         $this->_logger = $logger;
         $this->_mlogger = $mlogger;
         $this->_connection = $resource->getConnection();
@@ -66,17 +66,17 @@ class API
         if(!$this->_scopeConfig->getValue('ame/general/debug_log', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)){
             $this->_mlogger = $nmlogger;
         }
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
-            $this->url = "https://api.dev.amedigital.com/api";
-        }
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
-            $this->url = "https://api.hml.amedigital.com/api";
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
+//            $this->url = "https://api.dev.amedigital.com/api";
+//        }
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
+//            $this->url = "https://api.hml.amedigital.com/api";
 //            $this->url = "https://ame19gwci.gum.net.br:63333/api";
-        }
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
+//        }
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
 //            $this->url = "https://api.amedigital.com/api";
             $this->url = "https://ame19gwci.gum.net.br:63333/api";
-        }
+//        }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
         $this->_invalidProxies = [];
