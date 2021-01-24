@@ -52,25 +52,30 @@ class UpdatePendingTransactions
     }
     public function execute()
     {
+        // Temporarily disabled
         $num = 10;
-        $transactions = $this->_dbAME->getFirstPendingCaptureTransactions($num);
-        foreach($transactions as $transaction){
-            $hash = $this->_dbAME->getCallback2Hash();
-            $url = $this->getCallbackUrl() . '/step2/index/hash/' . $hash . '/id/' . $ame_transaction_id;
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            $result = curl_exec($ch);
-        }
+//        $transactions = $this->_dbAME->getFirstPendingCaptureTransactions($num);
+//        foreach($transactions as $transaction){
+//            $hash = $this->_dbAME->getCallback2Hash();
+//            $url = $this->getCallbackUrl() . '/step2/index/hash/' . $hash . '/id/' . $ame_transaction_id;
+//            $ch = curl_init();
+//            curl_setopt($ch, CURLOPT_URL, $url);
+//            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+//            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+//            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+//            $result = curl_exec($ch);
+//        }
+
+        // WORK BELOW
+/*
         $transactions = $this->_dbAME->getFirstPendingTransactions($num);
         foreach($transactions as $transaction){
             $capture = $this->_gumApi->captureTransaction($transaction['ame_order_id'],$transaction['ame_transaction_id'],$transaction['amount']);
             if($capture) $this->_dbAME->setCaptured2($transaction['ame_transaction_id']);
             $this->_dbAME->setTransactionUpdated($transaction['ame_transaction_id']);
         }
+*/
     }
     public function getCallbackUrl()
     {

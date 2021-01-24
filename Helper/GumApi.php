@@ -34,23 +34,38 @@ class GumApi
     protected $_storeManager;
     protected $_scopeConfig;
     protected $url;
+    protected $moduleList;
+    protected $productMetadata;
 
     public function __construct(\Magento\Store\Model\StoreManagerInterface $storeManager,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-                                )
+                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+                                \Magento\Framework\Module\ModuleList $moduleList,
+                                \Magento\Framework\App\ProductMetadataInterface $productMetadata
+    )
     {
         $this->_storeManager = $storeManager;
         $this->_scopeConfig = $scopeConfig;
         $this->url = "https://apiame.gum.net.br";
+        $this->moduleList = $moduleList;
+        $this->productMetadata = $productMetadata;
     }
-    
+
     public function refundTransaction($ame_transaction_id,$ame_refund_id,$amount)
     {
         $result = $ame_refund_id . "|" . $amount;
         return $this->gumRequest("refundtransaction",$result,$ame_transaction_id);
     }
-    
-    
+
+    public function queueTransactionError($json)
+    {
+        $this->apiGumCallback("/api/ame/transactionerror/","POST",$json);
+    }
+
+    public function queueTransaction($json)
+    {
+        $this->apiGumCallback("/api/ame/transaction/","POST",$json);
+    }
+
     public function captureTransaction($ame_transaction_id,$ame_order_id,$amount)
     {
         $result = $ame_transaction_id . "|".$amount;
@@ -68,6 +83,31 @@ class GumApi
 
         $this->gumRequest("createorder",$json_result,$json_input);
         return true;
+    }
+    public function apiGumCallback($url, $method = "GET", $json = ""){
+        $url = $this->url . $url;
+        $ch = curl_init();
+
+        $json_array['environment'] = $this->getEnvironment();
+        $json_array['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
+        $json_array['username'] = $this->_scopeConfig->getValue('ame/general/api_user', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['password'] = $this->_scopeConfig->getValue('ame/general/api_password', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['magentoversion'] = $this->productMetadata->getVersion();
+        $json_array['moduleversion'] = $this->moduleList->getOne('GumNet_AME')['setup_version'];
+
+        $json_array['callback'] = $json;
+        $json_array['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";
+        $json = json_encode($json_array,JSON_PRETTY_PRINT);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        $re = curl_exec($ch);
+        curl_close($ch);
+        return $re;
     }
     public function gumRequest($action,$result,$input=""){
         $ch = curl_init();
