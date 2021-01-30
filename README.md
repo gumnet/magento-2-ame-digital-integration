@@ -29,7 +29,7 @@ Você também pode utilizar o site: www.amedigital.com
 
 @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
 
-@copyright Copyright (c) 2020 GumNet (https://gum.net.br)
+@copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
 
 @package GumNet AME
 
