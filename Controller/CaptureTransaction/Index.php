@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Controller\Step2;
+namespace GumNet\AME\Controller\CaptureTransaction;
 
 use \Magento\Framework\App\CsrfAwareActionInterface;
 use \Magento\Framework\App\RequestInterface;
