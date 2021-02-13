@@ -136,17 +136,17 @@ class GumApi
         }
     }
     public function getEnvironment(){
-        $environment = "";
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
-            $environment = "dev";
-        }
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
-            $environment = "hml";
-        }
-        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
-            $environment = "prod";
-        }
-        return $environment;
+//        $environment = "";
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
+//            $environment = "dev";
+//        }
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
+//            $environment = "hml";
+//        }
+//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
+//            $environment = "prod";
+//        }
+        return "prod";
     }
 }
 

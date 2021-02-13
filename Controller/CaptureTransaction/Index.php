@@ -99,15 +99,12 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_mlogger->log("INFO","Order ID: ".$orderId);
         $order = $this->_orderRepository->get($orderId);
         $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
-        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$ame_order_id);
-
-        $json_capture = json_encode($capture);
-        $this->_mlogger->log("INFO","AME Callback Capture response:".$json_capture);
+        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$request_ame_order_id);
         $this->invoiceOrder($order);
-        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
-        $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
+//        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
+        $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($request_ame_order_id);
         $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
-//        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
+        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$request_ame_order_id,$amount);
         if($capture2) $this->_dbAME->setCaptured2($ame_transaction_id);
         $this->_mlogger->log("INFO","AME Capture Transaction ended.");
         die();
