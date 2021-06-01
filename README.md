@@ -13,16 +13,9 @@ Página oficial do desenvolvedor: https://gum.net.br/modulo-magento-2-integracao
 
 ## Importante
 
-Para o correto funcionamento é necessário entrar em contato com a equipe comercial da AME.
+O suporte responsável pela API da Ame Digital está em disponivel em https://portal-amedigital.sensedia.com/api-portal/pt-br 
 
-Se ainda não fez contato, entre em contato por email:
-
-ana.delima@amedigital.com
-
-Ana Carolina - Gerente de parcerias
-
-Você também pode utilizar o site: www.amedigital.com
-
+É necessário se cadastrar, ativar a conta e acessar o menu de Suporte na área logada.
 
 
 ## Informações de licença

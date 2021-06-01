@@ -35,18 +35,20 @@ use Magento\Framework\Exception\LocalizedException;
 class CreditMemoObserver implements ObserverInterface
 {
     protected $_apiAME;
+    protected $_sensediaAPI;
     protected $_order;
     protected $_gumAPI;
     protected $_dbAME;
 
     public function __construct(
         \GumNet\AME\Helper\API $api,
+        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
         \Magento\Sales\Api\Data\OrderInterface $order,
         \GumNet\AME\Helper\GumApi $gumAPI,
         \GumNet\AME\Helper\DbAME $dbAME
     )
     {
-        $this->_apiAME = $api;
+        $this->_apiAME = $sensediaAPI;
         $this->_order = $order;
         $this->_gumAPI = $gumAPI;
         $this->_dbAME = $dbAME;

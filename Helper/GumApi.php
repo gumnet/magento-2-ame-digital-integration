@@ -49,13 +49,11 @@ class GumApi
         $this->moduleList = $moduleList;
         $this->productMetadata = $productMetadata;
     }
-
     public function refundTransaction($ame_transaction_id,$ame_refund_id,$amount)
     {
         $result = $ame_refund_id . "|" . $amount;
         return $this->gumRequest("refundtransaction",$result,$ame_transaction_id);
     }
-
     public function queueTransactionError($json)
     {
         $this->apiGumCallback("/api/ame/transactionerror/","POST",$json);
@@ -94,6 +92,12 @@ class GumApi
         $json_array['password'] = $this->_scopeConfig->getValue('ame/general/api_password', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         $json_array['magentoversion'] = $this->productMetadata->getVersion();
         $json_array['moduleversion'] = $this->moduleList->getOne('GumNet_AME')['setup_version'];
+
+        if (!$this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            ||$this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+            $json_array['api'] = "sensedia";
+        }
+        else $json_array['api'] = "ame";
 
         $json_array['callback'] = $json;
         $json_array['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";

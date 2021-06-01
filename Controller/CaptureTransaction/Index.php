@@ -101,6 +101,10 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
         $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$request_ame_order_id);
         $this->invoiceOrder($order);
+        $order->addStatusHistoryComment(
+            'AME transaction ID: '.$this->_dbAME->getCallBackTransactionId($request_ame_order_id)."\n"
+            .'NSU: '.$this->_dbAME->getCallBackNsu($request_ame_order_id));
+        $order->save();
 //        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
         $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($request_ame_order_id);
         $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);

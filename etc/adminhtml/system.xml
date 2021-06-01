@@ -39,19 +39,25 @@
             <resource>GumNet_AME::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Geral</label>
-                <field id="api_user" translate="label" type="text" sortOrder="30" showInDefault="1">
-                    <label>Application Key</label>
+                <field id="api_user" translate="label" type="text" sortOrder="10" showInDefault="1">
+                    <label>Client ID</label>
+                    <comment><![CDATA[Client_id pertence a empresa que gerencia o e-commerce ou integração própria.]]></comment>
                     <validate>required-entry validate-uuid</validate>
                 </field>
-                <field id="api_password" translate="label" type="text" sortOrder="40" showInDefault="1">
-                    <label>Application Token</label>
+                <field id="api_password" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Access Token</label>
+                    <comment><![CDATA[Access_token chave fixa utilizada pelos estabelecimento. Cada CNPJ possui seu próprio access_token.]]></comment>
                     <validate>required-entry validate-uuid</validate>
                 </field>
-                <field id="order_status_created" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="environment" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Status de ordem criada</label>
+                    <source_model>GumNet\AME\Model\Config\Environment</source_model>
+                </field>
+                <field id="order_status_created" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Status de ordem criada</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>
-                <field id="order_status_payment_received" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="order_status_payment_received" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Status de pagamento confirmado</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>
@@ -71,25 +77,24 @@
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
             </group>
-            <group id="exhibition" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="exhibition" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Configurações de exibição</label>
                 <field id="show_cashback_products_list" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>Exibir informações de cashback na lista de produtos</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
-            <group id="debug" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="debug" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Debug</label>
-                <field id="debug_log" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="debug_log" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Habilitar debug log</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="debug_email_enable" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="debug_email_enable" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enviar emails de debug</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-
-                <field id="debug_email_addresses" translate="label" type="text" sortOrder="80" showInDefault="1">
+                <field id="debug_email_addresses" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enviar emails de debug para</label>
                     <validate>validate-email</validate>
                 </field>
@@ -105,19 +110,19 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="41" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
-                <field id="instructions" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="instructions" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Instructions</label>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="sort_order" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>

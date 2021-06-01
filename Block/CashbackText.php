@@ -42,6 +42,7 @@ class CashbackText extends \Magento\Framework\View\Element\Template
                                 \Magento\Catalog\Helper\Data $helper,
                                 \Magento\Framework\Registry $registry,
                                 \GumNet\AME\Helper\API $_api,
+                                \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
                                 \Magento\Framework\App\Request\Http $request
                                 )
     {
@@ -49,6 +50,10 @@ class CashbackText extends \Magento\Framework\View\Element\Template
         $this->_helper = $helper;
         $this->_registry = $registry;
         $this->_api = $_api;
+        if (!$scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            || $scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+            $this->_api = $sensediaAPI;
+        }
         $this->_request = $request;
         parent::__construct($context);
     }

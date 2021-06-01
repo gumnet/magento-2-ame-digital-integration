@@ -29,6 +29,7 @@
 
 namespace GumNet\AME\Observer;
 
+use GumNet\AME\Helper\SensediaAPI;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order;
 
@@ -39,13 +40,18 @@ class OrderCreate implements ObserverInterface
 
     public function __construct(
         \GumNet\AME\Helper\API $api,
-        \Magento\Sales\Api\Data\OrderInterface $order
+        \Magento\Sales\Api\Data\OrderInterface $order,
+        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     )
     {
         $this->_ame = $api;
+        if (!$scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            || $scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+            $this->_ame = $sensediaAPI;
+        }
         $this->_order = $order;
     }
-
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
@@ -61,7 +67,10 @@ class OrderCreate implements ObserverInterface
         if($method=="ame") {
             $order->setState('new')->setStatus('pending');
             $order->save();
-            $this->_ame->createOrder($order);
+            $result = $this->_ame->createOrder($order);
+            $order->addStatusHistoryComment(
+                'AME Order ID: '.$result['id']);
+            $order->save();
         }
     }
 }

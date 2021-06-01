@@ -41,6 +41,20 @@ class DbAME {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
     }
+    public function getCallBackNsu($order_id)
+    {
+        $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
+        $json = $this->_connection->fetchOne($sql);
+        $json_array = json_decode($json,true);
+        return json_array['id'];
+    }
+    public function getCallBackTransactionId($order_id)
+    {
+        $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
+        $json = $this->_connection->fetchOne($sql);
+        $json_array = json_decode($json,true);
+        return json_array['nsu'];
+    }
     public function setCashbackPercent($cashback_percent){
         $sql = "UPDATE ame_config SET ame_value = '".$cashback_percent."' WHERE ame_option = 'cashback_percent'";
         $this->_connection->query($sql);
