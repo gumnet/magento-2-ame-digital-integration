@@ -62,7 +62,7 @@ class SensediaAPI
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
 
-        $this->url = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
+        $this->url = "http://api-amedigital.sensedia.com/transacoes/v1";
 
         $this->_email = $email;
         $this->_gumapi = $gumApi;
@@ -84,7 +84,6 @@ class SensediaAPI
         $json_array['description'] = "Pedido " . $pedido;
         $json_array['amount'] = 10000;
         $json_array['currency'] = "BRL";
-//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
         $json_array['attributes']['items'] = [];
 
@@ -134,13 +133,11 @@ class SensediaAPI
         $this->_mlogger->info("AME REFUND ID:" . $refund_id);
         $url = $this->url . "/pagamentos/" . $transaction_id;// . "/refunds/MAGENTO-" . $refund_id;
         $this->_mlogger->info("AME REFUND URL:" . $url);
-//        echo $url;
         $json_array['amount'] = $amount;
         $json_array['refundId'] = "MAGENTO-".$refund_id;
         $json = json_encode($json_array);
         $this->_mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
-//        echo $result[0];
         $this->_mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) return false;
         $result[1] = $refund_id;
@@ -150,7 +147,6 @@ class SensediaAPI
     {
         $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
         if (!$transaction_id) {
-//            echo "Transaction ID not found";
             return false;
         }
         $url = $this->url . "/pagamentos/" . $transaction_id;
@@ -183,13 +179,11 @@ class SensediaAPI
         $shippingAmount = $order->getShippingAmount();
         $productsAmount = $order->getGrandTotal() - $shippingAmount;
         $amount = intval($order->getGrandTotal() * 100);
-//        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
 
         $json_array['title'] = "Pedido " . $order->getIncrementId();
         $json_array['description'] = "Pedido " . $order->getIncrementId();
         $json_array['amount'] = $amount;
         $json_array['currency'] = "BRL";
-//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
         $json_array['attributes']['items'] = [];
 
@@ -273,10 +267,6 @@ class SensediaAPI
         }
         return false;
     }
-//    public function getCashbackPercent()
-//    {
-//        return $this->_scopeConfig->getValue('ame/general/cashback_value', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-//    }
     public function getStoreName()
     {
         return $this->_scopeConfig->getValue('ame/general/store_name', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
