@@ -1,5 +1,5 @@
-<?xml version="1.0"?>
-<!--
+<?php
+
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
@@ -27,12 +27,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="payment_method_is_active">
-        <observer name="disable_pg_ame" instance="GumNet\AME\Observer\ObserverForDisabledFrontendPg" />
-    </event>
-    <event name="sales_order_creditmemo_refund">
-        <observer name="ame_credit_memo" instance="GumNet\AME\Observer\CreditMemoObserver"  />
-    </event>
-</config>
+
+namespace GumNet\AME\Model\ResourceModel;
+
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\Model\ResourceModel\Db\Context;
+
+class AmeOrder extends AbstractDb
+{
+    /**
+     * AmeOrder constructor.
+     * @param Context $context
+     */
+    public function __construct(Context $context)
+    {
+        parent::__construct($context);
+    }
+
+    /**
+     * _construct function
+     */
+    protected function _construct()
+    {
+        $this->_init('ame_order', 'id');
+    }
+
+}

@@ -29,16 +29,29 @@
 
 namespace GumNet\AME\Plugin\Order;
 
+use GumNet\AME\Helper\DbAME;
+use Magento\Framework\App\Request\Http;
+use Magento\Sales\Api\OrderRepositoryInterface;
+
 class Info
 {
+    /**
+     * @var DbAME
+     */
     protected $dbAME;
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
+    /**
+     * @var Http
+     */
     protected $request;
 
     public function __construct(
-        \GumNet\AME\Helper\DbAME $dbAME,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Framework\App\Request\Http $request
+        DbAME $dbAME,
+        OrderRepositoryInterface $orderRepository,
+        Http $request
     ) {
         $this->dbAME = $dbAME;
         $this->orderRepository = $orderRepository;

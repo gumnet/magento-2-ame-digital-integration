@@ -29,22 +29,123 @@
 
 namespace GumNet\AME\Model;
 
+use GumNet\AME\Helper\API;
+use GumNet\AME\Helper\SensediaAPI;
+use Magento\Directory\Helper\Data as DirectoryHelper;
+use Magento\Framework\Api\AttributeValueFactory;
+use Magento\Framework\Api\ExtensionAttributesFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Registry;
+use Magento\Payment\Helper\Data;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Payment\Model\Method\AbstractMethod;
+use Magento\Payment\Model\Method\Logger;
+use Magento\Store\Model\ScopeInterface;
+
 /**
  * Pay In Store payment method model
  */
-class AME extends \Magento\Payment\Model\Method\AbstractMethod
+class AME extends AbstractMethod
 {
+    const CODE = 'ame';
     /**
      * Payment code
      *
      * @var string
      */
-    protected $_code = 'ame';
-    protected $_methodCode = 'ame';
+    protected $_code = self::CODE;
+    protected $_methodCode = self::CODE;
+
+    protected $_isOffline = false;
+    protected $_isGateway = true;
+    protected $_canCapture = true;
+    protected $_canAuthorize = true;
+    protected $_canCapturePartial = true;
+    protected $_canRefund = true;
+    protected $_canRefundInvoicePartial = true;
+    protected $_minAmount = null;
+    protected $_maxAmount = null;
+    protected $_supportedCurrencyCodes = ['BRL'];
+
+    protected $_ame;
+
     /**
-     * Availability option
-     *
-     * @var bool
+     * AME constructor.
+     * @param Context $context
+     * @param Registry $registry
+     * @param ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param Data $paymentData
+     * @param ScopeConfigInterface $scopeConfig
+     * @param Logger $logger
+     * @param API $api
+     * @param SensediaAPI $sensediaAPI
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
+     * @param array $data
+     * @param DirectoryHelper|null $directory
      */
-    protected $_isOffline = true;
+    public function __construct(
+        Context $context,
+        Registry $registry,
+        ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        Data $paymentData,
+        ScopeConfigInterface $scopeConfig,
+        Logger $logger,
+        API $api,
+        SensediaAPI $sensediaAPI,
+        AbstractResource $resource = null,
+        AbstractDb $resourceCollection = null,
+        array $data = [],
+        DirectoryHelper $directory = null
+    ) {
+        parent::__construct(
+            $context,
+            $registry,
+            $extensionFactory,
+            $customAttributeFactory,
+            $paymentData,
+            $scopeConfig,
+            $logger,
+            $resource,
+            $resourceCollection,
+            $data,
+            $directory
+        );
+        $this->_ame = $api;
+        if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
+            || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
+            $this->_ame = $sensediaAPI;
+        }
+    }
+
+    /**
+     * Order creation
+     * @param InfoInterface $payment
+     * @param float $amount
+     * @return AME
+     */
+    public function order(InfoInterface $payment, $amount)
+    {
+        $order = $payment->getOrder();
+        $order->setState('new')->setStatus('pending');
+        $order->save();
+        $result = $this->_ame->createOrder($order);
+        $order->addStatusHistoryComment('AME Order ID: '.$result['id']);
+        $order->save();
+        return $this;
+    }
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
+    {
+        if (!$this->_scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE)) {
+            return false;
+        }
+        $storeId = $quote ? $quote->getStoreId() : null;
+
+        return $this->getConfigData('active', $storeId) ? true : fale;
+    }
 }

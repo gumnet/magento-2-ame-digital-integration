@@ -33,7 +33,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\Request\DataPersistorInterface;
 use Magento\Framework\App\ObjectManager;
 
-class ObserverforDisabledFrontendPg implements ObserverInterface
+class ObserverForDisabledFrontendPg implements ObserverInterface
 {
     protected $_appState;
 

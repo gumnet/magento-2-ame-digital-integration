@@ -29,52 +29,88 @@
 
 namespace GumNet\AME\Block;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface;
+
 class CashbackText extends \Magento\Framework\View\Element\Template
 {
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $_scopeConfig;
+    /**
+     * @var \Magento\Catalog\Helper\Data
+     */
     protected $_helper;
+    /**
+     * @var \Magento\Framework\Registry
+     */
     protected $_registry;
+    /**
+     * @var \GumNet\AME\Helper\SensediaAPI
+     */
     protected $_api;
+    /**
+     * @var \Magento\Framework\App\Request\Http
+     */
     protected $_request;
 
-    public function __construct(\Magento\Framework\View\Element\Template\Context $context,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Catalog\Helper\Data $helper,
-                                \Magento\Framework\Registry $registry,
-                                \GumNet\AME\Helper\API $_api,
-                                \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
-                                \Magento\Framework\App\Request\Http $request
-                                )
-    {
+    /**
+     * CashbackText constructor.
+     * @param \Magento\Framework\View\Element\Template\Context $context
+     * @param ScopeConfigInterface $scopeConfig
+     * @param \Magento\Catalog\Helper\Data $helper
+     * @param \Magento\Framework\Registry $registry
+     * @param \GumNet\AME\Helper\API $_api
+     * @param \GumNet\AME\Helper\SensediaAPI $sensediaAPI
+     * @param \Magento\Framework\App\Request\Http $request
+     */
+    public function __construct(
+        \Magento\Framework\View\Element\Template\Context $context,
+        ScopeConfigInterface $scopeConfig,
+        \Magento\Catalog\Helper\Data $helper,
+        \Magento\Framework\Registry $registry,
+        \GumNet\AME\Helper\API $_api,
+        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
+        \Magento\Framework\App\Request\Http $request
+    ) {
         $this->_scopeConfig = $scopeConfig;
         $this->_helper = $helper;
         $this->_registry = $registry;
         $this->_api = $_api;
-        if (!$scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
-            || $scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+        if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
+            || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $this->_api = $sensediaAPI;
         }
         $this->_request = $request;
         parent::__construct($context);
     }
+
+    /**
+     * @return mixed
+     */
     public function isShowCashbackProductsListEnabled()
     {
-        return $this->_scopeConfig->getValue("ame/exhibition/show_cashback_products_list", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        return $this->_scopeConfig
+            ->getValue("ame/exhibition/show_cashback_products_list", ScopeInterface::SCOPE_STORE);
     }
+
+    /**
+     * @return false|float|int|string
+     */
     public function getCashbackPercent()
     {
-//        return $this->_scopeConfig->getValue("ame/general/cashback_value", \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         return $this->_api->getCashbackPercent();
     }
-    public function getCashbackValue(){
+    public function getCashbackValue()
+    {
         if ($this->_request->getFullActionName() == 'catalog_product_view') {
-            if(!$product = $this->getProduct()){
+            if (!$product = $this->getProduct()) {
                 $product = $this->_registry->registry('product');
+                return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
             }
         }
-        else{
-            $product = $this->getKey();
-        }
+        $product = $this->getKey();
         return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
     }
 }
