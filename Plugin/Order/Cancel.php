@@ -49,9 +49,11 @@ class Cancel
         $subject,
         $order
     ) {
-        if (!$order->hasInvoices()) {
-            $ame_id = $this->dbAME->getAmeIdByIncrementId($order->getIncrementId());
-            $this->api->cancelOrder($ame_id);
+        if ($order->getPayment->getMethod() == 'ame') {
+            if (!$order->hasInvoices()) {
+                $ame_id = $this->dbAME->getAmeIdByIncrementId($order->getIncrementId());
+                $this->api->cancelOrder($ame_id);
+            }
         }
     }
 }
