@@ -29,34 +29,32 @@
 
 namespace GumNet\AME\Observer;
 
+use GumNet\AME\Helper\SensediaAPI;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\App\Request\DataPersistorInterface;
-use Magento\Framework\App\ObjectManager;
+use Magento\Sales\Model\Order;
 
-class ObserverforDisabledFrontendPg implements ObserverInterface
+class ValidateForm implements ObserverInterface
 {
-    protected $_appState;
+    protected $scopeConfig;
 
     public function __construct(
-        \Magento\Framework\App\State $appState
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     )
     {
-        $this->_appState = $appState;
+        $this->scopeConfig = $scopeConfig;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $result = $observer->getEvent()->getResult();
-        $method_instance = $observer->getEvent()->getMethodInstance();
-//        $quote = $observer->getEvent()->getQuote();
-//        if ($method_instance->getCode() == 'ame'
-//            &&
-//            ) {
-//            $result->setData('is_available', false);
-//        }
-    }
-    protected function getDisableAreas()
-    {
-        return array(\Magento\Framework\App\Area::AREA_FRONTEND, \Magento\Framework\App\Area::AREA_WEBAPI_REST);
+        /** @var \Magento\Quote\Model\Quote $quote */
+        $quote = $observer->getEvent()->getQuote();
+        if ($quote->getPayment()->getMethod() != 'ame') {
+            return;
+        }
+        $neighborhood_line = $this->scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        if (!isset($quote->getShippingAddress()->getStreet()[$neighborhood_line])
+            ||!$quote->getShippingAddress()->getStreet()[$neighborhood_line]) {
+            throw new \Magento\Framework\Exception\LocalizedException('Por favor preencha o campo bairro.');
+        }
     }
 }
