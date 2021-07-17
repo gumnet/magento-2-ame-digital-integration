@@ -46,9 +46,9 @@ class Cancel
         $this->dbAME = $dbAME;
     }
     public function beforeCancel(
-        $subject,
-        $order
+        \Magento\Sales\Model\Order $subject
     ) {
+        $order = $subject;
         if ($order->getPayment->getMethod() == 'ame') {
             if (!$order->hasInvoices()) {
                 $ame_id = $this->dbAME->getAmeIdByIncrementId($order->getIncrementId());
