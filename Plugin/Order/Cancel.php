@@ -1,5 +1,5 @@
-<?xml version="1.0" ?>
-<!--
+<?php
+
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
@@ -27,19 +27,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="\Magento\Sales\Block\Adminhtml\Order\View">
-        <plugin name="GumNet_AME::sendOrderView" type="GumNet\AME\Plugin\PluginBtnOrderView" />
-    </type>
-    <type name="Magento\Sales\Model\Order">
-        <plugin name="GumNet_AME::orderCancel" type="GumNet\AME\Plugin\Order\Cancel" />
-    </type>
-    <type name="Magento\Framework\Notification\MessageList">
-        <arguments>
-            <argument name="messages" xsi:type="array">
-                <item name="AdminQuoteMessages" xsi:type="string">GumNet\AME\Model\Admin\Quote\Messages</item>
-            </argument>
-        </arguments>
-    </type>
-</config>
+
+namespace GumNet\AME\Plugin\Order;
+
+class Cancel
+{
+    protected $orderRepository;
+    protected $api;
+    protected $dbAME;
+
+    public function __construct(
+        \Magento\Sales\Model\OrderRepository $orderRepository,
+        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
+        \GumNet\AME\Helper\DbAME $dbAME
+    ) {
+        $this->orderRepository = $orderRepository;
+        $this->api = $sensediaAPI;
+        $this->dbAME = $dbAME;
+    }
+    public function beforeCancel(
+        \Magento\Sales\Model\Order $subject
+    ) {
+        $order = $subject;
+        if ($order->getPayment->getMethod() == 'ame') {
+            if (!$order->hasInvoices()) {
+                $ame_id = $this->dbAME->getAmeIdByIncrementId($order->getIncrementId());
+                $this->api->cancelOrder($ame_id);
+            }
+        }
+    }
+}

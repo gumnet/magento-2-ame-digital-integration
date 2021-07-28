@@ -1,5 +1,4 @@
-<?xml version="1.0" ?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
@@ -27,19 +26,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="\Magento\Sales\Block\Adminhtml\Order\View">
-        <plugin name="GumNet_AME::sendOrderView" type="GumNet\AME\Plugin\PluginBtnOrderView" />
-    </type>
-    <type name="Magento\Sales\Model\Order">
-        <plugin name="GumNet_AME::orderCancel" type="GumNet\AME\Plugin\Order\Cancel" />
-    </type>
-    <type name="Magento\Framework\Notification\MessageList">
-        <arguments>
-            <argument name="messages" xsi:type="array">
-                <item name="AdminQuoteMessages" xsi:type="string">GumNet\AME\Model\Admin\Quote\Messages</item>
-            </argument>
-        </arguments>
-    </type>
-</config>
+
+namespace GumNet\AME\Observer;
+
+use GumNet\AME\Helper\SensediaAPI;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Model\Order;
+
+class ValidateForm implements ObserverInterface
+{
+    protected $scopeConfig;
+
+    public function __construct(
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+    )
+    {
+        $this->scopeConfig = $scopeConfig;
+    }
+
+    public function execute(\Magento\Framework\Event\Observer $observer)
+    {
+        /** @var \Magento\Quote\Model\Quote $quote */
+        $quote = $observer->getEvent()->getQuote();
+        if ($quote->getPayment()->getMethod() != 'ame') {
+            return;
+        }
+        $neighborhood_line = $this->scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        if (!isset($quote->getShippingAddress()->getStreet()[$neighborhood_line])
+            ||!$quote->getShippingAddress()->getStreet()[$neighborhood_line]) {
+            throw new \Magento\Framework\Exception\LocalizedException('Por favor preencha o campo bairro.');
+        }
+    }
+}

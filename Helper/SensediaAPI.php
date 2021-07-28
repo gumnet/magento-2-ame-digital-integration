@@ -62,7 +62,7 @@ class SensediaAPI
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
 
-        $this->url = "http://api-amedigital.sensedia.com/transacoes/v1";
+        $this->url = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
 
         $this->_email = $email;
         $this->_gumapi = $gumApi;
@@ -145,13 +145,31 @@ class SensediaAPI
     }
     public function cancelOrder($ame_id)
     {
-        $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
+        $url = $this->url . "/ordens/" . $ame_id;
+        $result = $this->ameRequest($url, "DELETE", "");
+        if ($this->hasError(
+            $result,
+            $url,
+            ""
+        )) {
+            return false;
+        }
+        return true;
+    }
+    public function cancelTransaction($transaction_id)
+    {
         if (!$transaction_id) {
             return false;
         }
         $url = $this->url . "/pagamentos/" . $transaction_id;
         $result = $this->ameRequest($url, "DELETE", "");
-        if ($this->hasError($result, $url, "")) return false;
+        if ($this->hasError(
+            $result,
+            $url,
+            ""
+        )) {
+            return false;
+        }
         return true;
     }
     public function consultOrder($ame_id)
@@ -255,10 +273,13 @@ class SensediaAPI
                 $this->_logger->log($result, "error", $url, $input);
                 $subject = "AME Error";
                 $message = "Result: ".$result."\r\n\r\nurl: ".$url."\r\n\r\n";
-                if($input){
+                if ($input) {
                     $message = $message . "Input: ".$input;
                 }
-                $this->_email->sendDebug($subject,$message);
+                $this->_email->sendDebug(
+                    $subject,
+                    $message
+                );
                 return true;
             }
         } else {
@@ -269,7 +290,10 @@ class SensediaAPI
     }
     public function getStoreName()
     {
-        return $this->_scopeConfig->getValue('ame/general/store_name', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        return $this->_scopeConfig->getValue(
+            'ame/general/store_name',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
     }
     public function ameRequest($url, $method = "GET", $json = "")
     {

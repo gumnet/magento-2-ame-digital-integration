@@ -48,12 +48,12 @@ class ObserverForDisabledFrontendPg implements ObserverInterface
     {
         $result = $observer->getEvent()->getResult();
         $method_instance = $observer->getEvent()->getMethodInstance();
-        $quote = $observer->getEvent()->getQuote();
-        if ($method_instance->getCode() == 'ame'
+//        $quote = $observer->getEvent()->getQuote();
+//        if ($method_instance->getCode() == 'ame'
 //            &&
-            ) {
+//            ) {
 //            $result->setData('is_available', false);
-        }
+//        }
     }
     protected function getDisableAreas()
     {
