@@ -62,7 +62,7 @@ class SensediaAPI
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
 
-        $this->url = "http://api-amedigital.sensedia.com/transacoes/v1";
+        $this->url = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
 
         $this->_email = $email;
         $this->_gumapi = $gumApi;
@@ -145,7 +145,19 @@ class SensediaAPI
     }
     public function cancelOrder($ame_id)
     {
-        $transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
+        $url = $this->url . "/ordens/" . $ame_id;
+        $result = $this->ameRequest($url, "DELETE", "");
+        if ($this->hasError(
+            $result,
+            $url,
+            ""
+        )) {
+            return false;
+        }
+        return true;
+    }
+    public function cancelTransaction($transaction_id)
+    {
         if (!$transaction_id) {
             return false;
         }
