@@ -71,6 +71,7 @@ class AME extends AbstractMethod
     protected $_supportedCurrencyCodes = ['BRL'];
 
     protected $_ame;
+    protected $db;
 
     /**
      * AME constructor.
@@ -98,6 +99,7 @@ class AME extends AbstractMethod
         Logger $logger,
         API $api,
         SensediaAPI $sensediaAPI,
+        \GumNet\AME\Helper\DbAME $db,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = [],
@@ -117,6 +119,7 @@ class AME extends AbstractMethod
             $directory
         );
         $this->_ame = $api;
+        $this->db = $db;
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $this->_ame = $sensediaAPI;
@@ -147,5 +150,33 @@ class AME extends AbstractMethod
         $storeId = $quote ? $quote->getStoreId() : null;
 
         return $this->getConfigData('active', $storeId) ? true : fale;
+    }
+
+    /**
+     * @param InfoInterface $payment
+     * @param float $amount
+     * @return $this|AME
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Validator\Exception
+     */
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
+        if (!$this->canRefund()) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
+        }
+        try {
+            $order = $payment->getOrder();
+            $ameId = $this->db->getAmeIdByIncrementId($order->getIncrementId());
+            $this->_ame->refundOrder($ameId, $amount * 100);
+        } catch (\Exception $e) {
+//            $this-(['transaction_id' => $transactionId, 'exception' => $e->getMessage()]);
+            throw new \Magento\Framework\Validator\Exception(__('Payment API refund error.'));
+        }
+//        $payment
+//            ->setTransactionId($transactionId . '-' . \Magento\Sales\Model\Order\Payment\Transaction::TYPE_REFUND)
+//            ->setParentTransactionId($transactionId)
+//            ->setIsTransactionClosed(1)
+//            ->setShouldCloseParentTransaction(1);
+        return $this;
     }
 }

@@ -44,17 +44,17 @@ class SensediaAPI
     protected $_gumapi;
     protected $_invalidProxies;
 
-    public function __construct(\GumNet\AME\Helper\LoggerAME $logger,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \Magento\Framework\App\ResourceConnection $resource,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Store\Model\StoreManagerInterface $storeManager,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                \GumNet\AME\Helper\Mlogger $nmlogger
-    )
-    {
+    public function __construct(
+        \GumNet\AME\Helper\LoggerAME $logger,
+        \Psr\Log\LoggerInterface $mlogger,
+        \Magento\Framework\App\ResourceConnection $resource,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \GumNet\AME\Helper\DbAME $dbAME,
+        \GumNet\AME\Helper\MailerAME $email,
+        \GumNet\AME\Helper\GumApi $gumApi,
+        \GumNet\AME\Helper\Mlogger $nmlogger
+    ) {
         $this->_logger = $logger;
         $this->_mlogger = $mlogger;
         $this->_connection = $resource->getConnection();
@@ -62,24 +62,24 @@ class SensediaAPI
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
 
-        $this->url = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
+        $this->url = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
 
         $this->_email = $email;
         $this->_gumapi = $gumApi;
         $this->_invalidProxies = [];
     }
-    public function getCashBackPercent(){
+    public function getCashBackPercent()
+    {
         $cashback_updated_at = $this->_dbAME->getCashbackUpdatedAt();
-        if(time()<$cashback_updated_at + 3600){
+        if (time()<$cashback_updated_at + 3600) {
             return $this->_dbAME->getCashbackPercent();
         }
-        else{
-            return $this->generateCashbackFromOrder();
-        }
+        return $this->generateCashbackFromOrder();
     }
-    public function generateCashbackFromOrder(){
+    public function generateCashbackFromOrder()
+    {
         $url = $this->url . "/ordens";
-        $pedido = rand(1000,1000000);
+        $pedido = rand(1000, 1000000);
         $json_array['title'] = "Pedido " . $pedido;
         $json_array['description'] = "Pedido " . $pedido;
         $json_array['amount'] = 10000;
@@ -107,12 +107,12 @@ class SensediaAPI
         $json = json_encode($json_array);
         $result = $this->ameRequest($url, "POST", $json);
         $result_array = json_decode($result, true);
-        if ($this->hasError($result, $url, $json)) return false;
-        if(array_key_exists('cashbackAmountValue',$result_array['attributes'])){
-            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        if ($this->hasError($result, $url, $json)) {
+            return false;
         }
-        else{
-            $cashbackAmountValue = 0;
+        $cashbackAmountValue = 0;
+        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
+            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
         }
         $cashback_percent = $cashbackAmountValue/100;
         $this->_dbAME->setCashbackPercent($cashback_percent);
@@ -127,7 +127,7 @@ class SensediaAPI
         $this->_mlogger->info("AME REFUND TRANSACTION:" . $transaction_id);
 
         $refund_id = Uuid::uuid4()->toString();
-        while($this->_dbAME->refundIdExists($refund_id)){
+        while ($this->_dbAME->refundIdExists($refund_id)) {
             $refund_id = Uuid::uuid4()->toString();
         }
         $this->_mlogger->info("AME REFUND ID:" . $refund_id);
@@ -139,7 +139,8 @@ class SensediaAPI
         $this->_mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
         $this->_mlogger->info("AME REFUND Result:" . $result[0]);
-        if ($this->hasError($result[0], $url, $json)) return false;
+        if ($this->hasError($result[0], $url, $json))
+            return false;
         $result[1] = $refund_id;
         return $result;
     }
@@ -176,19 +177,14 @@ class SensediaAPI
     {
         $url = $this->url . "/orders/" . $ame_id;
         $result = $this->ameRequest($url, "GET", "");
-        if ($this->hasError($result, $url)) return false;
+        if ($this->hasError($result, $url)) {
+            return false;
+        }
         return $result;
     }
     public function captureOrder($ame_id)
     {
         die("capture must be made from gum api");
-        $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_id);
-        $url = $this->url . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
-        $result = $this->ameRequest($url, "PUT", "");
-        if ($this->hasError($result, $url)) return false;
-        $result_array = json_decode($result, true);
-
-        return $result_array;
     }
     public function createOrder($order)
     {
@@ -209,7 +205,9 @@ class SensediaAPI
         $amount = 0;
         $total_discount = 0;
         foreach ($items as $item) {
-            if (isset($array_items)) unset($array_items);
+            if (isset($array_items)) {
+                unset($array_items);
+            }
             $array_items['description'] = $item->getName() . " - SKU " . $item->getSku();
             $array_items['quantity'] = intval($item->getQtyOrdered());
             $array_items['amount'] = intval(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
@@ -217,32 +215,40 @@ class SensediaAPI
             $total_discount = $total_discount + abs($item->getDiscountAmount());
             array_push($json_array['attributes']['items'], $array_items);
         }
-        if($total_discount){
-//            $amount = intval($products_amount + $shippingAmount * 100);
-//            $json_array['amount'] = $amount;
-//            $cashbackAmountValue = intval($this->getCashbackPercent() * $products_amount * 0.01);
-//            $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
-        }
-
         $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
         $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
 
-        $number_line = $this->_scopeConfig->getValue('ame/address/number', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] = $order->getShippingAddress()->getStreet()[$number_line];
+        $number_line = $this->_scopeConfig->getValue(
+            'ame/address/number',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['number'] =
+            $order->getShippingAddress()->getStreet()[$number_line];
 
         $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
 
-        $street_line = $this->_scopeConfig->getValue('ame/address/street', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] = $order->getShippingAddress()->getStreet()[$street_line];
+        $street_line = $this->_scopeConfig->getValue(
+            'ame/address/street',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['street'] =
+            $order->getShippingAddress()->getStreet()[$street_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = $order->getShippingAddress()->getPostcode();
+        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] =
+            $order->getShippingAddress()->getPostcode();
 
-        $neighborhood_line = $this->_scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = $order->getShippingAddress()->getStreet()[$neighborhood_line];
+        $neighborhood_line = $this->_scopeConfig->getValue(
+            'ame/address/neighborhood',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] =
+            $order->getShippingAddress()->getStreet()[$neighborhood_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] = $this->codigoUF($order->getShippingAddress()->getRegion());
+        $json_array['attributes']['customPayload']['shippingAddress']['state'] =
+            $this->codigoUF($order->getShippingAddress()->getRegion());
 
-        $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
+        $json_array['attributes']['customPayload']['billingAddress'] =
+            $json_array['attributes']['customPayload']['shippingAddress'];
         $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
         $json_array['attributes']['paymentOnce'] = true;
         $json_array['attributes']['riskHubProvider'] = "SYNC";
@@ -251,12 +257,14 @@ class SensediaAPI
         $json = json_encode($json_array);
         $result = $this->ameRequest($url, "POST", $json);
 
-        if ($this->hasError($result, $url, $json)) return false;
-        $this->_gumapi->createOrder($json,$result);
+        if ($this->hasError($result, $url, $json)) {
+            return false;
+        }
+        $this->_gumapi->createOrder($json, $result);
         $this->_logger->log($result, "info", $url, $json);
         $result_array = json_decode($result, true);
 
-        $this->_dbAME->insertOrder($order,$result_array);
+        $this->_dbAME->insertOrder($order, $result_array);
 
         $this->_logger->log($result, "info", $url, $json);
         return $result_array;
@@ -298,10 +306,10 @@ class SensediaAPI
     public function ameRequest($url, $method = "GET", $json = "")
     {
         $this->_mlogger->info("ameRequest starting...");
-        if(!$client_id = $this->_scopeConfig->getValue('ame/general/api_user')){
+        if (!$client_id = $this->_scopeConfig->getValue('ame/general/api_user')) {
             return false;
         }
-        if(!$access_token = $this->_scopeConfig->getValue('ame/general/api_password')){
+        if (!$access_token = $this->_scopeConfig->getValue('ame/general/api_password')) {
             return false;
         }
         $method = strtoupper($method);
@@ -310,10 +318,11 @@ class SensediaAPI
         if ($json) {
             $this->_mlogger->info("ameRequest JSON:" . $json);
         }
-        $headers = array(
+        $headers = [
             "Content-Type: application/json",
             "client_id: " . $client_id,
-            "access_token: ". $access_token);
+            "access_token: ". $access_token
+        ];
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
