@@ -46,8 +46,7 @@ class OrderCreate implements ObserverInterface
     )
     {
         $this->_ame = $api;
-        if (!$scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
-            || $scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+        if ($scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
             $this->_ame = $sensediaAPI;
         }
         $this->_order = $order;
@@ -68,8 +67,6 @@ class OrderCreate implements ObserverInterface
             $order->setState('new')->setStatus('pending');
             $order->save();
             $result = $this->_ame->createOrder($order);
-            $order->addStatusHistoryComment(
-                'AME Order ID: '.$result['id']);
             $order->save();
         }
     }

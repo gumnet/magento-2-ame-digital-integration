@@ -44,18 +44,16 @@ class API
     protected $_gumapi;
     protected $_invalidProxies;
 
-    public function __construct(\GumNet\AME\Helper\LoggerAME $logger,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \Magento\Framework\App\ResourceConnection $resource,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Store\Model\StoreManagerInterface $storeManager,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                \GumNet\AME\Helper\Mlogger $nmlogger
-    )
-    {
-//        $this->url = "https://api.hml.amedigital.com/api";
+    public function __construct(
+        \GumNet\AME\Helper\LoggerAME $logger,
+        \Psr\Log\LoggerInterface $mlogger,
+        \Magento\Framework\App\ResourceConnection $resource,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \GumNet\AME\Helper\DbAME $dbAME,
+        \GumNet\AME\Helper\MailerAME $email,
+        \GumNet\AME\Helper\GumApi $gumApi
+    ) {
         $this->_logger = $logger;
         $this->_mlogger = $mlogger;
         $this->_connection = $resource->getConnection();
@@ -63,19 +61,9 @@ class API
         $this->_storeManager = $storeManager;
         $this->_dbAME = $dbAME;
 
-        if(!$this->_scopeConfig->getValue('ame/general/debug_log', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)){
-            $this->_mlogger = $nmlogger;
-        }
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
 //            $this->url = "https://api.dev.amedigital.com/api";
-//        }
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
 //            $this->url = "https://api.hml.amedigital.com/api";
-//            $this->url = "https://ame19gwci.gum.net.br:63333/api";
-//        }
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
-//            $this->url = "https://api.amedigital.com/api";
-            $this->url = "https://ame19gwci.gum.net.br:63333/api";
+        $this->url = "https://ame19gwci.gum.net.br:63333/api";
 //        }
         $this->_email = $email;
         $this->_gumapi = $gumApi;
@@ -189,6 +177,7 @@ class API
     }
     public function createOrder($order)
     {
+        $this->_mlogger->info("Create AME Order");
         $url = $this->url . "/orders";
 
         $shippingAmount = $order->getShippingAmount();
@@ -248,6 +237,7 @@ class API
         $json_array['attributes']['origin'] = "ECOMMERCE";
 
         $json = json_encode($json_array);
+        $this->_mlogger->info($json);
         $result = $this->ameRequest($url, "POST", $json);
 
         if ($this->hasError($result, $url, $json)) return false;
