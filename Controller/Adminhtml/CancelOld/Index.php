@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Controller\Adminhtml\Cancel;
+namespace GumNet\AME\Controller\Adminhtml\CancelOld;
 
 use \Zend\Barcode\Barcode;
 

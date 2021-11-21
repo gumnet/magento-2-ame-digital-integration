@@ -28,7 +28,7 @@
  */
 
 
-namespace GumNet\AME\Controller\Adminhtml\Capture;
+namespace GumNet\AME\Controller\Adminhtml\CaptureOld;
 
 use \Zend\Barcode\Barcode;
 

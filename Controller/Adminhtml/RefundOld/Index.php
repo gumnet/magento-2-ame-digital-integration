@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Controller\Adminhtml\Refund;
+namespace GumNet\AME\Controller\Adminhtml\RefundOld;
 
 use \Zend\Barcode\Barcode;
 
