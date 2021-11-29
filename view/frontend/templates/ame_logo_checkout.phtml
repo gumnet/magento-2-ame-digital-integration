@@ -30,10 +30,16 @@
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $assetRepo = $objectManager->get('Magento\Framework\View\Asset\Repository');
 $ame_logo = $assetRepo->getUrl("GumNet_AME::images/ame-logo.png");
-
+/** @var \Magento\Checkout\Model\Session $checkoutSession */
 $checkoutSession = $objectManager->get('Magento\Checkout\Model\Session');
-$grandTotal = $checkoutSession->getQuote()->getGrandTotal();
+$quote = $checkoutSession->getQuote();
+$grandTotal = $checkoutSession->getQuote()->getTotals()['grand_total']->getValue();
+if (array_key_exists('discount', $quote->getTotals())) {
+    $grandTotal = $checkoutSession->getQuote()->getGrandTotal() - $quote->getTotals()['discount']->getValue();
+}
+
 $api = $objectManager->get('GumNet\AME\Helper\API');
+/** @var \GumNet\AME\Helper\API $cashbackPercent */
 $cashbackPercent = $api->getCashbackPercent();
 $cashbackValue = $grandTotal * $cashbackPercent * 0.01;
 
