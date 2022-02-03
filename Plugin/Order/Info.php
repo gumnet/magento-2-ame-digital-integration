@@ -44,7 +44,10 @@ class Info
         $this->orderRepository = $orderRepository;
         $this->request = $request;
     }
-    public function afterGetPaymentInfoHtml($payment_info_html){
+    public function afterGetPaymentInfoHtml(
+        \Magento\Sales\Block\Order\Info $subject,
+        $payment_info_html
+    ) {
         $orderId = $this->request->getParam('order_id');
         $order = $this->orderRepository->get($orderId);
         $increment_id = $order->getIncrementId();
