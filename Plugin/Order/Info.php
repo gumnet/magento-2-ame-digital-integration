@@ -50,6 +50,9 @@ class Info
     ) {
         $orderId = $this->request->getParam('order_id');
         $order = $this->orderRepository->get($orderId);
+        if ($order->getPayment()->getMethod() != "ame") {
+            return $payment_info_html;
+        }
         $increment_id = $order->getIncrementId();
         $qrcode = $this->dbAME->getQrCodeLink($increment_id);
         $payment_info_html .= "<br>";
