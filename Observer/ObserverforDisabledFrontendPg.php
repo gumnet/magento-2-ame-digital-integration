@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -35,28 +35,25 @@ use Magento\Framework\App\ObjectManager;
 
 class ObserverforDisabledFrontendPg implements ObserverInterface
 {
-    protected $_appState;
+    protected $scopeConfig;
 
     public function __construct(
-        \Magento\Framework\App\State $appState
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     )
     {
-        $this->_appState = $appState;
+        $this->scopeConfig = $scopeConfig;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $result = $observer->getEvent()->getResult();
         $method_instance = $observer->getEvent()->getMethodInstance();
-//        $quote = $observer->getEvent()->getQuote();
-//        if ($method_instance->getCode() == 'ame'
-//            &&
-//            ) {
-//            $result->setData('is_available', false);
-//        }
+        if ($method_instance->getCode() === 'ame' && $this->scopeConfig->get('payment/ame/active')===0) {
+            $result->setData('is_available', false);
+        }
     }
     protected function getDisableAreas()
     {
-        return array(\Magento\Framework\App\Area::AREA_FRONTEND, \Magento\Framework\App\Area::AREA_WEBAPI_REST);
+        return [];
     }
 }

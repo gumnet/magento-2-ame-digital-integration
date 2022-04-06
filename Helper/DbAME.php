@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -46,14 +46,14 @@ class DbAME {
         $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
         $json = $this->_connection->fetchOne($sql);
         $json_array = json_decode($json,true);
-        return json_array['id'];
+        return $json_array['id'];
     }
     public function getCallBackTransactionId($order_id)
     {
         $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
         $json = $this->_connection->fetchOne($sql);
         $json_array = json_decode($json,true);
-        return json_array['nsu'];
+        return $json_array['nsu'];
     }
     public function setCashbackPercent($cashback_percent){
         $sql = "UPDATE ame_config SET ame_value = '".$cashback_percent."' WHERE ame_option = 'cashback_percent'";
