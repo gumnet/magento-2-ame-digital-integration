@@ -29,85 +29,118 @@
 
 namespace GumNet\AME\Helper;
 
-class DbAME {
+class DbAME
+{
 
     protected $_connection;
     protected $_mlogger;
 
-    public function __construct(\Magento\Framework\App\ResourceConnection $resource,
-                                \Psr\Log\LoggerInterface $mlogger
-                                )
-    {
+    public function __construct(
+        \Magento\Framework\App\ResourceConnection $resource,
+        \Psr\Log\LoggerInterface $mlogger
+    ) {
         $this->_connection = $resource->getConnection();
         $this->_mlogger = $mlogger;
     }
+
     public function getCallBackNsu($order_id)
     {
         $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
         $json = $this->_connection->fetchOne($sql);
-        $json_array = json_decode($json,true);
-        return $json_array['id'];
+        $json_array = json_decode($json, true);
+        if (is_array($json_array) && isset($json_array['nsu'])) {
+            return $json_array['nsu'];
+        }
+        return "";
     }
+
     public function getCallBackTransactionId($order_id)
     {
         $sql = "SELECT json FROM ame_callback WHERE json LIKE '%".$order_id."%'";
         $json = $this->_connection->fetchOne($sql);
-        $json_array = json_decode($json,true);
-        return $json_array['nsu'];
+        $json_array = json_decode($json, true);
+        if (is_array($json_array) && isset($json_array['id'])) {
+            return $json_array['id'];
+        }
+        return "";
     }
-    public function setCashbackPercent($cashback_percent){
+
+    public function setCashbackPercent($cashback_percent)
+    {
         $sql = "UPDATE ame_config SET ame_value = '".$cashback_percent."' WHERE ame_option = 'cashback_percent'";
         $this->_connection->query($sql);
         $sql = "UPDATE ame_config SET ame_value = '".time()."' WHERE ame_option = 'cashback_updated_at'";
         $this->_connection->query($sql);
     }
-    public function getCashbackUpdatedAt(){
+
+    public function getCashbackUpdatedAt()
+    {
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'cashback_updated_at'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getCashbackPercent(){
+
+    public function getCashbackPercent()
+    {
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'cashback_percent'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getQrCodeLink($increment_id){
+
+    public function getQrCodeLink($increment_id)
+    {
         $sql = "SELECT qr_code_link FROM ame_order WHERE increment_id = ".$increment_id;
         return $this->_connection->fetchOne($sql);
     }
-    public function setTransactionUpdated($ame_transaction_id){
+
+    public function setTransactionUpdated($ame_transaction_id)
+    {
         $sql = "UPDATE ame_transaction SET updated_at = NOW() WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
     }
-    public function setCaptured($ame_transaction_id,$ame_capture_id){
+
+    public function setCaptured($ame_transaction_id, $ame_capture_id)
+    {
         $sql = "UPDATE ame_transaction SET capture_ok = 1 WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
         $sql = "UPDATE ame_transaction SET ame_capture_id = '".$ame_capture_id."' WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
     }
-    public function getRefundedSumByTransactionId($ame_transaction_id){
+
+    public function getRefundedSumByTransactionId($ame_transaction_id)
+    {
         $sql = "SELECT SUM(amount) soma FROM ame_refund WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $soma = $this->_connection->fetchOne($sql);
         return $soma;
     }
-    public function getAmeOrderIdByTransactionId($ame_transaction_id){
+
+    public function getAmeOrderIdByTransactionId($ame_transaction_id)
+    {
         $sql = "SELECT ame_order_id FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getCallback2Hash(){
+
+    public function getCallback2Hash()
+    {
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'callback2_hash'";
         return $this->_connection->fetchOne($sql);
     }
-    public function setCaptured2($ame_transaction_id){
+
+    public function setCaptured2($ame_transaction_id)
+    {
         $sql = "UPDATE ame_transaction SET update_ok = 1 WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $rs_query = $this->_connection->query($sql);
     }
-    public function insertRefund($ame_order_id,$refund_id,$operation_id,$amount,$status){
+
+    public function insertRefund($ame_order_id, $refund_id, $operation_id, $amount, $status)
+    {
         $transaction_id = $this->getTransactionIdByOrderId($ame_order_id);
         $sql = "INSERT INTO ame_refund (ame_transaction_id,refund_id,operation_id,amount,status,created_at,refunded_at)
                 VALUES ('".$transaction_id."','".$refund_id."','".$operation_id."',".$amount.",'".$status."',NOW(),NOW())";
         $this->_connection->query($sql);
         return true;
     }
-    public function refundIdExists($refund_id){
+
+    public function refundIdExists($refund_id)
+    {
         $sql = "SELECT refund_id FROM ame_refund WHERE refund_id = '".$refund_id."'";
         $result = $this->_connection->fetchOne($sql);
         if($result){
@@ -117,7 +150,9 @@ class DbAME {
             return false;
         }
     }
-    public function insertOrder($order,$result_array){
+
+    public function insertOrder($order, $result_array)
+    {
         if(array_key_exists('cashbackAmountValue',$result_array['attributes'])){
             $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
         }
@@ -133,13 +168,17 @@ class DbAME {
                         '" . $result_array['deepLink'] . "')";
         $this->_connection->query($sql);
     }
-    public function updateToken($expires_in,$token){
+
+    public function updateToken($expires_in, $token)
+    {
         $sql = "UPDATE ame_config SET ame_value = '" . $expires_in . "'WHERE ame_option = 'token_expires'";
         $this->_connection->query($sql);
         $sql = "UPDATE ame_config SET  ame_value = '" . $token . "' WHERE ame_option = 'token_value'";
         $this->_connection->query($sql);
     }
-    public function getToken(){
+
+    public function getToken()
+    {
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_expires'";
         $token_expires = $this->_connection->fetchOne($sql);
         $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_value'";
@@ -150,44 +189,52 @@ class DbAME {
         }
         return false;
     }
-    public function getOrderAmount($ame_order_id){
+
+    public function getOrderAmount($ame_order_id)
+    {
         $sql = "SELECT amount FROM ame_order WHERE ame_id = '".$ame_order_id."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getTransactionAmount($ame_transaction_id){
+
+    public function getTransactionAmount($ame_transaction_id)
+    {
         $sql = "SELECT amount FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function getTransactionIdByOrderId($ame_order_id){
+
+    public function getTransactionIdByOrderId($ame_order_id)
+    {
         $sql = "SELECT ame_transaction_id FROM ame_transaction WHERE ame_order_id = '".$ame_order_id."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function insertTransactionSplits($transaction_array){
+
+    public function insertTransactionSplits($transaction_array)
+    {
         $splits = $transaction_array['splits'];
-        $array_keys = array('id','date','amount','status','cashType');
-        foreach($splits as $split) {
+        $array_keys = ['id','date','amount','status','cashType'];
+        foreach ($splits as $split) {
             $sql = file_get_contents(__DIR__ . "/SQL/inserttransactionsplit.sql");
-            if(array_key_exists('id',$transaction_array)) {
+            if (array_key_exists('id', $transaction_array)) {
                 $sql = str_replace('[AME_TRANSACTION_ID]', $transaction_array['id'], $sql);
             }
-            if(array_key_exists('id',$split)) {
+            if (array_key_exists('id', $split)) {
                 $sql = str_replace('[AME_TRANSACTION_SPLIT_ID]', $split['id'], $sql);
             }
-            if(array_key_exists('date',$split)) {
+            if (array_key_exists('date', $split)) {
                 $sql = str_replace('[AME_TRANSACTION_SPLIT_DATE]', json_encode($split['date']), $sql);
             }
-            if(array_key_exists('amount',$split)) {
+            if (array_key_exists('amount', $split)) {
                 $sql = str_replace('[AMOUNT]', $split['amount'], $sql);
             }
-            if(array_key_exists('status',$split)) {
+            if (array_key_exists('status', $split)) {
                 $sql = str_replace('[STATUS]', $split['status'], $sql);
             }
-            if(array_key_exists('cashType',$split)) {
+            if (array_key_exists('cashType', $split)) {
                 $sql = str_replace('[CASH_TYPE]', $split['cashType'], $sql);
             }
             $others = [];
-            foreach($split as $key => $value){
-                if(!in_array($key,$array_keys)){
+            foreach ($split as $key => $value) {
+                if (!in_array($key,$array_keys)) {
                     $others[$key] = $value;
                 }
             }
@@ -197,44 +244,60 @@ class DbAME {
         }
         return true;
     }
-    public function insertTransaction($transaction_array){
+
+    public function insertTransaction($transaction_array)
+    {
         $sql = file_get_contents(__DIR__ . "/SQL/inserttransaction.sql");
-        $sql = str_replace('[AME_ORDER_ID]',$transaction_array['attributes']['orderId'],$sql);
-        $sql = str_replace('[AME_TRANSACTION_ID]',$transaction_array['id'],$sql);
-        $sql = str_replace('[AMOUNT]',$transaction_array['amount'],$sql);
-        $sql = str_replace('[STATUS]',$transaction_array['status'],$sql);
-        $sql = str_replace('[OPERATION_TYPE]',$transaction_array['operationType'],$sql);
+        $sql = str_replace('[AME_ORDER_ID]', $transaction_array['attributes']['orderId'], $sql);
+        $sql = str_replace('[AME_TRANSACTION_ID]', $transaction_array['id'], $sql);
+        $sql = str_replace('[AMOUNT]', $transaction_array['amount'], $sql);
+        $sql = str_replace('[STATUS]', $transaction_array['status'], $sql);
+        $sql = str_replace('[OPERATION_TYPE]', $transaction_array['operationType'], $sql);
         $this->_connection->query($sql);
         $this->insertTransactionSplits($transaction_array);
         return true;
     }
-    public function getAmeIdByIncrementId($incrementId){
+
+    public function getAmeIdByIncrementId($incrementId)
+    {
         $sql = "SELECT ame_id FROM ame_order WHERE increment_id = '".$incrementId."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function setCanceled($ame_transaction_id){
+
+    public function setCanceled($ame_transaction_id)
+    {
         $sql = "UPDATE ame_transaction SET capture_ok = 2 WHERE ame_transaction_id = '".$ame_transaction_id."'";
         $this->_connection->query($sql);
     }
-    public function getFirstPendingCaptureTransactions($num){
+
+    public function getFirstPendingCaptureTransactions($num)
+    {
         $sql = file_get_contents("SQL/getfirstpendingcapturetransactions.sql");
-        $sql = str_replace("[LIMIT]",$num,$sql);
+        $sql = str_replace("[LIMIT]", $num, $sql);
         return $this->_connection->fetchAssoc($sql);
     }
-    public function getFirstPendingTransactions($num){
+
+    public function getFirstPendingTransactions($num)
+    {
         $sql = file_get_contents("SQL/getfirstpendingtransactions.sql");
-        $sql = str_replace("[LIMIT]",$num,$sql);
+        $sql = str_replace("[LIMIT]", $num, $sql);
         return $this->_connection->fetchAssoc($sql);
     }
-    public function isCaptured($ame_transaction_id){
+
+    public function isCaptured($ame_transaction_id)
+    {
         $sql = "SELECT capture_ok FROM ame_transaction WHERE ame_transaction_id = '".$ame_transaction_id."'";
         return $this->_connection->fetchOne($sql);
     }
-    public function insertCallback($json){
+
+    public function insertCallback($json)
+    {
         $sql = "INSERT INTO ame_callback (json,created_at) VALUES ('".$json."',NOW())";
         $this->_connection->query($sql);
     }
-    public function getOrderIncrementId($ameid){
+
+    public function getOrderIncrementId($ameid)
+    {
         $sql = "SELECT increment_id FROM ame_order WHERE ame_id = '".$ameid."'";
         return $this->_connection->fetchOne($sql);
     }
