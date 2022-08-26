@@ -339,7 +339,30 @@ class API
             'Content-Type: application/x-www-form-urlencoded',
         ));
         $result = curl_exec($ch);
-        if ($this->hasError($result, $url, $post)) return false;
+        if ($this->hasError($result, $url, $post)) {
+            curl_close($ch);
+            // Known issue - invert username/password
+            $userTmp = $username;
+            $username = $password;
+            $password = $userTmp;
+            $url = $this->url . "/auth/oauth/token";
+            $ch = curl_init();
+            $post = "grant_type=client_credentials";
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/x-www-form-urlencoded',
+            ));
+            $result = curl_exec($ch);
+            if ($this->hasError($result, $url, $post)) {
+                return false;
+            }
+        }
         $result_array = json_decode($result, true);
         if(!array_key_exists('access_token',$result_array)) return false;
         $this->_logger->log($result, "info", $url, $username . ":" . $password);
