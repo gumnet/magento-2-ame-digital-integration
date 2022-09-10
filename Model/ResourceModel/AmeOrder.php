@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -28,28 +27,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Model\ResourceModel;
+declare(strict_types=1);
 
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Magento\Framework\Model\ResourceModel\Db\Context;
+namespace GumNet\Ame\Model\ResourceModel;
 
-class AmeOrder extends AbstractDb
+/**
+ * @codeCoverageIgnore
+ */
+class AmeOrder extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
     /**
-     * AmeOrder constructor.
-     * @param Context $context
+     * {@inheritdoc}
      */
-    public function __construct(Context $context)
-    {
-        parent::__construct($context);
-    }
+    protected $_useIsObjectNew = true;
 
     /**
-     * _construct function
+     * {@inheritdoc}
+     */
+    protected $_isPkAutoIncrement = false;
+
+    /**
+     * Define resource model
+     *
+     * @return void
      */
     protected function _construct()
     {
-        $this->_init('ame_order', 'id');
+        $this->_init('ame_config', 'id');
     }
-
 }

@@ -27,44 +27,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Api\Data;
+declare(strict_types=1);
 
-interface AmeConfigInterface
+namespace GumNet\Ame\Model\ResourceModel\AmeOrder;
+
+use GumNet\AME\Model\AmeConfig;
+use GumNet\AME\Model\ResourceModel\AmeConfig as AmeConfigResource;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+
+/**
+ * @codeCoverageIgnore
+ */
+class Collection extends AbstractCollection
 {
-    const KEY_ID = 'id';
-    const AME_OPTION = 'ame_option';
-    const AME_VALUE = 'ame_value';
+    /**
+     * @var string
+     */
+    protected $_idFieldName = 'id';
 
     /**
-     * @return int|null
+     * Define resource model
+     *
+     * @return void
      */
-    public function getId(): ?int;
-
-    /**
-     * @param int $id
-     * @return AmeConfigInterface
-     */
-    public function setId(int $id): AmeConfigInterface;
-
-    /**
-     * @return string|null
-     */
-    public function getOption(): ?string;
-
-    /**
-     * @param string $option
-     * @return AmeConfigInterface
-     */
-    public function setOption(string $option): AmeConfigInterface;
-
-    /**
-     * @return string|null
-     */
-    public function getValue(): ?string;
-
-    /**
-     * @param string $value
-     * @return AmeConfigInterface
-     */
-    public function setValue(string $value): AmeConfigInterface;
+    protected function _construct()
+    {
+        $this->_init(
+            AmeConfig::class,
+            AmeConfigResource::class
+        );
+    }
 }
