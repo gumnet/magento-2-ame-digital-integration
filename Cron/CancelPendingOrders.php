@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -31,11 +31,32 @@ namespace GumNet\AME\Cron;
 
 class CancelPendingOrders
 {
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
     protected $logger;
+
+    /**
+     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
+     */
     protected $collectionFactory;
+
+    /**
+     * @var \Magento\Sales\Model\OrderFactory
+     */
     protected $orderFactory;
+
+    /**
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
     protected $scopeConfig;
 
+    /**
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory
+     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory,
@@ -47,31 +68,49 @@ class CancelPendingOrders
         $this->orderFactory = $orderFactory;
         $this->scopeConfig = $scopeConfig;
     }
+
+    /**
+     * @return void
+     */
     public function execute()
     {
-        $expires_in = 1;
-        if(!$expires_in) return;
-        $to = date('Y-m-d H:i:s',time()-86400*$expires_in);
-        $orderCollection = $this->getOrderCollection($to,'ame');
+        $expiresIn = 1;
+        if (!$expiresIn) {
+            return;
+        }
+        $to = date('Y-m-d H:i:s', time()-86400*$expires_in);
+        $orderCollection = $this->getOrderCollection($to, 'ame');
         $this->cancelOrders($orderCollection);
     }
-    public function getOrderCollection($to,$method)
+
+    /**
+     * @param $to
+     * @param $method
+     * @return \Magento\Sales\Model\ResourceModel\Order\Collection
+     */
+    public function getOrderCollection($to, $method)
     {
-        $orderCollection = $this->collectionFactory->create()->addFieldToSelect(array('*'));
-        $orderCollection->addFieldToFilter('created_at', array('lteq' => $to));
-        $orderCollection->addFieldToFilter('state', array('eq' => 'new'));
+        $orderCollection = $this->collectionFactory->create()->addFieldToSelect(['*']);
+        $orderCollection->addFieldToFilter('created_at', ['lteq' => $to]);
+        $orderCollection->addFieldToFilter('state', ['eq' => 'new']);
         $orderCollection->getSelect()
             ->join(
                 ["sop" => "sales_order_payment"],
                 'main_table.entity_id = sop.parent_id',
-                array('method')
+                ['method']
             )
-            ->where('sop.method = ?',[$method] );
+            ->where('sop.method = ?', [$method]);
         return $orderCollection;
     }
+
+    /**
+     * @param $orderCollection
+     * @return void
+     * @throws \Exception
+     */
     public function cancelOrders($orderCollection)
     {
-        foreach($orderCollection as $item) {
+        foreach ($orderCollection as $item) {
             $order = $this->orderFactory->create()->load($item->getId());
             $order->cancel()->save();
             $this->logger->info("AME: automatic cancel expired order ID: ".$order->getId());

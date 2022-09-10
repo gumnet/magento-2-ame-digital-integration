@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *

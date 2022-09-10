@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -35,33 +35,85 @@ use \Magento\Framework\App\Request\InvalidRequestException;
 
 class Index extends \Magento\Framework\App\Action\Action
 {
+    /**
+     * @var
+     */
     protected $_session;
+    /**
+     * @var \Magento\Framework\App\Request\Http
+     */
     protected $_request;
+    /**
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
     protected $_scopeConfig;
+    /**
+     * @var \Magento\Sales\Model\OrderRepository
+     */
     protected $_orderRepository;
+    /**
+     * @var \GumNet\AME\Helper\DbAME
+     */
     protected $_dbAME;
+    /**
+     * @var \GumNet\AME\Helper\MailerAME
+     */
     protected $_mailerAME;
+    /**
+     * @var \Magento\Sales\Model\Service\InvoiceService
+     */
     protected $_invoiceService;
+    /**
+     * @var \Magento\Framework\DB\TransactionFactory
+     */
     protected $_transactionFactory;
+    /**
+     * @var \GumNet\AME\Helper\API
+     */
     protected $_api;
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
     protected $_mlogger;
+    /**
+     * @var \GumNet\AME\Helper\MailerAME
+     */
     protected $_email;
+    /**
+     * @var \GumNet\AME\Helper\GumApi
+     */
     protected $_gumApi;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $mailerAME,
-                                \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-                                \Magento\Framework\DB\TransactionFactory $transactionFactory,
-                                \GumNet\AME\Helper\API $api,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                array $data = []
-                                )
+    /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Framework\App\Request\Http $request
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Sales\Model\OrderRepository $orderRepository
+     * @param \GumNet\AME\Helper\DbAME $dbAME
+     * @param \GumNet\AME\Helper\MailerAME $mailerAME
+     * @param \Magento\Sales\Model\Service\InvoiceService $invoiceService
+     * @param \Magento\Framework\DB\TransactionFactory $transactionFactory
+     * @param \GumNet\AME\Helper\API $api
+     * @param \Psr\Log\LoggerInterface $mlogger
+     * @param \GumNet\AME\Helper\MailerAME $email
+     * @param \GumNet\AME\Helper\GumApi $gumApi
+     * @param array $data
+     */
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\App\Request\Http $request,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Sales\Model\OrderRepository $orderRepository,
+        \GumNet\AME\Helper\DbAME $dbAME,
+        \GumNet\AME\Helper\MailerAME $mailerAME,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\TransactionFactory $transactionFactory,
+        \GumNet\AME\Helper\API $api,
+        \Psr\Log\LoggerInterface $mlogger,
+        \GumNet\AME\Helper\MailerAME $email,
+        \GumNet\AME\Helper\GumApi $gumApi,
+        array $data = []
+    )
     {
         $this->_request = $request;
         $this->_scopeConfig = $scopeConfig;
@@ -76,45 +128,68 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_gumApi = $gumApi;
         parent::__construct($context);
     }
+
+    /**
+     * @return void
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function execute()
     {
-        $this->_mlogger->log("INFO","AME Callback step 2 starting...");
+        $this->_mlogger->log("INFO", "AME Callback step 2 starting...");
         $hash = $this->_request->getParam('hash');
         $callback2_hash = $this->_dbAME->getCallback2Hash();
-        if($hash != $callback2_hash){
-            $this->_mlogger->log("ERROR","AME Callback step 2 wrong hash");
+        if ($hash != $callback2_hash) {
+            $this->_mlogger->log("ERROR", "AME Callback step 2 wrong hash");
             die();
         }
         $ame_transaction_id = $this->_request->getParam('id');
         $ame_order_id = $this->_dbAME->getAmeOrderIdByTransactionId($ame_transaction_id);
         $incrId = $this->_dbAME->getOrderIncrementId($ame_order_id);
-        $this->_mlogger->log("INFO","AME Callback getting Magento Order for ".$incrId);
+        $this->_mlogger->log("INFO", "AME Callback getting Magento Order for ".$incrId);
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $orderInterface = $objectManager->create('Magento\Sales\Api\Data\OrderInterface');
         $order = $orderInterface->loadByIncrementId($incrId);
         $orderId = $order->getId();
-        $this->_mlogger->log("INFO","Order ID: ".$orderId);
+        $this->_mlogger->log("INFO", "Order ID: ".$orderId);
         $order = $this->_orderRepository->get($orderId);
-        $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
-        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$ame_order_id);
+        $this->_mlogger->log("INFO", "AME Callback invoicing Magento order ".$incrId);
+        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(), "AME ID: ".$ame_order_id);
         $this->_mlogger->log("INFO", "AME Callback capturing...");
         $capture = $this->_api->captureOrder($ame_order_id);
-        if(!$capture) die();
+        if (!$capture) {
+            die();
+        }
         $json_capture = json_encode($capture);
-        $this->_mlogger->log("INFO","AME Callback Capture response:".$json_capture);
+        $this->_mlogger->log("INFO", "AME Callback Capture response:".$json_capture);
         $this->invoiceOrder($order);
-        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
+        $this->_dbAME->setCaptured($ame_transaction_id, $capture['id']);
         $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
         $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
-        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$ame_order_id,$amount);
-        if($capture2) $this->_dbAME->setCaptured2($ame_transaction_id);
-        $this->_mlogger->log("INFO","AME Callback step 2 ended.");
+        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id, $ame_order_id, $amount);
+        if ($capture2) {
+            $this->_dbAME->setCaptured2($ame_transaction_id);
+        }
+        $this->_mlogger->log("INFO", "AME Callback step 2 ended.");
         die();
     }
-    public function cancelOrder($order){
+
+    /**
+     * @param $order
+     * @return void
+     */
+    public function cancelOrder($order)
+    {
         $order->cancel()->save();
     }
-    public function invoiceOrder($order){
+
+    /**
+     * @param $order
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function invoiceOrder($order)
+    {
         $invoice = $this->_invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
         $invoice->register();
@@ -125,7 +200,13 @@ class Index extends \Magento\Framework\App\Action\Action
         $order->setState('processing')->setStatus('processing');
         $order->save();
     }
-    public function isJson($string) {
+
+    /**
+     * @param $string
+     * @return bool
+     */
+    public function isJson($string)
+    {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
     }

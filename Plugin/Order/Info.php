@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -57,9 +57,15 @@ class Info
         $this->orderRepository = $orderRepository;
         $this->request = $request;
     }
-    public function afterGetPaymentInfoHtml($payment_info_html){
+    public function afterGetPaymentInfoHtml(
+        \Magento\Sales\Block\Order\Info $subject,
+        $payment_info_html
+    ) {
         $orderId = $this->request->getParam('order_id');
         $order = $this->orderRepository->get($orderId);
+        if ($order->getPayment()->getMethod() != "ame") {
+            return $payment_info_html;
+        }
         $increment_id = $order->getIncrementId();
         $qrcode = $this->dbAME->getQrCodeLink($increment_id);
         $payment_info_html .= "<br>";

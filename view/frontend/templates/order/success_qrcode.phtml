@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
- * @copyright Copyright (c) 2020-2021 GumNet (https://gum.net.br)
+ * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
  * @package GumNet AME
  * All rights reserved.
  *
@@ -45,7 +45,7 @@ if($block->getPaymentMethod()=="ame") {
             &nbsp;<br>
             <div id="success_ame_value_txt"><img src="<?php echo $ame_logo; ?>" width="150"><br><br>
                 Valor da compra:</div>
-            <div id="success_ame_value">R$<?php echo number_format($block->getPrice()-abs($total_discount),
+            <div id="success_ame_value">R$<?php echo number_format($block->getPrice(),
                     2,",","."); ?></div><br>
             <?php if($block->getCashbackValue()){ ?>
             <div id="success_ame_cashback_txt">Receba de volta <div id="success_ame_cashback_value">
