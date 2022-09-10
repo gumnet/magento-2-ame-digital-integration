@@ -102,6 +102,10 @@ class CashbackText extends \Magento\Framework\View\Element\Template
     {
         return $this->_api->getCashbackPercent();
     }
+
+    /**
+     * @return float
+     */
     public function getCashbackValue()
     {
         if ($this->_request->getFullActionName() == 'catalog_product_view') {

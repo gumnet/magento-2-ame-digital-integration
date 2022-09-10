@@ -43,16 +43,18 @@ if($block->getPaymentMethod()=="ame") {
         <center>
         <div id='success_ame_internal'>
             &nbsp;<br>
-            <div id="success_ame_value_txt"><img src="<?php echo $ame_logo; ?>" width="150"><br><br>
+            <div id="success_ame_value_txt"><img src="<?=$ame_logo?>" width="150"><br><br>
                 Valor da compra:</div>
-            <div id="success_ame_value">R$<?php echo number_format($block->getPrice(),
+            <div id="success_ame_value">R$<?= number_format($block->getPrice(),
                     2,",","."); ?></div><br>
             <?php if($block->getCashbackValue()){ ?>
-            <div id="success_ame_cashback_txt">Receba de volta <div id="success_ame_cashback_value">
-                    <?php echo number_format($block->getCashbackValue(),2,",","."); ?></div> em até 30 dias.</div><br>
+            <div id="success_ame_cashback_txt">Receba de volta
+                <div id="success_ame_cashback_value">
+                    <?=number_format($block->getCashbackValue(),2,",",".")?>
+                </div> em até 30 dias.</div><br>
                     <?php } ?>
             <div id="success_ame_facil">Pagar com a AME é fácil e rápido!</div>
-            <img id="success_ame_qrcode" src='<?php echo $block->getQrCodeLink(); ?>'/>
+            <img id="success_ame_qrcode" src='<?=$block->getQrCodeLink()?>'/>
             <div id="success_ame_info">1. Abra o aplicativo Ame Digital. Se você ainda não tem, <br>baixe no
                 <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/google-logo.svg');?>" alt='Google Play' height="16">
                 ou na
