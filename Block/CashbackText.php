@@ -37,23 +37,23 @@ class CashbackText extends \Magento\Framework\View\Element\Template
     /**
      * @var ScopeConfigInterface
      */
-    protected $_scopeConfig;
+    protected $scopeConfig;
     /**
      * @var \Magento\Catalog\Helper\Data
      */
-    protected $_helper;
+    protected $helper;
     /**
      * @var \Magento\Framework\Registry
      */
-    protected $_registry;
+    protected $registry;
     /**
      * @var \GumNet\AME\Helper\SensediaAPI
      */
-    protected $_api;
+    protected $api;
     /**
      * @var \Magento\Framework\App\Request\Http
      */
-    protected $_request;
+    protected $request;
 
     /**
      * CashbackText constructor.
@@ -74,15 +74,15 @@ class CashbackText extends \Magento\Framework\View\Element\Template
         \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
         \Magento\Framework\App\Request\Http $request
     ) {
-        $this->_scopeConfig = $scopeConfig;
-        $this->_helper = $helper;
-        $this->_registry = $registry;
-        $this->_api = $_api;
+        $this->scopeConfig = $scopeConfig;
+        $this->helper = $helper;
+        $this->registry = $registry;
+        $this->api = $_api;
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
-            $this->_api = $sensediaAPI;
+            $this->api = $sensediaAPI;
         }
-        $this->_request = $request;
+        $this->request = $request;
         parent::__construct($context);
     }
 
@@ -91,7 +91,7 @@ class CashbackText extends \Magento\Framework\View\Element\Template
      */
     public function isShowCashbackProductsListEnabled(): bool
     {
-        return (bool)$this->_scopeConfig
+        return (bool)$this->scopeConfig
             ->getValue("ame/exhibition/show_cashback_products_list", ScopeInterface::SCOPE_STORE);
     }
 
@@ -100,7 +100,7 @@ class CashbackText extends \Magento\Framework\View\Element\Template
      */
     public function getCashbackPercent()
     {
-        return $this->_api->getCashbackPercent();
+        return $this->api->getCashbackPercent();
     }
 
     /**
@@ -108,9 +108,9 @@ class CashbackText extends \Magento\Framework\View\Element\Template
      */
     public function getCashbackValue(): float
     {
-        if ($this->_request->getFullActionName() == 'catalog_product_view') {
+        if ($this->request->getFullActionName() == 'catalog_product_view') {
             if (!$product = $this->getProduct()) {
-                $product = $this->_registry->registry('product');
+                $product = $this->registry->registry('product');
                 return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
             }
         }

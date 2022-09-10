@@ -35,7 +35,7 @@
         <column xsi:type="varchar" name="ame_config" nullable="false" length="255" comment="AME Config"/>
         <column xsi:type="varchar" name="ame_value" nullable="false" length="255" comment="AME Value"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
-            <column name="entity_id"/>
+            <column name="id"/>
         </constraint>
     </table>
 </schema>

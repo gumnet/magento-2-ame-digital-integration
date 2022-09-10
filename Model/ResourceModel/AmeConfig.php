@@ -66,22 +66,4 @@ class AmeConfig extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 
         return (int)$connection->fetchOne($select, $bind);
     }
-
-    /**
-     * @param string $sellerId
-     * @param string $cnpj
-     * @return float|null
-     */
-    public function getAMEBySellerIdAndCnpj(string $sellerId, string $cnpj): ?float
-    {
-        $connection = $this->getConnection();
-
-        $select = $connection->select()->from('marketplace_company_wallet_balance', 'wallet_balance')
-            ->where('seller_id = :seller_id')
-            ->where('cnpj = :cnpj');
-
-        $bind = [':cnpj' => $cnpj, ':seller_id' => $sellerId];
-
-        return (float)$connection->fetchOne($select, $bind);
-    }
 }
