@@ -87,11 +87,11 @@ class CashbackText extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * @return mixed
+     * @return bool
      */
-    public function isShowCashbackProductsListEnabled()
+    public function isShowCashbackProductsListEnabled(): bool
     {
-        return $this->_scopeConfig
+        return (bool)$this->_scopeConfig
             ->getValue("ame/exhibition/show_cashback_products_list", ScopeInterface::SCOPE_STORE);
     }
 
@@ -106,7 +106,7 @@ class CashbackText extends \Magento\Framework\View\Element\Template
     /**
      * @return float
      */
-    public function getCashbackValue()
+    public function getCashbackValue(): float
     {
         if ($this->_request->getFullActionName() == 'catalog_product_view') {
             if (!$product = $this->getProduct()) {
@@ -114,7 +114,6 @@ class CashbackText extends \Magento\Framework\View\Element\Template
                 return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
             }
         }
-        $product = $this->getKey();
         return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
     }
 }

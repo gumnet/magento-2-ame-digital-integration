@@ -1,4 +1,5 @@
-<?php
+<?xml version="1.0"?>
+<!--
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
@@ -26,33 +27,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-declare(strict_types=1);
-
-namespace GumNet\Ame\Model\ResourceModel;
-
-/**
- * @codeCoverageIgnore
- */
-class AmeOrder extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
-{
-    /**
-     * {@inheritdoc}
-     */
-    protected $_useIsObjectNew = true;
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $_isPkAutoIncrement = false;
-
-    /**
-     * Define resource model
-     *
-     * @return void
-     */
-    protected function _construct()
-    {
-        $this->_init('ame_config', 'id');
-    }
-}
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="ame_config" resource="default" engine="innodb" comment="AME Configuration">
+        <column xsi:type="int" name="id" unsigned="true" nullable="false" padding="10" identity="true" comment="ID"/>
+        <column xsi:type="varchar" name="ame_config" nullable="false" length="255" comment="AME Config"/>
+        <column xsi:type="varchar" name="ame_value" nullable="false" length="255" comment="AME Value"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+    </table>
+</schema>

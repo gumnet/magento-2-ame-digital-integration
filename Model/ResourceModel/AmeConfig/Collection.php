@@ -29,7 +29,7 @@
 
 declare(strict_types=1);
 
-namespace GumNet\Ame\Model\ResourceModel\AmeOrder;
+namespace GumNet\Ame\Model\ResourceModel\AmeConfig;
 
 use GumNet\AME\Model\AmeConfig;
 use GumNet\AME\Model\ResourceModel\AmeConfig as AmeConfigResource;
