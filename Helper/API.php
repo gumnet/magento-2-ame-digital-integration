@@ -141,7 +141,7 @@ class API
         $this->ameConfigRepository->save($config);
     }
 
-    public function refundOrder($ame_id, $amount)
+    public function refundOrder($ame_id, $amount): string
     {
         $this->mlogger->info("AME REFUND ORDER:" . $ame_id);
         $this->mlogger->info("AME REFUND amount:" . $amount);
@@ -150,7 +150,7 @@ class API
         $this->mlogger->info("AME REFUND TRANSACTION:" . $transaction_id);
 
         $refund_id = Uuid::uuid4()->toString();
-        while($this->dbAME->refundIdExists($refund_id)){
+        while ($this->dbAME->refundIdExists($refund_id)) {
             $refund_id = Uuid::uuid4()->toString();
         }
         $this->mlogger->info("AME REFUND ID:" . $refund_id);
@@ -162,20 +162,23 @@ class API
         $this->mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
         $this->mlogger->info("AME REFUND Result:" . $result[0]);
-        if ($this->hasError($result[0], $url, $json)) return false;
+        if ($this->hasError($result[0], $url, $json)) {
+            return false;
+        }
         $result[1] = $refund_id;
         return $result;
     }
-    public function cancelOrder($ame_id)
+    public function cancelOrder($ame_id): bool
     {
         $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
         if (!$transaction_id) {
-//            echo "Transaction ID not found";
             return false;
         }
         $url = self::URL . "/wallet/user/payments/" . $transaction_id . "/cancel";
         $result = $this->ameRequest($url, "PUT", "");
-        if ($this->hasError($result, $url, "")) return false;
+        if ($this->hasError($result, $url, "")) {
+            return false;
+        }
         return true;
     }
     public function consultOrder(string $ame_id): string
@@ -199,7 +202,8 @@ class API
 
         return $result_array;
     }
-    public function createOrder($order)
+
+    public function createOrder($order): string
     {
         /** @var \Magento\Sales\Model\Order $order */
         $this->mlogger->info("Create AME Order");
@@ -228,25 +232,40 @@ class API
             array_push($json_array['attributes']['items'], $array_items);
         }
 
-        $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
+        $json_array['attributes']['customPayload']['ShippingValue'] = (int)$order->getShippingAmount() * 100;
         $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
 
-        $number_line = $this->scopeConfig->getValue('ame/address/number', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] = $order->getShippingAddress()->getStreet()[$number_line];
+        $number_line = $this->scopeConfig->getValue(
+            'ame/address/number',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['number'] =
+            $order->getShippingAddress()->getStreet()[$number_line];
 
         $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
 
-        $street_line = $this->scopeConfig->getValue('ame/address/street', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] = $order->getShippingAddress()->getStreet()[$street_line];
+        $street_line = $this->scopeConfig->getValue(
+            'ame/address/street',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['street'] =
+            $order->getShippingAddress()->getStreet()[$street_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = $order->getShippingAddress()->getPostcode();
+        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] =
+            $order->getShippingAddress()->getPostcode();
 
-        $neighborhood_line = $this->scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = $order->getShippingAddress()->getStreet()[$neighborhood_line];
+        $neighborhood_line = $this->scopeConfig->getValue(
+            'ame/address/neighborhood',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] =
+            $order->getShippingAddress()->getStreet()[$neighborhood_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] = $this->codigoUF($order->getShippingAddress()->getRegion());
+        $json_array['attributes']['customPayload']['shippingAddress']['state'] =
+            $this->codigoUF($order->getShippingAddress()->getRegion());
 
-        $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
+        $json_array['attributes']['customPayload']['billingAddress'] =
+            $json_array['attributes']['customPayload']['shippingAddress'];
         $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
         $json_array['attributes']['paymentOnce'] = true;
         $json_array['attributes']['riskHubProvider'] = "SYNC";
@@ -256,12 +275,14 @@ class API
         $this->mlogger->info($json);
         $result = $this->ameRequest($url, "POST", $json);
 
-        if ($this->hasError($result, $url, $json)) return false;
+        if ($this->hasError($result, $url, $json)) {
+            return "";
+        }
         $this->gumapi->createOrder($json,$result);
         $this->logger->log($result, "info", $url, $json);
         $result_array = json_decode($result, true);
 
-        $this->dbAME->insertOrder($order,$result_array);
+        $this->dbAME->insertOrder($order, $result_array);
 
         $this->logger->log($result, "info", $url, $json);
         return $result;
@@ -306,7 +327,9 @@ class API
     {
         $this->mlogger->info("ameRequest starting...");
         $_token = $this->getToken();
-        if (!$_token) return false;
+        if (!$_token) {
+            return false;
+        }
         $method = strtoupper($method);
         $this->mlogger->info("ameRequest URL:" . $url);
         $this->mlogger->info("ameRequest METHOD:" . $method);
