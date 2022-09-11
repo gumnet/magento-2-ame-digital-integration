@@ -58,7 +58,6 @@ class AME extends AbstractMethod
      */
     protected $_code = self::CODE;
     protected $_methodCode = self::CODE;
-
     protected $_isOffline = false;
     protected $_isGateway = true;
     protected $_canCapture = true;
@@ -71,8 +70,6 @@ class AME extends AbstractMethod
     protected $_supportedCurrencyCodes = ['BRL'];
 
     protected $ame;
-
-    protected $db;
 
     /**
      * AME constructor.
@@ -100,7 +97,6 @@ class AME extends AbstractMethod
         Logger $logger,
         API $api,
         SensediaAPI $sensediaAPI,
-        \GumNet\AME\Helper\DbAME $db,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = [],
@@ -120,7 +116,6 @@ class AME extends AbstractMethod
             $directory
         );
         $this->ame = $api;
-        $this->db = $db;
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $this->ame = $sensediaAPI;
@@ -166,18 +161,11 @@ class AME extends AbstractMethod
             throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
         }
         try {
-            $order = $payment->getOrder();
-            $ameId = $this->db->getAmeIdByIncrementId($order->getIncrementId());
+            $ameId = $payment->getAdditionalInformation('ame_id');
             $this->ame->refundOrder($ameId, $amount * 100);
         } catch (\Exception $e) {
-//            $this-(['transaction_id' => $transactionId, 'exception' => $e->getMessage()]);
             throw new \Magento\Framework\Validator\Exception(__('Payment API refund error.'));
         }
-//        $payment
-//            ->setTransactionId($transactionId . '-' . \Magento\Sales\Model\Order\Payment\Transaction::TYPE_REFUND)
-//            ->setParentTransactionId($transactionId)
-//            ->setIsTransactionClosed(1)
-//            ->setShouldCloseParentTransaction(1);
         return $this;
     }
 }

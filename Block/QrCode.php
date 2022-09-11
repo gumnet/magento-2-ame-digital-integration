@@ -35,79 +35,51 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
 
     protected $customerSession;
 
-    protected $orderFactory;
-
-    protected $connection;
-
-    protected $apiAME;
-
-    protected $orderRepository;
-
-    /**
-     * QrCode constructor.
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Customer\Model\Session $customerSession
-     * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Magento\Framework\App\ResourceConnection $resource
-     * @param \Magento\Sales\Model\Order\Config $orderConfig
-     * @param \Magento\Framework\App\Http\Context $httpContext
-     * @param \GumNet\AME\Helper\API $apiAME
-     */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Customer\Model\Session $customerSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Sales\Model\Order\Config $orderConfig,
-        \Magento\Framework\App\Http\Context $httpContext,
-        \GumNet\AME\Helper\API $apiAME,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+        \Magento\Framework\App\Http\Context $httpContext
     ) {
-        parent::__construct($context, $checkoutSession,$orderConfig,$httpContext);
+        parent::__construct($context, $checkoutSession, $orderConfig, $httpContext);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
-        $this->orderFactory = $orderFactory;
-        $this->connection = $resource->getConnection();
-        $this->apiAME = $apiAME;
-        $this->orderRepository = $orderRepository;
     }
-    public function getCashbackValue(){
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT cashback_amount FROM ame_order WHERE increment_id = ".$increment_id;
-        $value = $this->connection->fetchOne($sql);
-        return $value * 0.01;
+    public function getCashbackValue(): float
+    {
+        return (float)$this->getOrder()->getPayment()->getAdditionalInformation('cashback_amount') * 0.01;
     }
 
-    public function getPrice()
+    public function getPrice(): float
     {
         return $this->getOrder()->getGrandTotal();
     }
-    public function getOrder()
+
+    public function getOrder(): \Magento\Sales\Model\Order
     {
         return $this->checkoutSession->getLastRealOrder();
     }
 
-    public function getCustomerId()
+    /**
+     * @return int
+     */
+    public function getCustomerId(): int
     {
         return $this->customerSession->getCustomer()->getId();
     }
-    public function getDeepLink()
+
+    public function getDeepLink(): string
     {
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT deep_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->connection->fetchOne($sql);
-        return $qr;
+        return $this->getOrder()->getPayment()->getAdditionalInformation('deep_link');
     }
-    public function getQrCodeLink()
+
+    public function getQrCodeLink(): string
     {
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT qr_code_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->connection->fetchOne($sql);
-        return $qr;
+        return $this->getOrder()->getPayment()->getAdditionalInformation('qr_code_link');
     }
-    public function getPaymentMethod()
+
+    public function getPaymentMethod(): string
     {
         return $this->getOrder()->getPayment()->getMethod();
     }

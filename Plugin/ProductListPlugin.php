@@ -41,7 +41,8 @@ class ProductListPlugin {
 
     public function afterGetProductPrice($subject, $result, $product)
     {
-        $html = $this->template->getLayout()->createBlock('GumNet\AME\Block\CashbackText')->setKey($product)->setTemplate('GumNet_AME::cashbacktext.phtml')->toHtml();
+        $html = $this->template->getLayout()->createBlock('GumNet\AME\Block\CashbackText')->setKey($product)
+            ->setTemplate('GumNet_AME::cashbacktext.phtml')->toHtml();
 
         return $result.$html;
     }
