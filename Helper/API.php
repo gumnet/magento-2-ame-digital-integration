@@ -41,8 +41,6 @@ class API
 
     protected $url;
 
-    protected $logger;
-
     protected $mlogger;
 
     protected $connection;
@@ -58,7 +56,6 @@ class API
     protected $ameConfigRepository;
 
     public function __construct(
-        \GumNet\AME\Helper\LoggerAME $logger,
         \Psr\Log\LoggerInterface $mlogger,
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -67,7 +64,6 @@ class API
         \GumNet\AME\Helper\GumApi $gumApi,
         \GumNet\AME\Api\AmeConfigRepositoryInterface $ameConfigRepository
     ) {
-        $this->logger = $logger;
         $this->mlogger = $mlogger;
         $this->connection = $resource->getConnection();
         $this->scopeConfig = $scopeConfig;
@@ -149,13 +145,9 @@ class API
         $this->ameConfigRepository->save($config);
     }
 
-    public function refundOrder($ame_id, $amount): string
+    public function refundOrder(string $ame_id, float $amount): array
     {
-        $this->mlogger->info("AME REFUND ORDER:" . $ame_id);
-        $this->mlogger->info("AME REFUND amount:" . $amount);
-
         $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        $this->mlogger->info("AME REFUND TRANSACTION:" . $transaction_id);
 
         $refund_id = Uuid::uuid4()->toString();
         while ($this->dbAME->refundIdExists($refund_id)) {
@@ -163,11 +155,9 @@ class API
         }
         $this->mlogger->info("AME REFUND ID:" . $refund_id);
         $url = self::URL . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
-        $this->mlogger->info("AME REFUND URL:" . $url);
 
         $json_array['amount'] = $amount;
         $json = json_encode($json_array);
-        $this->mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
         $this->mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) {
@@ -194,6 +184,7 @@ class API
         }
         return true;
     }
+
     public function consultOrder(string $ame_id): string
     {
         $url = self::URL . "/orders/" . $ame_id;
@@ -203,7 +194,7 @@ class API
         }
         return $result;
     }
-    public function captureOrder($ame_id): array
+    public function captureOrder(string $ame_id)
     {
         $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
         $url = self::URL . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
@@ -211,9 +202,7 @@ class API
         if ($this->hasError($result, $url)) {
             return false;
         }
-        $result_array = json_decode($result, true);
-
-        return $result_array;
+        return json_decode($result, true);
     }
 
     public function createOrder($order): string
@@ -291,14 +280,34 @@ class API
         if ($this->hasError($result, $url, $json)) {
             return "";
         }
-        $this->gumapi->createOrder($json,$result);
-        $this->logger->log($result, "info", $url, $json);
+        $this->gumapi->createOrder($json, $result);
         $result_array = json_decode($result, true);
 
         $this->dbAME->insertOrder($order, $result_array);
-
-        $this->logger->log($result, "info", $url, $json);
         return $result;
+    }
+
+    /**
+     * @param $order
+     * @param array $result_array
+     * @return void
+     */
+    public function setAdditionalData($order, array $result_array)
+    {
+        $cashbackAmountValue = 0;
+        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
+            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        }
+        /** @var \Magento\Sales\Model\Order $order */
+        $payment = $order->getPayment();
+        $additionalData = $payment->getAdditionalInformation();
+        $additionalData['ame_id'] = $result_array['id'];
+        $additionalData['amount'] = $result_array['amount'];
+        $additionalData['cashback_amount'] = $cashbackAmountValue;
+        $additionalData['qr_code_link'] = $result_array['qrCodeLink'];
+        $additionalData['deep_link'] = $result_array['deepLink'];
+        $payment->setAdditionalInformation($additionalData);
+        $payment->save();
     }
 
     /**
@@ -315,7 +324,6 @@ class API
         $result_array = json_decode($result, true);
         if (is_array($result_array)) {
             if (array_key_exists("error", $result_array)) {
-                $this->logger->log($result, "error", $url, $input);
                 $subject = "AME Error";
                 $message = "Result: ".$result."\r\n\r\nurl: ".$url."\r\n\r\n";
                 $this->mlogger->error($subject . "-" . $message);
@@ -338,14 +346,9 @@ class API
         $this->mlogger->info("ameRequest starting...");
         $_token = $this->getToken();
         if (!$_token) {
-            return false;
+            return "";
         }
         $method = strtoupper($method);
-        $this->mlogger->info("ameRequest URL:" . $url);
-        $this->mlogger->info("ameRequest METHOD:" . $method);
-        if ($json) {
-            $this->mlogger->info("ameRequest JSON:" . $json);
-        }
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $_token];
@@ -359,16 +362,27 @@ class API
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $result = curl_exec($ch);
-        $this->mlogger->info("ameRequest OUTPUT:" . $result);
         curl_close($ch);
         return $result;
     }
 
+    public function getTokenFromDb(): string
+    {
+        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_expires'";
+        $ameConfig = $this->ameConfigRepository->getByConfig('token_expires');
+        $token_expires = (int)$ameConfig->getValue();
+        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_value'";
+        if (time() + 600 < $token_expires) {
+            $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
+            return $ameConfig->getValue();
+        }
+        return "";
+    }
+
     public function getToken()
     {
-        $this->mlogger->info("ameRequest getToken starting...");
         // check if existing token will be expired within 10 minutes
-        if($token = $this->dbAME->getToken()){
+        if ($token = $this->getTokenFromDb()) {
             return $token;
         }
         // get user & pass from core_config_data
@@ -381,7 +395,7 @@ class API
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
         if (!$username || !$password) {
-            $this->logger->log("user/pass not found on db", "error", "-", "-");
+            $this->mlogger->info("AME user/pass not set.");
             return "";
         }
         $url = self::URL . "/auth/oauth/token";
@@ -403,9 +417,7 @@ class API
             $userTmp = $username;
             $username = $password;
             $password = $userTmp;
-            $url = self::URL . "/auth/oauth/token";
             $ch = curl_init();
-            $post = "grant_type=client_credentials";
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -413,7 +425,6 @@ class API
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            $header = ['Content-Type: application/x-www-form-urlencoded'];
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
             $result = curl_exec($ch);
             if ($this->hasError($result, $url, $post)) {

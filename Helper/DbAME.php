@@ -185,7 +185,7 @@ class DbAME
         if (time() + 600 < $token_expires) {
             $token = $this->_connection->fetchOne($sql);
             $this->_mlogger->info("ameRequest getToken returns: " . $token);
-            return $token;
+            return "";
         }
         return false;
     }
