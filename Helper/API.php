@@ -35,17 +35,25 @@ use \Ramsey\Uuid\Uuid;
 class API
 {
     const URL = "https://ame19gwci.gum.net.br:63333/api";
+// Do not remove the following lines - used for development
+//    const URL = "https://api.dev.amedigital.com/api";
+//    const URL = "https://api.hml.amedigital.com/api";
 
     protected $url;
+
     protected $logger;
+
     protected $mlogger;
+
     protected $connection;
+
     protected $scopeConfig;
+
     protected $storeManager;
+
     protected $dbAME;
-    protected $email;
+
     protected $gumapi;
-    protected $invalidProxies;
 
     protected $ameConfigRepository;
 
@@ -56,15 +64,9 @@ class API
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \GumNet\AME\Helper\DbAME $dbAME,
-        \GumNet\AME\Helper\MailerAME $email,
         \GumNet\AME\Helper\GumApi $gumApi,
         \GumNet\AME\Api\AmeConfigRepositoryInterface $ameConfigRepository
     ) {
-// Do not remove the following lines - used for development
-//            const URL = "https://api.dev.amedigital.com/api";
-//            const URL = "https://api.hml.amedigital.com/api";
-
-
         $this->logger = $logger;
         $this->mlogger = $mlogger;
         $this->connection = $resource->getConnection();
@@ -72,22 +74,29 @@ class API
         $this->storeManager = $storeManager;
         $this->dbAME = $dbAME;
 
-        $this->email = $email;
         $this->gumapi = $gumApi;
-        $this->invalidProxies = [];
         $this->ameConfigRepository = $ameConfigRepository;
     }
-    public function getCashBackPercent(){
+
+    /**
+     * @return float
+     * @throws NoSuchEntityException
+     */
+    public function getCashBackPercent(): float
+    {
         $cashback_updated_at = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
-        if(time()<$cashback_updated_at + 3600){
-            return $this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
-        }
-        else{
+        if (time() < $cashback_updated_at + 3600) {
+            return (float)$this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
+        } else {
             return $this->generateCashbackFromOrder();
         }
     }
-    public function generateCashbackFromOrder()
 
+    /**
+     * @return float
+     * @throws NoSuchEntityException
+     */
+    public function generateCashbackFromOrder(): float
     {
         $url = self::URL . "/orders";
         $pedido = rand(1000, 1000000);
@@ -95,7 +104,6 @@ class API
         $json_array['description'] = "Pedido " . $pedido;
         $json_array['amount'] = 10000;
         $json_array['currency'] = "BRL";
-//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
         $json_array['attributes']['items'] = [];
 
@@ -120,7 +128,7 @@ class API
         $result = $this->ameRequest($url, "POST", $json);
         $result_array = json_decode($result, true);
         if ($this->hasError($result, $url, $json)) {
-            return false;
+            return 0;
         }
         $cashbackAmountValue = 0;
         if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
@@ -128,16 +136,16 @@ class API
         }
         $cashback_percent = $cashbackAmountValue/100;
         $this->setCashbackPercent($cashback_percent);
-        return $cashback_percent;
+        return (float)$cashback_percent;
     }
 
     protected function setCashbackPercent($cashback_percent)
     {
         $config = $this->ameConfigRepository->getByConfig('cashback_updated_at');
-        $config->setValue((string)time());
+        $config->setValue(time());
         $this->ameConfigRepository->save($config);
         $config = $this->ameConfigRepository->getByConfig('cashback_percent');
-        $config->setValue((string)$cashback_percent);
+        $config->setValue($cashback_percent);
         $this->ameConfigRepository->save($config);
     }
 
@@ -163,12 +171,17 @@ class API
         $result[0] = $this->ameRequest($url, "PUT", $json);
         $this->mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) {
-            return false;
+            return "";
         }
         $result[1] = $refund_id;
         return $result;
     }
-    public function cancelOrder($ame_id): bool
+
+    /**
+     * @param string $ame_id
+     * @return bool
+     */
+    public function cancelOrder(string $ame_id): bool
     {
         $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
         if (!$transaction_id) {
@@ -305,10 +318,7 @@ class API
                 $this->logger->log($result, "error", $url, $input);
                 $subject = "AME Error";
                 $message = "Result: ".$result."\r\n\r\nurl: ".$url."\r\n\r\n";
-                if($input){
-                    $message = $message . "Input: ".$input;
-                }
-                $this->email->sendDebug($subject,$message);
+                $this->mlogger->error($subject . "-" . $message);
                 return true;
             }
         } else {
@@ -350,8 +360,6 @@ class API
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $result = curl_exec($ch);
         $this->mlogger->info("ameRequest OUTPUT:" . $result);
-        $this->logger->log(curl_getinfo($ch, CURLINFO_HTTP_CODE), "header", $url, $json);
-        $this->logger->log($result, "info", $url, $json);
         curl_close($ch);
         return $result;
     }
@@ -364,11 +372,17 @@ class API
             return $token;
         }
         // get user & pass from core_config_data
-        $username = $this->scopeConfig->getValue('ame/general/api_user', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $password = $this->scopeConfig->getValue('ame/general/api_password', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $username = $this->scopeConfig->getValue(
+            'ame/general/api_user',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $password = $this->scopeConfig->getValue(
+            'ame/general/api_password',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
         if (!$username || !$password) {
             $this->logger->log("user/pass not found on db", "error", "-", "-");
-            return false;
+            return "";
         }
         $url = self::URL . "/auth/oauth/token";
         $ch = curl_init();
@@ -380,9 +394,8 @@ class API
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/x-www-form-urlencoded',
-        ));
+        $header = ['Content-Type: application/x-www-form-urlencoded'];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         $result = curl_exec($ch);
         if ($this->hasError($result, $url, $post)) {
             curl_close($ch);
@@ -400,21 +413,31 @@ class API
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/x-www-form-urlencoded',
-            ));
+            $header = ['Content-Type: application/x-www-form-urlencoded'];
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
             $result = curl_exec($ch);
             if ($this->hasError($result, $url, $post)) {
-                return false;
+                return "";
             }
         }
         $result_array = json_decode($result, true);
-        if(!array_key_exists('access_token',$result_array)) return false;
-        $this->logger->log($result, "info", $url, $username . ":" . $password);
+        if (!array_key_exists('access_token', $result_array)) {
+            return "";
+        }
 
-        $expires_in = (int)time() + intval($result_array['expires_in']);
-        $this->dbAME->updateToken($expires_in,$result_array['access_token']);
+        $expires_in = time() + (int)$result_array['expires_in'];
+        $this->storeToken($result_array['access_token'], $expires_in);
         return $result_array['access_token'];
+    }
+
+    public function storeToken(string $token, int $expires_in)
+    {
+        $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
+        $ameConfig->setValue($token);
+        $this->ameConfigRepository->save($ameConfig);
+        $ameConfig = $this->ameConfigRepository->getByConfig('token_expires');
+        $ameConfig->setValue($expires_in);
+        $this->ameConfigRepository->save($ameConfig);
     }
 
     /**
