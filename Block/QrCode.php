@@ -26,16 +26,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+//SELECT * FROM sales_order_payment WHERE JSON_EXTRACT(additional_information, '$.method_title') = 'AME';
 namespace GumNet\AME\Block;
 
 class QrCode extends \Magento\Checkout\Block\Onepage\Success
 {
     protected $checkoutSession;
+
     protected $customerSession;
-    protected $_orderFactory;
-    protected $_connection;
-    protected $_apiAME;
+
+    protected $orderFactory;
+
+    protected $connection;
+
+    protected $apiAME;
+
+    protected $orderRepository;
 
     /**
      * QrCode constructor.
@@ -56,19 +62,21 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Sales\Model\Order\Config $orderConfig,
         \Magento\Framework\App\Http\Context $httpContext,
-        \GumNet\AME\Helper\API $apiAME
+        \GumNet\AME\Helper\API $apiAME,
+        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
     ) {
         parent::__construct($context, $checkoutSession,$orderConfig,$httpContext);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
-        $this->_orderFactory = $orderFactory;
-        $this->_connection = $resource->getConnection();
-        $this->_apiAME = $apiAME;
+        $this->orderFactory = $orderFactory;
+        $this->connection = $resource->getConnection();
+        $this->apiAME = $apiAME;
+        $this->orderRepository = $orderRepository;
     }
     public function getCashbackValue(){
         $increment_id = $this->getOrderId();
         $sql = "SELECT cashback_amount FROM ame_order WHERE increment_id = ".$increment_id;
-        $value = $this->_connection->fetchOne($sql);
+        $value = $this->connection->fetchOne($sql);
         return $value * 0.01;
     }
 
@@ -78,7 +86,7 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
     }
     public function getOrder()
     {
-        return $this->_orderFactory->create()->loadByIncrementId($this->getOrderId());
+        return $this->checkoutSession->getLastRealOrder();
     }
 
     public function getCustomerId()
@@ -89,14 +97,14 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
     {
         $increment_id = $this->getOrderId();
         $sql = "SELECT deep_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->_connection->fetchOne($sql);
+        $qr = $this->connection->fetchOne($sql);
         return $qr;
     }
     public function getQrCodeLink()
     {
         $increment_id = $this->getOrderId();
         $sql = "SELECT qr_code_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->_connection->fetchOne($sql);
+        $qr = $this->connection->fetchOne($sql);
         return $qr;
     }
     public function getPaymentMethod()

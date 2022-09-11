@@ -40,6 +40,7 @@ class LayoutProcessor
         \Magento\Checkout\Block\Checkout\LayoutProcessor $subject,
         array  $jsLayout
     ) {
+        return $layout;
         $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
         ['shippingAddress']['children']['shipping-address-fieldset']['children']['street'] = [
             'component' => 'Magento_Ui/js/form/components/group',

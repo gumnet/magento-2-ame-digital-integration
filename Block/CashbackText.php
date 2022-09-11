@@ -70,14 +70,14 @@ class CashbackText extends \Magento\Framework\View\Element\Template
         ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Helper\Data $helper,
         \Magento\Framework\Registry $registry,
-        \GumNet\AME\Helper\API $_api,
+        \GumNet\AME\Helper\API $api,
         \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
         \Magento\Framework\App\Request\Http $request
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->helper = $helper;
         $this->registry = $registry;
-        $this->api = $_api;
+        $this->api = $api;
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $this->api = $sensediaAPI;
@@ -114,7 +114,10 @@ class CashbackText extends \Magento\Framework\View\Element\Template
                 return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
             }
         }
-        return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
+        if (isset($product)) {
+            return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
+        }
+        return 0;
     }
 }
 

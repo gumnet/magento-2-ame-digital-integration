@@ -70,7 +70,8 @@ class AME extends AbstractMethod
     protected $_maxAmount = null;
     protected $_supportedCurrencyCodes = ['BRL'];
 
-    protected $_ame;
+    protected $ame;
+
     protected $db;
 
     /**
@@ -118,11 +119,11 @@ class AME extends AbstractMethod
             $data,
             $directory
         );
-        $this->_ame = $api;
+        $this->ame = $api;
         $this->db = $db;
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
-            $this->_ame = $sensediaAPI;
+            $this->ame = $sensediaAPI;
         }
     }
 
@@ -137,14 +138,14 @@ class AME extends AbstractMethod
         $order = $payment->getOrder();
         $order->setState('new')->setStatus('pending');
         $order->save();
-        $result = $this->_ame->createOrder($order);
+        $result = $this->ame->createOrder($order);
         $order->addStatusHistoryComment('AME Order ID: '.$result['id']);
         $order->save();
         return $this;
     }
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
-        if (!$this->_scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE)) {
+        if (!$this->scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE)) {
             return false;
         }
         $storeId = $quote ? $quote->getStoreId() : null;
@@ -167,7 +168,7 @@ class AME extends AbstractMethod
         try {
             $order = $payment->getOrder();
             $ameId = $this->db->getAmeIdByIncrementId($order->getIncrementId());
-            $this->_ame->refundOrder($ameId, $amount * 100);
+            $this->ame->refundOrder($ameId, $amount * 100);
         } catch (\Exception $e) {
 //            $this-(['transaction_id' => $transactionId, 'exception' => $e->getMessage()]);
             throw new \Magento\Framework\Validator\Exception(__('Payment API refund error.'));

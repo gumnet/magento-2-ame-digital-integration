@@ -29,10 +29,13 @@
 
 namespace GumNet\AME\Helper;
 
+use Magento\Framework\Exception\NoSuchEntityException;
 use \Ramsey\Uuid\Uuid;
 
 class API
 {
+    const URL = "https://ame19gwci.gum.net.br:63333/api";
+
     protected $url;
     protected $logger;
     protected $mlogger;
@@ -57,6 +60,11 @@ class API
         \GumNet\AME\Helper\GumApi $gumApi,
         \GumNet\AME\Api\AmeConfigRepositoryInterface $ameConfigRepository
     ) {
+// Do not remove the following lines - used for development
+//            const URL = "https://api.dev.amedigital.com/api";
+//            const URL = "https://api.hml.amedigital.com/api";
+
+
         $this->logger = $logger;
         $this->mlogger = $mlogger;
         $this->connection = $resource->getConnection();
@@ -64,10 +72,6 @@ class API
         $this->storeManager = $storeManager;
         $this->dbAME = $dbAME;
 
-//            $this->url = "https://api.dev.amedigital.com/api";
-//            $this->url = "https://api.hml.amedigital.com/api";
-        $this->url = "https://ame19gwci.gum.net.br:63333/api";
-//        }
         $this->email = $email;
         $this->gumapi = $gumApi;
         $this->invalidProxies = [];
@@ -82,9 +86,11 @@ class API
             return $this->generateCashbackFromOrder();
         }
     }
-    public function generateCashbackFromOrder(){
-        $url = $this->url . "/orders";
-        $pedido = rand(1000,1000000);
+    public function generateCashbackFromOrder()
+
+    {
+        $url = self::URL . "/orders";
+        $pedido = rand(1000, 1000000);
         $json_array['title'] = "Pedido " . $pedido;
         $json_array['description'] = "Pedido " . $pedido;
         $json_array['amount'] = 10000;
@@ -113,12 +119,12 @@ class API
         $json = json_encode($json_array);
         $result = $this->ameRequest($url, "POST", $json);
         $result_array = json_decode($result, true);
-        if ($this->hasError($result, $url, $json)) return false;
-        if(array_key_exists('cashbackAmountValue',$result_array['attributes'])){
-            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        if ($this->hasError($result, $url, $json)) {
+            return false;
         }
-        else{
-            $cashbackAmountValue = 0;
+        $cashbackAmountValue = 0;
+        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
+            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
         }
         $cashback_percent = $cashbackAmountValue/100;
         $this->setCashbackPercent($cashback_percent);
@@ -148,14 +154,13 @@ class API
             $refund_id = Uuid::uuid4()->toString();
         }
         $this->mlogger->info("AME REFUND ID:" . $refund_id);
-        $url = $this->url . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
+        $url = self::URL . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
         $this->mlogger->info("AME REFUND URL:" . $url);
-//        echo $url;
+
         $json_array['amount'] = $amount;
         $json = json_encode($json_array);
         $this->mlogger->info("AME REFUND JSON:" . $json);
         $result[0] = $this->ameRequest($url, "PUT", $json);
-//        echo $result[0];
         $this->mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) return false;
         $result[1] = $refund_id;
@@ -168,63 +173,59 @@ class API
 //            echo "Transaction ID not found";
             return false;
         }
-        $url = $this->url . "/wallet/user/payments/" . $transaction_id . "/cancel";
+        $url = self::URL . "/wallet/user/payments/" . $transaction_id . "/cancel";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url, "")) return false;
         return true;
     }
-    public function consultOrder($ame_id)
+    public function consultOrder(string $ame_id): string
     {
-        $url = $this->url . "/orders/" . $ame_id;
+        $url = self::URL . "/orders/" . $ame_id;
         $result = $this->ameRequest($url, "GET", "");
-        if ($this->hasError($result, $url)) return false;
+        if ($this->hasError($result, $url)) {
+            return "";
+        }
         return $result;
     }
-    public function captureOrder($ame_id)
+    public function captureOrder($ame_id): array
     {
         $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        $url = $this->url . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
+        $url = self::URL . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
         $result = $this->ameRequest($url, "PUT", "");
-        if ($this->hasError($result, $url)) return false;
+        if ($this->hasError($result, $url)) {
+            return false;
+        }
         $result_array = json_decode($result, true);
 
         return $result_array;
     }
     public function createOrder($order)
     {
+        /** @var \Magento\Sales\Model\Order $order */
         $this->mlogger->info("Create AME Order");
-        $url = $this->url . "/orders";
+        $url = self::URL . "/orders";
 
         $shippingAmount = $order->getShippingAmount();
-        $productsAmount = $order->getGrandTotal() - $shippingAmount;
-        $amount = intval($order->getGrandTotal() * 100);
-//        $cashbackAmountValue = intval($this->getCashbackPercent() * $amount * 0.01);
+        $amount = (int)$order->getGrandTotal() * 100;
 
         $json_array['title'] = "Pedido " . $order->getIncrementId();
         $json_array['description'] = "Pedido " . $order->getIncrementId();
         $json_array['amount'] = $amount;
         $json_array['currency'] = "BRL";
-//        $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
         $json_array['attributes']['items'] = [];
 
         $items = $order->getAllItems();
-        $amount = 0;
         $total_discount = 0;
         foreach ($items as $item) {
-            if (isset($array_items)) unset($array_items);
+            if (isset($array_items)) {
+                unset($array_items);
+            }
             $array_items['description'] = $item->getName() . " - SKU " . $item->getSku();
-            $array_items['quantity'] = intval($item->getQtyOrdered());
-            $array_items['amount'] = intval(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
-            $products_amount = $amount + $array_items['amount'];
+            $array_items['quantity'] = (int)$item->getQtyOrdered();
+            $array_items['amount'] = (int)($item->getRowTotal() - $item->getDiscountAmount()) * 100;
             $total_discount = $total_discount + abs($item->getDiscountAmount());
             array_push($json_array['attributes']['items'], $array_items);
-        }
-        if($total_discount){
-//            $amount = intval($products_amount + $shippingAmount * 100);
-//            $json_array['amount'] = $amount;
-//            $cashbackAmountValue = intval($this->getCashbackPercent() * $products_amount * 0.01);
-//            $json_array['attributes']['cashbackamountvalue'] = $cashbackAmountValue;
         }
 
         $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
@@ -265,11 +266,17 @@ class API
         $this->logger->log($result, "info", $url, $json);
         return $result;
     }
+
+    /**
+     * @return string
+     * @throws NoSuchEntityException
+     */
     public function getCallbackUrl()
     {
         return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
-    public function hasError($result, $url, $input = "")
+
+    public function hasError(string $result, string $url, string $input = ""): bool
     {
         $result_array = json_decode($result, true);
         if (is_array($result_array)) {
@@ -289,15 +296,13 @@ class API
         }
         return false;
     }
-//    public function getCashbackPercent()
-//    {
-//        return $this->scopeConfig->getValue('ame/general/cashback_value', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-//    }
-    public function getStoreName()
+
+    public function getStoreName(): string
     {
         return $this->scopeConfig->getValue('ame/general/store_name', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
-    public function ameRequest($url, $method = "GET", $json = "")
+
+    public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
         $this->mlogger->info("ameRequest starting...");
         $_token = $this->getToken();
@@ -310,7 +315,8 @@ class API
         }
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", "Authorization: Bearer " . $_token));
+        $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $_token];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 //        curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
@@ -326,6 +332,7 @@ class API
         curl_close($ch);
         return $result;
     }
+
     public function getToken()
     {
         $this->mlogger->info("ameRequest getToken starting...");
@@ -340,7 +347,7 @@ class API
             $this->logger->log("user/pass not found on db", "error", "-", "-");
             return false;
         }
-        $url = $this->url . "/auth/oauth/token";
+        $url = self::URL . "/auth/oauth/token";
         $ch = curl_init();
         $post = "grant_type=client_credentials";
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -360,7 +367,7 @@ class API
             $userTmp = $username;
             $username = $password;
             $password = $userTmp;
-            $url = $this->url . "/auth/oauth/token";
+            $url = self::URL . "/auth/oauth/token";
             $ch = curl_init();
             $post = "grant_type=client_credentials";
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -386,7 +393,12 @@ class API
         $this->dbAME->updateToken($expires_in,$result_array['access_token']);
         return $result_array['access_token'];
     }
-    public function codigoUF($txt_uf)
+
+    /**
+     * @param string $txt_uf
+     * @return string
+     */
+    public function codigoUF(string $txt_uf): string
     {
         $array_ufs = array("Rondônia" => "RO",
             "Acre" => "AC",
