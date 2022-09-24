@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
@@ -27,12 +26,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<payment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Payment:etc/payment.xsd">
-    <methods>
-        <method name="ame">
-            <allow_multiple_address>1</allow_multiple_address>
-        </method>
-    </methods>
-</payment>
 
+namespace GumNet\AME\Api\Data;
+
+interface AmeCallbackInterface
+{
+    const KEY_ID = 'entity_id';
+    const AME_OPTION = 'ame_option';
+    const AME_VALUE = 'ame_value';
+
+    /**
+     * @return int|null
+     */
+    public function getId(): ?int;
+
+    /**
+     * @param int $id
+     * @return AmeConfigInterface
+     */
+    public function setId(int $id): AmeConfigInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getOption(): ?string;
+
+    /**
+     * @param string $option
+     * @return AmeConfigInterface
+     */
+    public function setOption(string $option): AmeConfigInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getValue(): ?string;
+
+    /**
+     * @param string $value
+     * @return AmeConfigInterface
+     */
+    public function setValue(string $value): AmeConfigInterface;
+}

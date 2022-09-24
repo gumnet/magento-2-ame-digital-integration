@@ -35,105 +35,77 @@ use \Magento\Framework\App\Request\InvalidRequestException;
 
 class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
 {
-    protected $_session;
-    protected $_request;
-    protected $_scopeConfig;
-    protected $_orderRepository;
-    protected $_dbAME;
-    protected $_mailerAME;
-    protected $_invoiceService;
-    protected $_transactionFactory;
-    protected $_api;
-    protected $_mlogger;
-    protected $_email;
-    protected $_gumApi;
-    protected $_storeManager;
+    protected $context;
+    protected $request;
+    protected $scopeConfig;
+    protected $orderRepository;
+    protected $resultFactory;
+    protected $dbAME;
+    protected $invoiceService;
+    protected $transactionFactory;
+    protected $gumApi;
+    protected $storeManager;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $mailerAME,
-                                \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-                                \Magento\Framework\DB\TransactionFactory $transactionFactory,
-                                \GumNet\AME\Helper\API $api,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                \Magento\Store\Model\StoreManagerInterface $storeManager,
-                                array $data = []
-                                )
-    {
-        $this->_request = $request;
-        $this->_scopeConfig = $scopeConfig;
-        $this->_orderRepository = $orderRepository;
-        $this->_dbAME = $dbAME;
-        $this->_mailerAME = $mailerAME;
-        $this->_invoiceService = $invoiceService;
-        $this->_transactionFactory = $transactionFactory;
-        $this->_api = $api;
-        $this->_mlogger = $mlogger;
-        $this->_email = $email;
-        $this->_gumApi = $gumApi;
-        $this->_storeManager = $storeManager;
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\App\RequestInterface $request,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Sales\Model\OrderRepository $orderRepository,
+        \Magento\Framework\Controller\Result\RawFactory $resultFactory,
+        \GumNet\AME\Helper\DbAME $dbAME,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\TransactionFactory $transactionFactory,
+        \GumNet\AME\Helper\GumApi $gumApi,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        array $data = []
+    ) {
+        $this->context = $context;
+        $this->request = $request;
+        $this->scopeConfig = $scopeConfig;
+        $this->orderRepository = $orderRepository;
+        $this->resultFactory = $resultFactory;
+        $this->dbAME = $dbAME;
+        $this->invoiceService = $invoiceService;
+        $this->transactionFactory = $transactionFactory;
+        $this->gumApi = $gumApi;
+        $this->storeManager = $storeManager;
         parent::__construct($context);
     }
     public function execute()
     {
-        $this->_mlogger->log("INFO","AME Callback starting...");
-        $json = file_get_contents('php://input');
-//        $json = fopen('php://input','r');
-        $this->_dbAME->insertCallback($json);
-        if(!$this->isJson($json)){
-            $this->_mlogger->log("ERROR","AME Callback is not json");
+        $json = $this->request->getContent();
+        $this->dbAME->insertCallback($json);
+        if (!$this->isJson($json)){
             return;
         }
-        $input = json_decode($json,true);
-        $this->_mlogger->log("INFO",print_r($input,true));
+        $input = json_decode($json, true);
         // verify if id exists
-        if(!array_key_exists('id',$input)){
-            $this->_mlogger->log("ERROR","AME Callback AME ID not found in JSON");
+        if (!array_key_exists('id', $input)) {
             return;
         }
         $ame_order_id = $input['attributes']['orderId'];
-        $incrId = $this->_dbAME->getOrderIncrementId($ame_order_id);
-        if(!$incrId){
-            $this->_mlogger->log("ERROR","AME Callback Increment ID not found in the database");
+        $incrId = $this->dbAME->getOrderIncrementId($ame_order_id);
+        if (!$incrId) {
             return;
         }
-        if($input['status']=="AUTHORIZED") {
-            $this->_dbAME->insertTransaction($input);
-            $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
-
-            $this->_mlogger->log("INFO","AME Callback Calling queue transaction API");
-
-            $this->_gumApi->queueTransaction($json);
-            $this->_mlogger->log("INFO", "Queue transaction call OK");
+        if ($input['status']=="AUTHORIZED") {
+            $this->dbAME->insertTransaction($input);
+            $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_order_id);
+            $this->gumApi->queueTransaction($json);
+        } else {
+            $this->gumApi->queueTransactionError($json);
         }
-        else{
-            $this->_gumApi->queueTransactionError($json);
-            $this->_mlogger->log("ERROR","Wrong Order status: ".$input['status']);
-        }
-//        if($input['status']=="CANCELED"){
-//            $this->_mlogger->log("INFO","AME Callback cancel order ".$incrId);
-//            $this->cancelOrder($order);
-//        }
-//        if($input['status']=="ERROR"||$input['status']=="DENIED"){
-//            $this->_mlogger->log("INFO","AME Callback error/denied - cancel order ".$incrId);
-//            $this->cancelOrder($order);
-//        }
-        $this->_mlogger->log("INFO","AME Callback ended.");
-        die();
+        $result = $this->resultFactory->create();
+        return $result->setContents('');
     }
     public function cancelOrder($order){
         $order->cancel()->save();
     }
     public function invoiceOrder($order){
-        $invoice = $this->_invoiceService->prepareInvoice($order);
+        $invoice = $this->invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
         $invoice->register();
-        $transaction = $this->_transactionFactory->create()
+        $transaction = $this->transactionFactory->create()
             ->addObject($invoice)
             ->addObject($invoice->getOrder());
         $transaction->save();
@@ -162,6 +134,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     }
     public function getCallbackUrl()
     {
-        return $this->_storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
+        return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
 }

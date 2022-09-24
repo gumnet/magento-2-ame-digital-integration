@@ -136,8 +136,6 @@ class AME extends AbstractMethod
     public function order(InfoInterface $payment, $amount)
     {
         $order = $payment->getOrder();
-        $order->setState('new')->setStatus('pending');
-        $order->save();
         $result = $this->ame->createOrder($order);
         $order->addStatusHistoryComment('AME Order ID: '.$result['id']);
         $order->save();
@@ -173,11 +171,6 @@ class AME extends AbstractMethod
 //            $this-(['transaction_id' => $transactionId, 'exception' => $e->getMessage()]);
             throw new \Magento\Framework\Validator\Exception(__('Payment API refund error.'));
         }
-//        $payment
-//            ->setTransactionId($transactionId . '-' . \Magento\Sales\Model\Order\Payment\Transaction::TYPE_REFUND)
-//            ->setParentTransactionId($transactionId)
-//            ->setIsTransactionClosed(1)
-//            ->setShouldCloseParentTransaction(1);
         return $this;
     }
 }

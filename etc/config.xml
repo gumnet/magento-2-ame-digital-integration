@@ -36,9 +36,8 @@
                 <title>AME</title>
                 <order_status>pending</order_status>
                 <instructions>Instruction.</instructions>
-                <payment_action>true</payment_action>
+                <payment_action>order</payment_action>
                 <model>GumNet\AME\Model\AME</model>
-                <group>offline</group>
             </ame>
         </payment>
     </default>

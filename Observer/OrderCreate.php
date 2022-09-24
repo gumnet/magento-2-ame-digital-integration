@@ -55,9 +55,9 @@ class OrderCreate implements ObserverInterface
     {
         $order = $observer->getEvent()->getOrder();
         //  Magento 2.2.* compatibility
-        if(!$order){
+        if (!$order) {
             $orderids = $observer->getEvent()->getOrderIds();
-            foreach($orderids as $orderid){
+            foreach ($orderids as $orderid) {
                 $order = $this->_order->load($orderid);
             }
         }
