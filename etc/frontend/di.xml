@@ -28,14 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="GumNet_AME" type="GumNet\AME\Block\LayoutProcessor" sortOrder="100"/>
-    </type>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Catalog\Block\Product\ListProduct" shared="false">
-        <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin" disabled="false" sortOrder="999" />
+        <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin"
+                disabled="false" sortOrder="999" />
     </type>
     <type name="Magento\Sales\Block\Order\Info">
-        <plugin name="gumnet_ame_order_qrcode_plugin" type="GumNet\AME\Plugin\Order\Info" disabled="false" sortOrder="999" />
+        <plugin name="gumnet_ame_order_qrcode_plugin" type="GumNet\AME\Plugin\Order\Info"
+                disabled="false" sortOrder="999" />
     </type>
 </config>
