@@ -39,8 +39,7 @@ class ValidateForm implements ObserverInterface
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    )
-    {
+    ) {
         $this->scopeConfig = $scopeConfig;
     }
 
@@ -51,10 +50,13 @@ class ValidateForm implements ObserverInterface
         if ($quote->getPayment()->getMethod() != 'ame') {
             return;
         }
-        $neighborhood_line = $this->scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $neighborhood_line = $this->scopeConfig->getValue(
+            'ame/address/neighborhood',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
         if (!isset($quote->getShippingAddress()->getStreet()[$neighborhood_line])
             ||!$quote->getShippingAddress()->getStreet()[$neighborhood_line]) {
-            throw new \Magento\Framework\Exception\LocalizedException('Por favor preencha o campo bairro.');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Por favor preencha o campo bairro.'));
         }
     }
 }
