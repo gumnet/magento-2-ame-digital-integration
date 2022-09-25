@@ -32,8 +32,11 @@ namespace GumNet\AME\Api\Data;
 interface AmeCallbackInterface
 {
     const KEY_ID = 'entity_id';
-    const AME_OPTION = 'ame_option';
-    const AME_VALUE = 'ame_value';
+    const CONTENT = 'content';
+    const STATUS = 'status';
+    const RETRIES = 'retries';
+    const CREATED_AT = 'updated_at';
+    const UPDATED_AT = 'updated_at';
 
     /**
      * @return int|null
@@ -42,29 +45,74 @@ interface AmeCallbackInterface
 
     /**
      * @param int $id
-     * @return AmeConfigInterface
+     * @return AmeCallbackInterface
      */
-    public function setId(int $id): AmeConfigInterface;
+    public function setId(int $id): AmeCallbackInterface;
+
+    /**
+     * @return int|null
+     */
+    public function getEntityId(): ?int;
+
+    /**
+     * @param int $entityId
+     * @return AmeCallbackInterface
+     */
+    public function setEntityId(int $entityId): AmeCallbackInterface;
+
 
     /**
      * @return string|null
      */
-    public function getOption(): ?string;
+    public function getContent(): ?string;
 
     /**
-     * @param string $option
-     * @return AmeConfigInterface
+     * @param string $content
+     * @return AmeCallbackInterface
      */
-    public function setOption(string $option): AmeConfigInterface;
+    public function setContent(string $content): AmeCallbackInterface;
 
     /**
      * @return string|null
      */
-    public function getValue(): ?string;
+    public function getStatus(): ?string;
 
     /**
-     * @param string $value
-     * @return AmeConfigInterface
+     * @param string $status
+     * @return AmeCallbackInterface
      */
-    public function setValue(string $value): AmeConfigInterface;
+    public function setStatus(string $status): AmeCallbackInterface;
+
+    /**
+     * @return int|null
+     */
+    public function getRetries(): ?int;
+
+    /**
+     * @param int $retries
+     * @return AmeCallbackInterface
+     */
+    public function setRetries(int $retries): AmeCallbackInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getCreatedAt(): ?string;
+
+    /**
+     * @param string $createdAt
+     * @return AmeCallbackInterface
+     */
+    public function setCreatedAt(string $createdAt): AmeCallbackInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getUpdatedAt(): ?string;
+
+    /**
+     * @param string $updatedAt
+     * @return AmeCallbackInterface
+     */
+    public function setUpdatedAt(string $updatedAt): AmeCallbackInterface;
 }

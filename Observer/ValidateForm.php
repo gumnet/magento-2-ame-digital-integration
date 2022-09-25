@@ -29,9 +29,7 @@
 
 namespace GumNet\AME\Observer;
 
-use GumNet\AME\Helper\SensediaAPI;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Sales\Model\Order;
 
 class ValidateForm implements ObserverInterface
 {
