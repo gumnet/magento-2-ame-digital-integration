@@ -12,40 +12,14 @@ use GumNet\AME\Values\Config;
 
 class MigrateConfig implements DataPatchInterface
 {
-    const TABLE_CORE_DATA = 'core_config_data';
-    const API_USER_OLD = 'ame/general/api_user';
-    const API_USER = 'payment/ame/api_user';
-    const API_PASSWORD_OLD = 'ame/general/api_password';
-    const API_PASSWORD = 'payment/ame/api_password';
-    const ENVIRONMENT_OLD = 'ame/general/environment';
-    const ENVIRONMENT = 'payment/ame/environment';
-    const STATUS_CREATED_OLD = 'ame/general/order_status_created';
-    const STATUS_CREATED = 'payment/ame/order_status_created';
-    const STATUS_PROCESSING_OLD = 'ame/general/order_status_payment_received';
-    const STATUS_PROCESSING = 'payment/ame/order_status_payment_received';
-    const ADDRESS_STREET_OLD = 'ame/address/street';
-    const ADDRESS_STREET = 'payment/ame/address_street';
-    const ADDRESS_NUMBER_OLD = 'ame/address/number';
-    const ADDRESS_NUMBER = 'payment/ame/address_number';
-    const ADDRESS_NEIGHBORHOOD_OLD = 'ame/address/neighborhood';
-    const ADDRESS_NEIGHBORHOOD = 'payment/ame/address_neighborhood';
-    const EXHIBITION_LIST_OLD = 'ame/exhibition/show_cashback_products_list';
-    const EXHIBITION_LIST = 'payment/ame/show_cashback_products_list';
-
-
-    protected $context;
-
     protected $connection;
 
     /**
-     * @param ModuleDataSetupInterface $moduleDataSetup
-     * @param EavSetupFactory $eavSetupFactory
+     * @param \Magento\Framework\App\ResourceConnection $resource
      */
     public function __construct(
-        Context $context,
         \Magento\Framework\App\ResourceConnection $resource
     ) {
-        $this->context = $context;
         $this->connection = $resource->getConnection();
     }
 
@@ -60,6 +34,12 @@ class MigrateConfig implements DataPatchInterface
         }
     }
 
+    /**
+     * @param string $table
+     * @param string $oldPath
+     * @param string $newPath
+     * @return void
+     */
     protected function updateConfig(string $table, string $oldPath, string $newPath): void
     {
         $data = ['path' => $newPath];
@@ -67,6 +47,9 @@ class MigrateConfig implements DataPatchInterface
         $this->connection->update($table, $data, $where);
     }
 
+    /**
+     * @return array[]
+     */
     protected function getConfigArray(): array
     {
         return [
@@ -83,6 +66,14 @@ class MigrateConfig implements DataPatchInterface
                 'new' => Config::ENVIRONMENT
             ],
             [
+                'old' => Config::STATUS_CREATED_OLD,
+                'new' => Config::STATUS_CREATED
+            ],
+            [
+                'old' => Config::STATUS_PROCESSING_OLD,
+                'new' => Config::STATUS_PROCESSING
+            ],
+            [
                 'old' => Config::ADDRESS_STREET_OLD,
                 'new' => Config::ADDRESS_STREET
             ],
@@ -95,42 +86,9 @@ class MigrateConfig implements DataPatchInterface
                 'new' => Config::ADDRESS_NEIGHBORHOOD
             ],
             [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
+                'old' => Config::EXHIBITION_LIST_OLD,
+                'new' => Config::EXHIBITION_LIST
             ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-            [
-                'old' => Config::ADDRESS_NUMBER_OLD,
-                'new' => Config::ADDRESS_NUMBER
-            ],
-
         ];
     }
 
@@ -148,13 +106,5 @@ class MigrateConfig implements DataPatchInterface
     public function getAliases()
     {
         return [];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getVersion()
-    {
-        return '2.0.0';
     }
 }
