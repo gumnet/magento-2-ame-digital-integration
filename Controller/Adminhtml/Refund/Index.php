@@ -40,7 +40,7 @@ use Magento\Framework\View\Result\PageFactory;
  */
 class Index extends Action // implements HttpGetActionInterface
 {
-public    const MENU_ID = 'GumNet_AME::refund_index';
+    public const MENU_ID = 'GumNet_AME::refund_index';
 
     protected $resultPageFactory;
 

@@ -37,18 +37,35 @@ use Magento\Store\Model\ScopeInterface;
 
 class ProductListPlugin
 {
+    /**
+     * @var Template
+     */
     protected $template;
 
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $scopeConfig;
 
+    /**
+     * @param Template $template
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         Template $template,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->template = $template;
         $this->scopeConfig = $scopeConfig;
     }
 
+    /**
+     * @param \Magento\Catalog\Block\Product\ListProduct $subject
+     * @param string $result
+     * @param Product $product
+     * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function afterGetProductPrice(
         \Magento\Catalog\Block\Product\ListProduct $subject,
         string $result,
@@ -63,5 +80,4 @@ class ProductListPlugin
 
         return $result . $html;
     }
-
 }

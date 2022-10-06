@@ -34,10 +34,10 @@ use \Ramsey\Uuid\Uuid;
 
 class API
 {
-public    const URL = "https://ame19gwci.gum.net.br:63333/api";
+    public const URL = "https://ame19gwci.gum.net.br:63333/api";
 // Do not remove the following lines - used for development
-//public    const URL = "https://api.dev.amedigital.com/api";
-//public    const URL = "https://api.hml.amedigital.com/api";
+//    public const URL = "https://api.dev.amedigital.com/api";
+//    public const URL = "https://api.hml.amedigital.com/api";
 
     protected $url;
 

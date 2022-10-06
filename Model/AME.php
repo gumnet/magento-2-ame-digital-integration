@@ -44,13 +44,14 @@ use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
 use Magento\Store\Model\ScopeInterface;
+use GumNet\AME\Values\Config;
 
 /**
  * Pay In Store payment method model
  */
 class AME extends AbstractMethod
 {
-public    const CODE = 'ame';
+    public const CODE = 'ame';
     /**
      * Payment code
      *
@@ -116,8 +117,7 @@ public    const CODE = 'ame';
             $directory
         );
         $this->ame = $api;
-        if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
-            || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
+        if ($scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
             $this->ame = $sensediaAPI;
         }
     }
@@ -128,7 +128,7 @@ public    const CODE = 'ame';
      * @param float $amount
      * @return AME
      */
-    public function order(InfoInterface $payment, $amount)
+    public function order(InfoInterface $payment, $amount): AME
     {
         $order = $payment->getOrder();
         $result = $this->ame->createOrder($order);
@@ -138,22 +138,17 @@ public    const CODE = 'ame';
     }
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
-        if (!$this->scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE)) {
-            return false;
-        }
-        $storeId = $quote ? $quote->getStoreId() : null;
-
-        return $this->getConfigData('active', $storeId) ? true : fale;
+        return (bool)$this->scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE);
     }
 
     /**
      * @param InfoInterface $payment
      * @param float $amount
-     * @return $this|AME
+     * @return AME
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Validator\Exception
      */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount): AME
     {
         if (!$this->canRefund()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
