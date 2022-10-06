@@ -27,37 +27,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Controller\Adminhtml\Capture;
+declare(strict_types=1);
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Action\HttpGetActionInterface;
-use Magento\Framework\View\Result\Page;
-use Magento\Framework\View\Result\PageFactory;
+namespace GumNet\AME\Api;
 
-/**
- * Class Index
- */
-class Index extends Action // implements HttpGetActionInterface
+use GumNet\AME\Api\Data\AmeCallbackInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+
+interface AmeCallbackRepositoryInterface
 {
-public    const MENU_ID = 'GumNet_AME::order_index';
+    /**
+     * Persist AmeConfig to database
+     *
+     * @param AmeCallbackInterface $ameCallback
+     * @throws LocalizedException
+     * @return AmeCallbackInterface
+     */
+    public function save(AmeCallbackInterface $ameCallback): AmeCallbackInterface;
 
-    protected $resultPageFactory;
+    /**
+     * Get AmeConfig through entity id
+     *
+     * @param int $id
+     * @throws NoSuchEntityException
+     * @return AmeCallbackInterface
+     */
+    public function get(int $id): ?AmeCallbackInterface;
 
-    public function __construct(
-        Context $context,
-        PageFactory $resultPageFactory
-    ) {
-
-        parent::__construct($context);
-        $this->resultPageFactory = $resultPageFactory;
-        $this->_isScopePrivate = true;
-    }
-    public function execute()
-    {
-        $resultPage = $this->resultPageFactory->create();
-//        $resultPage->setActiveMenu(static::MENU_ID);
-        $resultPage->getConfig()->getTitle()->prepend(__('AME Order Capture'));
-        return $resultPage;
-    }
+    /**
+     * Get WallAmeConfigetBalance through config
+     *
+     * @param string $config
+     * @throws NoSuchEntityException
+     * @return AmeCallbackInterface
+     */
+    public function getByConfig(string $config): ?AmeCallbackInterface;
 }

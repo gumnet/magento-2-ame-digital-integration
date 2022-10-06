@@ -30,76 +30,6 @@
  -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <tab id="ame_tab" translate="label" sortOrder="400">
-            <label>AME</label>
-        </tab>
-        <section id="ame" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-            <label>Configuração AME</label>
-            <tab>ame_tab</tab>
-            <resource>GumNet_AME::config</resource>
-            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Geral</label>
-                <field id="api_user" translate="label" type="text" sortOrder="10" showInDefault="1">
-                    <label>Client ID</label>
-                    <comment><![CDATA[Client_id pertence a empresa que gerencia o e-commerce ou integração própria.]]></comment>
-                    <validate>required-entry validate-uuid</validate>
-                </field>
-                <field id="api_password" translate="label" type="text" sortOrder="20" showInDefault="1">
-                    <label>Access Token</label>
-                    <comment><![CDATA[Access_token chave fixa utilizada pelos estabelecimento. Cada CNPJ possui seu próprio access_token.]]></comment>
-                    <validate>required-entry validate-uuid</validate>
-                </field>
-                <field id="environment" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Ambiente</label>
-                    <source_model>GumNet\AME\Model\Config\Environment</source_model>
-                </field>
-                <field id="order_status_created" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Status de ordem criada</label>
-                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
-                </field>
-                <field id="order_status_payment_received" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Status de pagamento confirmado</label>
-                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
-                </field>
-            </group>
-            <group id="address" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Definições do Endereço</label>
-                <field id="street" translate="label" type="select" sortOrder="10" showInDefault="1">
-                    <label>Rua</label>
-                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
-                </field>
-                <field id="number" translate="label" type="select" sortOrder="20" showInDefault="1">
-                    <label>Número</label>
-                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
-                </field>
-                <field id="neighborhood" translate="label" type="select" sortOrder="30" showInDefault="1">
-                    <label>Bairro</label>
-                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
-                </field>
-            </group>
-            <group id="exhibition" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Configurações de exibição</label>
-                <field id="show_cashback_products_list" translate="label" type="select" sortOrder="10" showInDefault="1">
-                    <label>Exibir informações de cashback na lista de produtos</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-            </group>
-            <group id="debug" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Debug</label>
-                <field id="debug_log" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Habilitar debug log</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="debug_email_enable" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enviar emails de debug</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="debug_email_addresses" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enviar emails de debug para</label>
-                    <validate>validate-email</validate>
-                </field>
-            </group>
-        </section>
         <section id="payment">
             <group id="ame" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>AME</label>
@@ -125,6 +55,44 @@
                 <field id="sort_order" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="api_user" translate="label" type="text" sortOrder="10" showInDefault="1">
+                    <label>Client ID</label>
+                    <comment><![CDATA[Client_id pertence a empresa que gerencia o e-commerce ou integração própria.]]></comment>
+                    <validate>required-entry validate-uuid</validate>
+                </field>
+                <field id="api_password" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Access Token</label>
+                    <comment><![CDATA[Access_token chave fixa utilizada pelos estabelecimento. Cada CNPJ possui seu próprio access_token.]]></comment>
+                    <validate>required-entry validate-uuid</validate>
+                </field>
+                <field id="environment" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Ambiente</label>
+                    <source_model>GumNet\AME\Model\Config\Environment</source_model>
+                </field>
+                <field id="order_status_created" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Status de ordem criada</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                </field>
+                <field id="order_status_payment_received" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Status de pagamento confirmado</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                </field>
+                <field id="address_street" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Rua</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+                <field id="address_number" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Número</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+                <field id="address_neighborhood" translate="label" type="select" sortOrder="30" showInDefault="1">
+                    <label>Bairro</label>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
+                </field>
+                <field id="show_cashback_products_list" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Exibir informações de cashback na lista de produtos</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
         </section>

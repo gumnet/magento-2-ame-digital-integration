@@ -31,9 +31,9 @@ namespace GumNet\AME\Api\Data;
 
 interface AmeConfigInterface
 {
-    const KEY_ID = 'id';
-    const AME_OPTION = 'ame_option';
-    const AME_VALUE = 'ame_value';
+public    const KEY_ID = 'id';
+public    const AME_OPTION = 'ame_option';
+public    const AME_VALUE = 'ame_value';
 
     /**
      * @return int|null

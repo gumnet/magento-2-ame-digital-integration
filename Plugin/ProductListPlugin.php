@@ -28,19 +28,29 @@
  */
 
 namespace GumNet\AME\Plugin;
-use \Magento\Framework\View\Element\Template;
 
-class ProductListPlugin {
+use Magento\Catalog\Model\Product;
+use Magento\Framework\View\Element\Template;
+
+class ProductListPlugin
+{
+    const LALA = 'ame/exhibition/show_cashback_products_list';
 
     protected $template;
 
-    public function __construct(\Magento\Framework\View\Element\Template $template)
+    protected $scopeConfig;
+
+    public function __construct(Template $template)
     {
         $this->template = $template;
+
     }
 
-    public function afterGetProductPrice($subject, $result, $product)
-    {
+    public function afterGetProductPrice(
+        \Magento\Catalog\Block\Product\ListProduct $subject,
+        string $result,
+        Product $product
+    ): string {
         $html = $this->template->getLayout()->createBlock('GumNet\AME\Block\CashbackText')->setKey($product)
             ->setTemplate('GumNet_AME::cashbacktext.phtml')->toHtml();
 

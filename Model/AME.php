@@ -50,7 +50,7 @@ use Magento\Store\Model\ScopeInterface;
  */
 class AME extends AbstractMethod
 {
-    const CODE = 'ame';
+public    const CODE = 'ame';
     /**
      * Payment code
      *

@@ -40,11 +40,11 @@ interface AmeConfigRepositoryInterface
     /**
      * Persist AmeConfig to database
      *
-     * @param AmeConfigInterface $walletBalance
+     * @param AmeConfigInterface $ameConfig
      * @throws LocalizedException
      * @return AmeConfigInterface
      */
-    public function save(AmeConfigInterface $walletBalance): AmeConfigInterface;
+    public function save(AmeConfigInterface $ameConfig): AmeConfigInterface;
 
     /**
      * Get AmeConfig through entity id

@@ -31,12 +31,12 @@ namespace GumNet\AME\Api\Data;
 
 interface AmeCallbackInterface
 {
-    const KEY_ID = 'entity_id';
-    const CONTENT = 'content';
-    const STATUS = 'status';
-    const RETRIES = 'retries';
-    const CREATED_AT = 'updated_at';
-    const UPDATED_AT = 'updated_at';
+public    const KEY_ID = 'entity_id';
+public    const CONTENT = 'content';
+public    const STATUS = 'status';
+public    const RETRIES = 'retries';
+public    const CREATED_AT = 'updated_at';
+public    const UPDATED_AT = 'updated_at';
 
     /**
      * @return int|null
