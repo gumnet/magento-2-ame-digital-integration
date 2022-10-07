@@ -36,9 +36,11 @@ use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
+use Magento\Framework\Validator\Exception;
 use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
@@ -132,32 +134,32 @@ class AME extends AbstractMethod
     {
         $order = $payment->getOrder();
         $result = $this->ame->createOrder($order);
-        $order->addStatusHistoryComment('AME Order ID: '.$result['id']);
+        $order->addStatusHistoryComment('AME Order ID: ' . $result['id']);
         $order->save();
         return $this;
     }
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null): bool
     {
-        return (bool)$this->scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE);
+        return (bool)$this->_scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE);
     }
 
     /**
      * @param InfoInterface $payment
      * @param float $amount
      * @return AME
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Validator\Exception
+     * @throws LocalizedException
+     * @throws Exception
      */
     public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount): AME
     {
         if (!$this->canRefund()) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
+            throw new LocalizedException(__('The refund action is not available.'));
         }
         try {
             $ameId = $payment->getAdditionalInformation('ame_id');
             $this->ame->refundOrder($ameId, $amount * 100);
         } catch (\Exception $e) {
-            throw new \Magento\Framework\Validator\Exception(__('Payment API refund error.'));
+            throw new Exception(__('Payment API refund error.'));
         }
         return $this;
     }

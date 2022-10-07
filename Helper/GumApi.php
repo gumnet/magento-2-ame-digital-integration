@@ -29,6 +29,8 @@
 
 namespace GumNet\AME\Helper;
 
+use Magento\Store\Model\ScopeInterface;
+
 class GumApi
 {
     protected $_storeManager;
@@ -52,7 +54,7 @@ class GumApi
     public function refundTransaction($ame_transaction_id,$ame_refund_id,$amount)
     {
         $result = $ame_refund_id . "|" . $amount;
-        return $this->gumRequest("refundtransaction",$result,$ame_transaction_id);
+        return $this->gumRequest("refundtransaction", $result, $ame_transaction_id);
     }
     public function queueTransactionError($json)
     {
@@ -64,12 +66,11 @@ class GumApi
         $this->apiGumCallback("/api/ame/transaction/","POST",$json);
     }
 
-    public function captureTransaction($ame_transaction_id,$ame_order_id,$amount)
-    {
+    public function captureTransaction($ame_transaction_id,$ame_order_id,$amount){
         $result = $ame_transaction_id . "|".$amount;
         return $this->gumRequest("capturetransaction",$result,$ame_order_id);
     }
-    public function createOrder($input,$result)
+    public function createOrder($input,$result): bool
     {
         $input_array = json_decode($input,true);
         $input1['amount'] = $input_array['amount'];
@@ -88,16 +89,16 @@ class GumApi
 
         $json_array['environment'] = $this->getEnvironment();
         $json_array['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
-        $json_array['username'] = $this->_scopeConfig->getValue('ame/general/api_user', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $json_array['password'] = $this->_scopeConfig->getValue('ame/general/api_password', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $json_array['username'] = $this->_scopeConfig->getValue('ame/general/api_user', ScopeInterface::SCOPE_STORE);
+        $json_array['password'] = $this->_scopeConfig->getValue('ame/general/api_password', ScopeInterface::SCOPE_STORE);
         $json_array['magentoversion'] = $this->productMetadata->getVersion();
         $json_array['moduleversion'] = $this->moduleList->getOne('GumNet_AME')['setup_version'];
 
-        if (!$this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
-            ||$this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
+        $json_array['api'] = "ame";
+        if (!$this->_scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
+            ||$this->_scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $json_array['api'] = "sensedia";
         }
-        else $json_array['api'] = "ame";
 
         $json_array['callback'] = $json;
         $json_array['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";
@@ -113,7 +114,9 @@ class GumApi
         curl_close($ch);
         return $re;
     }
-    public function gumRequest($action,$result,$input=""){
+
+    public function gumRequest(string $action, string $result, string $input=""): bool
+    {
         $ch = curl_init();
         $environment = $this->getEnvironment();
         $post['environment'] = $environment;
@@ -129,27 +132,17 @@ class GumApi
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-        $re = curl_exec($ch);
-        $http_code = curl_getinfo ($ch, CURLINFO_HTTP_CODE );
+        curl_exec($ch);
+        $http_code = curl_getinfo ($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        if($http_code=="200") {
+        if ($http_code == "200") {
             return true;
         }
-        else{
-            return false;
-        }
+        return false;
     }
-    public function getEnvironment(){
-//        $environment = "";
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 0) {
-//            $environment = "dev";
-//        }
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
-//            $environment = "hml";
-//        }
-//        if ($this->_scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 2) {
-//            $environment = "prod";
-//        }
+
+    public function getEnvironment()
+    {
         return "prod";
     }
 }

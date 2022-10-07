@@ -71,6 +71,7 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $this->storeManager = $storeManager;
         parent::__construct($context);
     }
+
     public function execute()
     {
         $json = $this->request->getContent();
@@ -112,6 +113,14 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $order->setState('processing')->setStatus('processing');
         $order->save();
     }
+
+    public function setTransaction(
+        \Magento\Sales\Api\Data\OrderInterface $order,
+        string $transactionId
+    ) {
+        $order->getPayment()->getAdditionalInformation();
+    }
+
     public function isJson($string) {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);

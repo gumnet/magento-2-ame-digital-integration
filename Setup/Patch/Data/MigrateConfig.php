@@ -28,9 +28,9 @@ class MigrateConfig implements DataPatchInterface
      */
     public function apply()
     {
-        $table = $this->connection->getTableName(Config::TABLE_CORE_DATA);
+          $table = $this->connection->getTableName(Config::TABLE_CORE_DATA);
         foreach ($this->getConfigArray() as $config) {
-            $this->updateConfig($table, $config['old'], $config['new']);
+              $this->updateConfig($table, $config['old'], $config['new']);
         }
     }
 

@@ -186,10 +186,7 @@ class SensediaAPI
         }
         return $result;
     }
-    public function captureOrder($ame_id)
-    {
-        die("capture must be made from gum api");
-    }
+
     public function createOrder($order): array
     {
         $url = $this->url . "/ordens";

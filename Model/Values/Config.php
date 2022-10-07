@@ -1,6 +1,6 @@
 <?php
 
-namespace GumNet\AME\Values;
+namespace GumNet\AME\Model\Values;
 
 class Config
 {

@@ -45,13 +45,6 @@ class AmeCallback extends AbstractExtensibleModel implements AmeCallbackInterfac
     /**
      * @inheritDoc
      */
-    public function setId(int $id): AmeCallback
-    {
-        return $this->setData(self::KEY_ID, $id);
-    }
-    /**
-     * @inheritDoc
-     */
     public function getContent(): ?string
     {
         return $this->getData(self::CONTENT);

@@ -30,7 +30,10 @@
 namespace GumNet\AME\Helper;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\ScopeInterface;
 use \Ramsey\Uuid\Uuid;
+use GumNet\AME\Model\Values\Config;
+use GumNet\AME\Model\Values\PaymentInformation;
 
 class API
 {
@@ -42,8 +45,6 @@ class API
     protected $url;
 
     protected $mlogger;
-
-    protected $connection;
 
     protected $scopeConfig;
 
@@ -57,7 +58,6 @@ class API
 
     public function __construct(
         \Psr\Log\LoggerInterface $mlogger,
-        \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \GumNet\AME\Helper\DbAME $dbAME,
@@ -65,7 +65,6 @@ class API
         \GumNet\AME\Api\AmeConfigRepositoryInterface $ameConfigRepository
     ) {
         $this->mlogger = $mlogger;
-        $this->connection = $resource->getConnection();
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
         $this->dbAME = $dbAME;
@@ -194,13 +193,13 @@ class API
         }
         return $result;
     }
-    public function captureOrder(string $ame_id)
+    public function captureOrder(string $ame_id): ?array
     {
         $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
         $url = self::URL . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url)) {
-            return false;
+            return null;
         }
         return json_decode($result, true);
     }
@@ -229,17 +228,17 @@ class API
             }
             $array_items['description'] = $item->getName() . " - SKU " . $item->getSku();
             $array_items['quantity'] = (int)$item->getQtyOrdered();
-            $array_items['amount'] = (int)($item->getRowTotal() - $item->getDiscountAmount()) * 100;
+            $array_items['amount'] = (int)(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
             $total_discount = $total_discount + abs($item->getDiscountAmount());
-            array_push($json_array['attributes']['items'], $array_items);
+            $json_array['attributes']['items'][] = $array_items;
         }
 
         $json_array['attributes']['customPayload']['ShippingValue'] = (int)$order->getShippingAmount() * 100;
         $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
 
         $number_line = $this->scopeConfig->getValue(
-            'ame/address/number',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            Config::ADDRESS_NUMBER,
+            ScopeInterface::SCOPE_STORE
         );
         $json_array['attributes']['customPayload']['shippingAddress']['number'] =
             $order->getShippingAddress()->getStreet()[$number_line];
@@ -247,8 +246,8 @@ class API
         $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
 
         $street_line = $this->scopeConfig->getValue(
-            'ame/address/street',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            Config::ADDRESS_STREET,
+            ScopeInterface::SCOPE_STORE
         );
         $json_array['attributes']['customPayload']['shippingAddress']['street'] =
             $order->getShippingAddress()->getStreet()[$street_line];
@@ -257,8 +256,8 @@ class API
             $order->getShippingAddress()->getPostcode();
 
         $neighborhood_line = $this->scopeConfig->getValue(
-            'ame/address/neighborhood',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            Config::ADDRESS_NEIGHBORHOOD,
+            ScopeInterface::SCOPE_STORE
         );
         $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] =
             $order->getShippingAddress()->getStreet()[$neighborhood_line];
@@ -283,7 +282,13 @@ class API
         $this->gumapi->createOrder($json, $result);
         $result_array = json_decode($result, true);
 
-        $this->dbAME->insertOrder($order, $result_array);
+        $payment = $order->getPayment();
+        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $result_array['id']);
+        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $result_array['amount']);
+        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $result_array['qrCodeLink']);
+        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $result_array['deepLink']);
+        $payment->save();
+
         return $result;
     }
 
@@ -292,22 +297,22 @@ class API
      * @param array $result_array
      * @return void
      */
-    public function setAdditionalData($order, array $result_array)
+    public function setAdditionalInformation(
+        \Magento\Sales\Api\Data\OrderInterface $order,
+        array $result_array): void
     {
+        $payment = $order->getPayment();
+        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $result_array['id']);
+        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $result_array['amount']);
+        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $result_array['qrCodeLink']);
+        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $result_array['deepLink']);
         $cashbackAmountValue = 0;
         if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
-            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+            $payment->setAdditionalInformation(
+                PaymentInformation::CASHBACK_VALUE,
+                $result_array['attributes']['cashbackAmountValue']
+            );
         }
-        /** @var \Magento\Sales\Model\Order $order */
-        $payment = $order->getPayment();
-        $additionalData = $payment->getAdditionalInformation();
-        $additionalData['ame_id'] = $result_array['id'];
-        $additionalData['amount'] = $result_array['amount'];
-        $additionalData['cashback_amount'] = $cashbackAmountValue;
-        $additionalData['qr_code_link'] = $result_array['qrCodeLink'];
-        $additionalData['deep_link'] = $result_array['deepLink'];
-        $payment->setAdditionalInformation($additionalData);
-        $payment->save();
     }
 
     /**
@@ -338,7 +343,7 @@ class API
 
     public function getStoreName(): string
     {
-        return $this->scopeConfig->getValue('ame/general/store_name', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfig->getValue('ame/general/store_name', ScopeInterface::SCOPE_STORE);
     }
 
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
@@ -368,10 +373,8 @@ class API
 
     public function getTokenFromDb(): string
     {
-        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_expires'";
-        $ameConfig = $this->ameConfigRepository->getByConfig('token_expires');
-        $token_expires = (int)$ameConfig->getValue();
-        $sql = "SELECT ame_value FROM ame_config WHERE ame_option = 'token_value'";
+        $config = $this->ameConfigRepository->getByConfig('token_expires');
+        $token_expires = (int)$config->getValue();
         if (time() + 600 < $token_expires) {
             $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
             return $ameConfig->getValue();
@@ -379,7 +382,7 @@ class API
         return "";
     }
 
-    public function getToken()
+    public function getToken(): string
     {
         // check if existing token will be expired within 10 minutes
         if ($token = $this->getTokenFromDb()) {
@@ -388,11 +391,11 @@ class API
         // get user & pass from core_config_data
         $username = $this->scopeConfig->getValue(
             'ame/general/api_user',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE
         );
         $password = $this->scopeConfig->getValue(
             'ame/general/api_password',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE
         );
         if (!$username || !$password) {
             $this->mlogger->info("AME user/pass not set.");
@@ -441,7 +444,7 @@ class API
         return $result_array['access_token'];
     }
 
-    public function storeToken(string $token, int $expires_in)
+    public function storeToken(string $token, int $expires_in): void
     {
         $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
         $ameConfig->setValue($token);

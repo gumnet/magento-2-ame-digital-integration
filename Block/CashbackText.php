@@ -29,55 +29,50 @@
 
 namespace GumNet\AME\Block;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use GumNet\AME\Helper\API;
+use GumNet\AME\Helper\SensediaAPI;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\Registry;
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\ScopeInterface;
 
-class CashbackText extends \Magento\Framework\View\Element\Template
+class CashbackText extends Template
 {
     /**
-     * @var ScopeConfigInterface
-     */
-    protected $scopeConfig;
-    /**
-     * @var \Magento\Catalog\Helper\Data
-     */
-    protected $helper;
-    /**
-     * @var \Magento\Framework\Registry
+     * @var Registry
      */
     protected $registry;
+
     /**
-     * @var \GumNet\AME\Helper\SensediaAPI
+     * @var SensediaAPI
      */
     protected $api;
+
     /**
-     * @var \Magento\Framework\App\Request\Http
+     * @var Http
      */
     protected $request;
 
     /**
      * CashbackText constructor.
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param ScopeConfigInterface $scopeConfig
-     * @param \Magento\Catalog\Helper\Data $helper
-     * @param \Magento\Framework\Registry $registry
-     * @param \GumNet\AME\Helper\API $_api
-     * @param \GumNet\AME\Helper\SensediaAPI $sensediaAPI
-     * @param \Magento\Framework\App\Request\Http $request
+     * @param Context $context
+     * @param Registry $registry
+     * @param API $_api
+     * @param SensediaAPI $sensediaAPI
+     * @param Http $request
      */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        ScopeConfigInterface $scopeConfig,
-        \Magento\Catalog\Helper\Data $helper,
-        \Magento\Framework\Registry $registry,
-        \GumNet\AME\Helper\API $api,
-        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
-        \Magento\Framework\App\Request\Http $request
+        Context $context,
+        Registry $registry,
+        API $api,
+        SensediaAPI $sensediaAPI,
+        Http $request
     ) {
         $this->scopeConfig = $scopeConfig;
-        $this->helper = $helper;
         $this->registry = $registry;
         $this->api = $api;
+
         if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
             || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $this->api = $sensediaAPI;
@@ -91,13 +86,10 @@ class CashbackText extends \Magento\Framework\View\Element\Template
      */
     public function isShowCashbackProductsListEnabled(): bool
     {
-        return (bool)$this->scopeConfig
+        return (bool)$this->_scopeConfig
             ->getValue("ame/exhibition/show_cashback_products_list", ScopeInterface::SCOPE_STORE);
     }
 
-    /**
-     * @return false|float|int|string
-     */
     public function getCashbackPercent()
     {
         return $this->api->getCashbackPercent();

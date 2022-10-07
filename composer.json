@@ -6,7 +6,8 @@
   "require": {
     "php": ">=7.0.0",
     "ramsey/uuid": ">=3.0.0",
-    "magento/framework": ">=102.0"
+    "magento/framework": ">=102.0",
+    "ext-json": "*"
   },
   "type": "magento2-module",
   "license": [
@@ -28,5 +29,4 @@
       "GumNet\\AME\\": ""
     }
   }
-
 }
