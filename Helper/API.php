@@ -299,8 +299,8 @@ class API
      */
     public function setAdditionalInformation(
         \Magento\Sales\Api\Data\OrderInterface $order,
-        array $result_array): void
-    {
+        array $result_array
+    ): void {
         $payment = $order->getPayment();
         $payment->setAdditionalInformation(PaymentInformation::AME_ID, $result_array['id']);
         $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $result_array['amount']);

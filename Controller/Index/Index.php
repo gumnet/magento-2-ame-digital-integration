@@ -29,34 +29,77 @@
 
 namespace GumNet\AME\Controller\Index;
 
-use \Magento\Framework\App\CsrfAwareActionInterface;
-use \Magento\Framework\App\RequestInterface;
-use \Magento\Framework\App\Request\InvalidRequestException;
+use GumNet\AME\Helper\GumApi;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\NotFoundException;
+use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 
-class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
+class Index extends Action implements CsrfAwareActionInterface
 {
+    /**
+     * @var Context
+     */
     protected $context;
-    protected $request;
-    protected $scopeConfig;
-    protected $orderRepository;
-    protected $resultFactory;
-    protected $dbAME;
-    protected $invoiceService;
-    protected $transactionFactory;
-    protected $gumApi;
-    protected $storeManager;
 
+    /**
+     * @var RequestInterface
+     */
+    protected $request;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var RawFactory
+     */
+    protected $resultFactory;
+
+    /**
+     * @var CollectionFactory
+     */
+    protected $orderCollectionFactory;
+
+    /**
+     * @var GumApi
+     */
+    protected $gumApi;
+
+    /**
+     * @param Context $context
+     * @param RequestInterface $request
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepository $orderRepository
+     * @param RawFactory $resultFactory
+     * @param CollectionFactory $orderCollectionFactory
+     * @param GumApi $gumApi
+     * @param array $data
+     */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\App\RequestInterface $request,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Sales\Model\OrderRepository $orderRepository,
-        \Magento\Framework\Controller\Result\RawFactory $resultFactory,
-        \GumNet\AME\Helper\DbAME $dbAME,
-        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-        \Magento\Framework\DB\TransactionFactory $transactionFactory,
-        \GumNet\AME\Helper\GumApi $gumApi,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        Context $context,
+        RequestInterface $request,
+        ScopeConfigInterface$scopeConfig,
+        OrderRepository $orderRepository,
+        RawFactory  $resultFactory,
+        CollectionFactory $orderCollectionFactory,
+        GumApi $gumApi,
         array $data = []
     ) {
         $this->context = $context;
@@ -64,34 +107,30 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $this->scopeConfig = $scopeConfig;
         $this->orderRepository = $orderRepository;
         $this->resultFactory = $resultFactory;
-        $this->dbAME = $dbAME;
-        $this->invoiceService = $invoiceService;
-        $this->transactionFactory = $transactionFactory;
+        $this->orderCollectionFactory = $orderCollectionFactory;
         $this->gumApi = $gumApi;
-        $this->storeManager = $storeManager;
         parent::__construct($context);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function execute()
     {
         $json = $this->request->getContent();
-        $this->dbAME->insertCallback($json);
-        if (!$this->isJson($json)){
-            return;
+        if (!$this->isJson($json)) {
+            $message = __('AME Callback - invalid JSON - ' . $json);
+            throw new InputException($message);
         }
         $input = json_decode($json, true);
         // verify if id exists
-        if (!array_key_exists('id', $input)) {
-            return;
+        if (!array_key_exists('id', $input)
+            || !array_key_exists('attributes', $input)) {
+            $message = __('AME Callback - JSON missing keys- ' . $json);
+            throw new InputException($message);
         }
-        $ame_order_id = $input['attributes']['orderId'];
-        $incrId = $this->dbAME->getOrderIncrementId($ame_order_id);
-        if (!$incrId) {
-            return;
-        }
-        if ($input['status']=="AUTHORIZED") {
-            $this->dbAME->insertTransaction($input);
-            $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_order_id);
+        if ($input['status'] == "AUTHORIZED") {
+            $this->setTransactionId($input['attributes']['orderId'], $input['id']);
             $this->gumApi->queueTransaction($json);
         } else {
             $this->gumApi->queueTransactionError($json);
@@ -99,32 +138,42 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
         $result = $this->resultFactory->create();
         return $result->setContents('');
     }
-    public function cancelOrder($order){
-        $order->cancel()->save();
-    }
-    public function invoiceOrder($order){
-        $invoice = $this->invoiceService->prepareInvoice($order);
-        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-        $invoice->register();
-        $transaction = $this->transactionFactory->create()
-            ->addObject($invoice)
-            ->addObject($invoice->getOrder());
-        $transaction->save();
-        $order->setState('processing')->setStatus('processing');
-        $order->save();
+
+    /**
+     * @param string $ameOrderId
+     * @param string $ameTransactionId
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws NoSuchEntityException
+     * @throws NotFoundException
+     */
+    public function setTransactionId(string $ameOrderId, string $ameTransactionId)
+    {
+        $orderCollection = $this->orderCollectionFactory->create();
+        $where = "JSON_EXTRACT(additional_information, '$." . PaymentInformation::AME_ID. ") = " . $ameOrderId;
+        $orderCollection->getSelect('additional_filter')->where($where);
+        if (!$orderCollection->count()) {
+            $message = __("AME Callback - Order with ID '" . $ameOrderId . "' not found.");
+            throw new \Magento\Framework\Exception\NotFoundException($message);
+        }
+        /** @var \Magento\Sales\Model\Order $order */
+        $order = $orderCollection->getFirstItem();
+        $payment = $order->getPayment();
+        $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
+        $this->orderRepository->save($order);
     }
 
-    public function setTransaction(
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        string $transactionId
-    ) {
-        $order->getPayment()->getAdditionalInformation();
-    }
-
-    public function isJson($string) {
+    /**
+     * @param $string
+     * @return bool
+     */
+    public function isJson($string): bool
+    {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
     }
+
     /**
      * @inheritDoc
      */
@@ -141,8 +190,12 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     {
         return true;
     }
-    public function getCallbackUrl()
+
+    /**
+     * @return string
+     */
+    public function getCallbackUrl(): string
     {
-        return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
+        return $this->context->getUrl()->getBaseUrl() . 'm2amecallbackendpoint';
     }
 }
