@@ -154,7 +154,6 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_mlogger->log("INFO", "Order ID: ".$orderId);
         $order = $this->_orderRepository->get($orderId);
         $this->_mlogger->log("INFO", "AME Callback invoicing Magento order ".$incrId);
-        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(), "AME ID: ".$ame_order_id);
         $this->_mlogger->log("INFO", "AME Callback capturing...");
         $capture = $this->_api->captureOrder($ame_order_id);
         if (!$capture) {

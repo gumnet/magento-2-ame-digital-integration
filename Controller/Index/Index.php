@@ -82,6 +82,8 @@ class Index extends Action implements CsrfAwareActionInterface
      */
     protected $gumApi;
 
+    protected $api;
+
     /**
      * @param Context $context
      * @param RequestInterface $request
@@ -100,6 +102,7 @@ class Index extends Action implements CsrfAwareActionInterface
         RawFactory  $resultFactory,
         CollectionFactory $orderCollectionFactory,
         GumApi $gumApi,
+        \GumNet\AME\Helper\API $api,
         array $data = []
     ) {
         $this->context = $context;
@@ -109,6 +112,7 @@ class Index extends Action implements CsrfAwareActionInterface
         $this->resultFactory = $resultFactory;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->gumApi = $gumApi;
+        $this->api = $api;
         parent::__construct($context);
     }
 
@@ -118,7 +122,7 @@ class Index extends Action implements CsrfAwareActionInterface
     public function execute()
     {
         $json = $this->request->getContent();
-        if (!$this->isJson($json)) {
+        if (!$this->api->isJson($json)) {
             $message = __('AME Callback - invalid JSON - ' . $json);
             throw new InputException($message);
         }
@@ -162,16 +166,6 @@ class Index extends Action implements CsrfAwareActionInterface
         $payment = $order->getPayment();
         $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
         $this->orderRepository->save($order);
-    }
-
-    /**
-     * @param $string
-     * @return bool
-     */
-    public function isJson($string): bool
-    {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
     }
 
     /**

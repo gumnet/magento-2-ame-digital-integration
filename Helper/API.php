@@ -37,12 +37,11 @@ use GumNet\AME\Model\Values\PaymentInformation;
 
 class API
 {
-    public const URL = "https://ame19gwci.gum.net.br:63333/api";
 // Do not remove the following lines - used for development
-//    public const URL = "https://api.dev.amedigital.com/api";
-//    public const URL = "https://api.hml.amedigital.com/api";
+//    protected = "https://api.dev.amedigital.com/api";
+//    protected = "https://api.hml.amedigital.com/api";
 
-    protected $url;
+    protected $url = "https://ame19gwci.gum.net.br:63333/api";
 
     protected $mlogger;
 
@@ -55,6 +54,8 @@ class API
     protected $gumapi;
 
     protected $ameConfigRepository;
+
+    protected $curl;
 
     public function __construct(
         \Psr\Log\LoggerInterface $mlogger,
@@ -93,7 +94,7 @@ class API
      */
     public function generateCashbackFromOrder(): float
     {
-        $url = self::URL . "/orders";
+        $url = $this->url . "/orders";
         $pedido = rand(1000, 1000000);
         $json_array['title'] = "Pedido " . $pedido;
         $json_array['description'] = "Pedido " . $pedido;
@@ -153,7 +154,7 @@ class API
             $refund_id = Uuid::uuid4()->toString();
         }
         $this->mlogger->info("AME REFUND ID:" . $refund_id);
-        $url = self::URL . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
+        $url = $this->url . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
 
         $json_array['amount'] = $amount;
         $json = json_encode($json_array);
@@ -176,7 +177,7 @@ class API
         if (!$transaction_id) {
             return false;
         }
-        $url = self::URL . "/wallet/user/payments/" . $transaction_id . "/cancel";
+        $url = $this->url . "/wallet/user/payments/" . $transaction_id . "/cancel";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url, "")) {
             return false;
@@ -186,7 +187,7 @@ class API
 
     public function consultOrder(string $ame_id): string
     {
-        $url = self::URL . "/orders/" . $ame_id;
+        $url = $this->url . "/orders/" . $ame_id;
         $result = $this->ameRequest($url, "GET", "");
         if ($this->hasError($result, $url)) {
             return "";
@@ -196,7 +197,7 @@ class API
     public function captureOrder(string $ame_id): ?array
     {
         $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        $url = self::URL . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
+        $url = $this->url . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url)) {
             return null;
@@ -208,7 +209,7 @@ class API
     {
         /** @var \Magento\Sales\Model\Order $order */
         $this->mlogger->info("Create AME Order");
-        $url = self::URL . "/orders";
+        $url = $this->url . "/orders";
 
         $shippingAmount = $order->getShippingAmount();
         $amount = (int)$order->getGrandTotal() * 100;
@@ -319,13 +320,16 @@ class API
      * @return string
      * @throws NoSuchEntityException
      */
-    public function getCallbackUrl()
+    public function getCallbackUrl(): string
     {
         return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
 
     public function hasError(string $result, string $url, string $input = ""): bool
     {
+        if (!$this->isJson($result)) {
+            return false;
+        }
         $result_array = json_decode($result, true);
         if (is_array($result_array)) {
             if (array_key_exists("error", $result_array)) {
@@ -339,6 +343,15 @@ class API
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    public function isJson(string $string): bool {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 
     public function getStoreName(): string
@@ -401,7 +414,7 @@ class API
             $this->mlogger->info("AME user/pass not set.");
             return "";
         }
-        $url = self::URL . "/auth/oauth/token";
+        $url = $this->url . "/auth/oauth/token";
         $ch = curl_init();
         $post = "grant_type=client_credentials";
         curl_setopt($ch, CURLOPT_URL, $url);
