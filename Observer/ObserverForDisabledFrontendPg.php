@@ -29,30 +29,30 @@
 
 namespace GumNet\AME\Observer;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\App\Request\DataPersistorInterface;
-use Magento\Framework\App\ObjectManager;
+use GumNet\AME\Model\Values\Config;
 
 class ObserverForDisabledFrontendPg implements ObserverInterface
 {
     protected $scopeConfig;
 
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    )
-    {
+        ScopeConfigInterface $scopeConfig
+    ) {
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer): void
     {
         $result = $observer->getEvent()->getResult();
-        $method_instance = $observer->getEvent()->getMethodInstance();
-        if ($method_instance->getCode() === 'ame' && $this->scopeConfig->get('payment/ame/active')===0) {
+        $methodInstance = $observer->getEvent()->getMethodInstance();
+        if ($methodInstance->getCode() === 'ame' && $this->scopeConfig->get(Config::ENABLED) === 0) {
             $result->setData('is_available', false);
         }
     }
-    protected function getDisableAreas()
+    protected function getDisableAreas(): array
     {
         return [];
     }

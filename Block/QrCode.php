@@ -26,37 +26,68 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-//SELECT * FROM sales_order_payment WHERE JSON_EXTRACT(additional_information, '$.method_title') = 'AME';
 namespace GumNet\AME\Block;
 
-class QrCode extends \Magento\Checkout\Block\Onepage\Success
+use GumNet\AME\Model\Values\Config;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Checkout\Block\Onepage\Success;
+use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\App\Http\Context as ContextAlias;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Sales\Model\Order;
+use Magento\Checkout\Model\Session as CheckoutSession;
+
+class QrCode extends Success
 {
+    /**
+     * @var CheckoutSession
+     */
     protected $checkoutSession;
 
+    /**
+     * @var CustomerSession
+     */
     protected $customerSession;
 
+    /**
+     * @param Context $context
+     * @param CheckoutSession $checkoutSession
+     * @param CustomerSession $customerSession
+     * @param Config $orderConfig
+     * @param ContextAlias $httpContext
+     */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Customer\Model\Session $customerSession,
-        \Magento\Sales\Model\Order\Config $orderConfig,
-        \Magento\Framework\App\Http\Context $httpContext
+        Context $context,
+        CheckoutSession $checkoutSession,
+        CustomerSession $customerSession,
+        Config $orderConfig,
+        ContextAlias $httpContext
     ) {
         parent::__construct($context, $checkoutSession, $orderConfig, $httpContext);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
     }
+
+    /**
+     * @return float
+     */
     public function getCashbackValue(): float
     {
         return (float)$this->getOrder()->getPayment()->getAdditionalInformation('cashback_amount') * 0.01;
     }
 
+    /**
+     * @return float
+     */
     public function getPrice(): float
     {
         return $this->getOrder()->getGrandTotal();
     }
 
-    public function getOrder(): \Magento\Sales\Model\Order
+    /**
+     * @return Order
+     */
+    public function getOrder(): Order
     {
         return $this->checkoutSession->getLastRealOrder();
     }
@@ -69,16 +100,25 @@ class QrCode extends \Magento\Checkout\Block\Onepage\Success
         return $this->customerSession->getCustomer()->getId();
     }
 
+    /**
+     * @return string
+     */
     public function getDeepLink(): string
     {
-        return $this->getOrder()->getPayment()->getAdditionalInformation('deep_link');
+        return $this->getOrder()->getPayment()->getAdditionalInformation(PaymentInformation::DEEP_LINK);
     }
 
+    /**
+     * @return string
+     */
     public function getQrCodeLink(): string
     {
-        return $this->getOrder()->getPayment()->getAdditionalInformation('qr_code_link');
+        return $this->getOrder()->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
     }
 
+    /**
+     * @return string
+     */
     public function getPaymentMethod(): string
     {
         return $this->getOrder()->getPayment()->getMethod();

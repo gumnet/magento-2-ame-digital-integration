@@ -29,44 +29,56 @@
 
 namespace GumNet\AME\Observer;
 
-use GumNet\AME\Helper\SensediaAPI;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Sales\Model\Order;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Store\Model\ScopeInterface;
+use GumNet\AME\Model\Values\Config;
 
 class OrderCreate implements ObserverInterface
 {
-    protected $_ame;
-    protected $_order;
+    /**
+     * @var OrderInterface
+     */
+    protected $order;
 
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @param OrderInterface $order
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
-        \GumNet\AME\Helper\API $api,
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    )
-    {
-        $this->_ame = $api;
-        if ($scopeConfig->getValue('ame/general/environment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 3) {
-            $this->_ame = $sensediaAPI;
-        }
-        $this->_order = $order;
+        OrderInterface $order,
+        ScopeConfigInterface $scopeConfig
+    ) {
+        $this->order = $order;
+        $this->scopeConfig = $scopeConfig;
     }
-    public function execute(\Magento\Framework\Event\Observer $observer)
+
+    /**
+     * @param Observer $observer
+     * @return void
+     */
+    public function execute(Observer $observer): void
     {
         $order = $observer->getEvent()->getOrder();
         //  Magento 2.2.* compatibility
         if (!$order) {
             $orderids = $observer->getEvent()->getOrderIds();
             foreach ($orderids as $orderid) {
-                $order = $this->_order->load($orderid);
+                $order = $this->order->load($orderid);
             }
         }
         $payment = $order->getPayment();
         $method = $payment->getMethod();
         if($method=="ame") {
-            $order->setState('new')->setStatus('pending');
-            $order->save();
-            $result = $this->_ame->createOrder($order);
+            $pendingStatus = $this->scopeConfig->getValue(Config::STATUS_CREATED, ScopeInterface::SCOPE_STORE);
+            $order->setState('new')->setStatus($pendingStatus);
             $order->save();
         }
     }

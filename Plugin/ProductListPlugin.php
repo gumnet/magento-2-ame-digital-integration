@@ -29,7 +29,10 @@
 
 namespace GumNet\AME\Plugin;
 
+use GumNet\AME\Block\CashbackText;
+use Magento\Catalog\Block\Product\ListProduct;
 use Magento\Catalog\Model\Product;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Element\Template;
 use GumNet\AME\Values\Config;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -60,21 +63,21 @@ class ProductListPlugin
     }
 
     /**
-     * @param \Magento\Catalog\Block\Product\ListProduct $subject
+     * @param ListProduct $subject
      * @param string $result
      * @param Product $product
      * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
     public function afterGetProductPrice(
-        \Magento\Catalog\Block\Product\ListProduct $subject,
+        ListProduct $subject,
         string $result,
         Product $product
     ): string {
         if (!$this->scopeConfig->getValue(Config::EXHIBITION_LIST, ScopeInterface::SCOPE_STORE)) {
             return $result;
         }
-        $html = $this->template->getLayout()->createBlock('GumNet\AME\Block\CashbackText')->setKey($product)
+        $html = $this->template->getLayout()->createBlock(CashbackText::class)->setKey($product)
             ->setName('cashback_list')
             ->setTemplate('GumNet_AME::cashbacktext.phtml')->toHtml();
 

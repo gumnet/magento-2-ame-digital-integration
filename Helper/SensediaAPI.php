@@ -31,95 +31,14 @@ namespace GumNet\AME\Helper;
 
 use \Ramsey\Uuid\Uuid;
 
-class SensediaAPI
+class SensediaAPI extends API
 {
-    public $url;
-    protected $logger;
-    protected $mlogger;
-    protected $connection;
-    protected $scopeConfig;
-    protected $storeManager;
-    protected $dbAME;
-    protected $email;
-    protected $gumapi;
-    protected $invalidProxies;
+    protected $url = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
 
-    public function __construct(
-        \GumNet\AME\Helper\LoggerAME $logger,
-        \Psr\Log\LoggerInterface $mlogger,
-        \Magento\Framework\App\ResourceConnection $resource,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \GumNet\AME\Helper\DbAME $dbAME,
-        \GumNet\AME\Helper\MailerAME $email,
-        \GumNet\AME\Helper\GumApi $gumApi,
-        \GumNet\AME\Helper\Mlogger $nmlogger
-    ) {
-        $this->logger = $logger;
-        $this->mlogger = $mlogger;
-        $this->connection = $resource->getConnection();
-        $this->scopeConfig = $scopeConfig;
-        $this->storeManager = $storeManager;
-        $this->dbAME = $dbAME;
+    protected $urlOrders = "ordens";
 
-        $this->url = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
+    protected $urlPayments = "pagamentos";
 
-        $this->email = $email;
-        $this->gumapi = $gumApi;
-        $this->invalidProxies = [];
-    }
-
-    public function getCashBackPercent(): float
-    {
-        $cashback_updated_at = $this->dbAME->getCashbackUpdatedAt();
-        if (time() < (int)$cashback_updated_at + 3600) {
-            return (float) $this->dbAME->getCashbackPercent();
-        }
-        return $this->generateCashbackFromOrder();
-    }
-
-    public function generateCashbackFromOrder(): float
-    {
-        $url = $this->url . "/ordens";
-        $pedido = rand(1000, 1000000);
-        $json_array['title'] = "Pedido " . $pedido;
-        $json_array['description'] = "Pedido " . $pedido;
-        $json_array['amount'] = 10000;
-        $json_array['currency'] = "BRL";
-        $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
-        $json_array['attributes']['items'] = [];
-
-        $array_items['description'] = "Produto - SKU " . "38271686";
-        $array_items['quantity'] = 1;
-        $array_items['amount'] = 9800;
-        array_push($json_array['attributes']['items'], $array_items);
-        $json_array['attributes']['customPayload']['ShippingValue'] = 200;
-        $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] = "234";
-        $json_array['attributes']['customPayload']['shippingAddress']['city'] = "Niteroi";
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] = "Rua Presidente Backer";
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = "24220-041";
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = "Icarai";
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] = "RJ";
-        $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
-        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
-        $json_array['attributes']['paymentOnce'] = true;
-        $json_array['attributes']['riskHubProvider'] = "SYNC";
-        $json_array['attributes']['origin'] = "ECOMMERCE";
-        $json = json_encode($json_array);
-        $result = $this->ameRequest($url, "POST", $json);
-        $result_array = json_decode($result, true);
-        if ($this->hasError($result, $url, $json)) {
-            return 0;
-        }
-        $cashbackAmountValue = 0;
-        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
-            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
-        }
-        $cashback_percent = $cashbackAmountValue/100;
-        $this->dbAME->setCashbackPercent($cashback_percent);
-        return (float)$cashback_percent;
-    }
     public function refundOrder($ame_id, $amount)
     {
         $this->mlogger->info("AME REFUND ORDER:" . $ame_id);
@@ -177,133 +96,6 @@ class SensediaAPI
         return true;
     }
 
-    public function consultOrder(string $ame_id): string
-    {
-        $url = $this->url . "/orders/" . $ame_id;
-        $result = $this->ameRequest($url, "GET", "");
-        if ($this->hasError($result, $url)) {
-            return false;
-        }
-        return $result;
-    }
-
-    public function createOrder($order): array
-    {
-        $url = $this->url . "/ordens";
-
-        $shippingAmount = $order->getShippingAmount();
-        $productsAmount = $order->getGrandTotal() - $shippingAmount;
-        $amount = intval($order->getGrandTotal() * 100);
-
-        $json_array['title'] = "Pedido " . $order->getIncrementId();
-        $json_array['description'] = "Pedido " . $order->getIncrementId();
-        $json_array['amount'] = $amount;
-        $json_array['currency'] = "BRL";
-        $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
-        $json_array['attributes']['items'] = [];
-
-        $items = $order->getAllItems();
-        $amount = 0;
-        $total_discount = 0;
-        foreach ($items as $item) {
-            if (isset($array_items)) {
-                unset($array_items);
-            }
-            $array_items['description'] = $item->getName() . " - SKU " . $item->getSku();
-            $array_items['quantity'] = intval($item->getQtyOrdered());
-            $array_items['amount'] = intval(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
-            $products_amount = $amount + $array_items['amount'];
-            $total_discount = $total_discount + abs($item->getDiscountAmount());
-            array_push($json_array['attributes']['items'], $array_items);
-        }
-        $json_array['attributes']['customPayload']['ShippingValue'] = intval($order->getShippingAmount() * 100);
-        $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
-
-        $number_line = $this->scopeConfig->getValue(
-            'ame/address/number',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] =
-            $order->getShippingAddress()->getStreet()[$number_line];
-
-        $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
-
-        $street_line = $this->scopeConfig->getValue(
-            'ame/address/street',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] =
-            $order->getShippingAddress()->getStreet()[$street_line];
-
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] =
-            $order->getShippingAddress()->getPostcode();
-
-        $neighborhood_line = $this->scopeConfig->getValue(
-            'ame/address/neighborhood',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] =
-            $order->getShippingAddress()->getStreet()[$neighborhood_line];
-
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] =
-            $this->codigoUF($order->getShippingAddress()->getRegion());
-
-        $json_array['attributes']['customPayload']['billingAddress'] =
-            $json_array['attributes']['customPayload']['shippingAddress'];
-        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
-        $json_array['attributes']['paymentOnce'] = true;
-        $json_array['attributes']['riskHubProvider'] = "SYNC";
-        $json_array['attributes']['origin'] = "ECOMMERCE";
-
-        $json = json_encode($json_array);
-        $result = $this->ameRequest($url, "POST", $json);
-
-        if ($this->hasError($result, $url, $json)) {
-            return false;
-        }
-        $this->gumapi->createOrder($json, $result);
-        $this->logger->log($result, "info", $url, $json);
-        $result_array = json_decode($result, true);
-
-        $this->dbAME->insertOrder($order, $result_array);
-
-        $this->logger->log($result, "info", $url, $json);
-        return $result_array;
-    }
-    public function getCallbackUrl()
-    {
-        return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
-    }
-    public function hasError(string $result, string $url, string $input = ""): bool
-    {
-        $result_array = json_decode($result, true);
-        if (is_array($result_array)) {
-            if (array_key_exists("error", $result_array)) {
-                $this->logger->log($result, "error", $url, $input);
-                $subject = "AME Error";
-                $message = "Result: ".$result."\r\n\r\nurl: ".$url."\r\n\r\n";
-                if ($input) {
-                    $message = $message . "Input: ".$input;
-                }
-                $this->email->sendDebug(
-                    $subject,
-                    $message
-                );
-                return true;
-            }
-        } else {
-            $this->mlogger->info("ameRequest hasError:" . $result);
-            return true;
-        }
-        return false;
-    }
-    public function getStoreName(): string
-    {
-        return $this->scopeConfig->getValue(
-            'ame/general/store_name',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
         $this->mlogger->info("ameRequest starting...");
@@ -341,43 +133,5 @@ class SensediaAPI
         $this->logger->log($result, "info", $url, $json);
         curl_close($ch);
         return $result;
-    }
-    public function codigoUF(string $txt_uf): string
-    {
-        $array_ufs = array("Rondônia" => "RO",
-            "Acre" => "AC",
-            "Amazonas" => "AM",
-            "Roraima" => "RR",
-            "Pará" => "PA",
-            "Amapá" => "AP",
-            "Tocantins" => "TO",
-            "Maranhão" => "MA",
-            "Piauí" => "PI",
-            "Ceará" => "CE",
-            "Rio Grande do Norte" => "RN",
-            "Paraíba" => "PB",
-            "Pernambuco" => "PE",
-            "Alagoas" => "AL",
-            "Sergipe" => "SE",
-            "Bahia" => "BA",
-            "Minas Gerais" => "MG",
-            "Espírito Santo" => "ES",
-            "Rio de Janeiro" => "RJ",
-            "São Paulo" => "SP",
-            "Paraná" => "PR",
-            "Santa Catarina" => "SC",
-            "Rio Grande do Sul (*)" => "RS",
-            "Mato Grosso do Sul" => "MS",
-            "Mato Grosso" => "MT",
-            "Goiás" => "GO",
-            "Distrito Federal" => "DF");
-        $uf = "RJ";
-        foreach ($array_ufs as $key => $value) {
-            if ($key == $txt_uf) {
-                $uf = $value;
-                break;
-            }
-        }
-        return $uf;
     }
 }

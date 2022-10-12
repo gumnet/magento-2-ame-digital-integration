@@ -10,4 +10,5 @@ class PaymentInformation
     public const DEEP_LINK = 'deepLink';
     public const CASHBACK_VALUE = 'cashbackAmountValue';
     public const TRANSACTION_ID = 'transaction_id';
+    public const NSU = "nsu";
 }

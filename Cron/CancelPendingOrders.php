@@ -29,39 +29,45 @@
 
 namespace GumNet\AME\Cron;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Sales\Model\OrderFactory;
+use Magento\Sales\Model\ResourceModel\Order\Collection;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Psr\Log\LoggerInterface;
+
 class CancelPendingOrders
 {
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     protected $logger;
 
     /**
-     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
+     * @var CollectionFactory
      */
     protected $collectionFactory;
 
     /**
-     * @var \Magento\Sales\Model\OrderFactory
+     * @var OrderFactory
      */
     protected $orderFactory;
 
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     protected $scopeConfig;
 
     /**
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory
-     * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param LoggerInterface $logger
+     * @param CollectionFactory $collectionFactory
+     * @param OrderFactory $orderFactory
+     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        LoggerInterface $logger,
+        CollectionFactory $collectionFactory,
+        OrderFactory $orderFactory,
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->logger = $logger;
         $this->collectionFactory = $collectionFactory;
@@ -72,13 +78,13 @@ class CancelPendingOrders
     /**
      * @return void
      */
-    public function execute()
+    public function execute(): void
     {
         $expiresIn = 1;
         if (!$expiresIn) {
             return;
         }
-        $to = date('Y-m-d H:i:s', time()-86400*$expires_in);
+        $to = date('Y-m-d H:i:s', time() - 86400 * $expiresIn);
         $orderCollection = $this->getOrderCollection($to, 'ame');
         $this->cancelOrders($orderCollection);
     }
@@ -86,9 +92,9 @@ class CancelPendingOrders
     /**
      * @param $to
      * @param $method
-     * @return \Magento\Sales\Model\ResourceModel\Order\Collection
+     * @return Collection
      */
-    public function getOrderCollection($to, $method)
+    public function getOrderCollection($to, $method): Collection
     {
         $orderCollection = $this->collectionFactory->create()->addFieldToSelect(['*']);
         $orderCollection->addFieldToFilter('created_at', ['lteq' => $to]);
@@ -108,7 +114,7 @@ class CancelPendingOrders
      * @return void
      * @throws \Exception
      */
-    public function cancelOrders($orderCollection)
+    public function cancelOrders($orderCollection): void
     {
         foreach ($orderCollection as $item) {
             $order = $this->orderFactory->create()->load($item->getId());

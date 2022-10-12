@@ -29,20 +29,22 @@
 
 namespace GumNet\AME\Helper;
 
+use GumNet\AME\Api\AmeConfigRepositoryInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 use \Ramsey\Uuid\Uuid;
 use GumNet\AME\Model\Values\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 
 class API
 {
-// Do not remove the following lines - used for development
-//    protected = "https://api.dev.amedigital.com/api";
-//    protected = "https://api.hml.amedigital.com/api";
-
-    protected $url = "https://ame19gwci.gum.net.br:63333/api";
-
+    const ORDER = "Pedido ";
     protected $mlogger;
 
     protected $scopeConfig;
@@ -57,13 +59,31 @@ class API
 
     protected $curl;
 
+//    protected = "https://api.dev.amedigital.com/api";
+//    protected = "https://api.hml.amedigital.com/api";
+
+    protected $url = "https://ame19gwci.gum.net.br:63333/api";
+
+    protected $urlOrders = "orders";
+
+    protected $urlPayments = "payments";
+
+
+    /**
+     * @param LoggerInterface $mlogger
+     * @param ScopeConfigInterface $scopeConfig
+     * @param StoreManagerInterface $storeManager
+     * @param DbAME $dbAME
+     * @param GumApi $gumApi
+     * @param AmeConfigRepositoryInterface $ameConfigRepository
+     */
     public function __construct(
-        \Psr\Log\LoggerInterface $mlogger,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \GumNet\AME\Helper\DbAME $dbAME,
-        \GumNet\AME\Helper\GumApi $gumApi,
-        \GumNet\AME\Api\AmeConfigRepositoryInterface $ameConfigRepository
+        LoggerInterface $mlogger,
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager,
+        DbAME $dbAME,
+        GumApi $gumApi,
+        AmeConfigRepositoryInterface $ameConfigRepository
     ) {
         $this->mlogger = $mlogger;
         $this->scopeConfig = $scopeConfig;
@@ -94,48 +114,55 @@ class API
      */
     public function generateCashbackFromOrder(): float
     {
-        $url = $this->url . "/orders";
-        $pedido = rand(1000, 1000000);
-        $json_array['title'] = "Pedido " . $pedido;
-        $json_array['description'] = "Pedido " . $pedido;
-        $json_array['amount'] = 10000;
-        $json_array['currency'] = "BRL";
-        $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
-        $json_array['attributes']['items'] = [];
+        $url = $this->url . "/" . $this->urlOrders;
+        $orderId = rand(1000, 1000000);
+        $jsonArray['title'] = self::ORDER . $orderId;
+        $jsonArray['description'] = self::ORDER . $orderId;
+        $jsonArray['amount'] = 10000;
+        $jsonArray['currency'] = "BRL";
+        $jsonArray['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
+        $jsonArray['attributes']['items'] = [];
 
-        $array_items['description'] = "Produto - SKU " . "38271686";
-        $array_items['quantity'] = 1;
-        $array_items['amount'] = 9800;
-        array_push($json_array['attributes']['items'], $array_items);
-        $json_array['attributes']['customPayload']['ShippingValue'] = 200;
-        $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] = "234";
-        $json_array['attributes']['customPayload']['shippingAddress']['city'] = "Niteroi";
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] = "Rua Presidente Backer";
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] = "24220-041";
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] = "Icarai";
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] = "RJ";
-        $json_array['attributes']['customPayload']['billingAddress'] = $json_array['attributes']['customPayload']['shippingAddress'];
-        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
-        $json_array['attributes']['paymentOnce'] = true;
-        $json_array['attributes']['riskHubProvider'] = "SYNC";
-        $json_array['attributes']['origin'] = "ECOMMERCE";
-        $json = json_encode($json_array);
+        $arrayItems['description'] = "Produto - SKU " . "38271686";
+        $arrayItems['quantity'] = 1;
+        $arrayItems['amount'] = 9800;
+        $jsonArray['attributes']['items'][] = $arrayItems;
+        $jsonArray['attributes']['customPayload']['ShippingValue'] = 200;
+        $jsonArray['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['number'] = "234";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['city'] = "Niteroi";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['street'] = "Rua Presidente Backer";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['postalCode'] = "24220-041";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['neighborhood'] = "Icarai";
+        $jsonArray['attributes']['customPayload']['shippingAddress']['state'] = "RJ";
+        $jsonArray['attributes']['customPayload']['billingAddress'] =
+            $jsonArray['attributes']['customPayload']['shippingAddress'];
+        $jsonArray['attributes']['customPayload']['isFrom'] = "MAGENTO";
+        $jsonArray['attributes']['paymentOnce'] = true;
+        $jsonArray['attributes']['riskHubProvider'] = "SYNC";
+        $jsonArray['attributes']['origin'] = "ECOMMERCE";
+        $json = json_encode($jsonArray);
         $result = $this->ameRequest($url, "POST", $json);
-        $result_array = json_decode($result, true);
+        $resultArray = json_decode($result, true);
         if ($this->hasError($result, $url, $json)) {
             return 0;
         }
         $cashbackAmountValue = 0;
-        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
-            $cashbackAmountValue = $result_array['attributes']['cashbackAmountValue'];
+        if (array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
+            $cashbackAmountValue = $resultArray['attributes']['cashbackAmountValue'];
         }
         $cashback_percent = $cashbackAmountValue/100;
         $this->setCashbackPercent($cashback_percent);
         return (float)$cashback_percent;
     }
 
-    protected function setCashbackPercent($cashback_percent)
+    /**
+     * @param $cashback_percent
+     * @return void
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    protected function setCashbackPercent($cashback_percent): void
     {
         $config = $this->ameConfigRepository->getByConfig('cashback_updated_at');
         $config->setValue(time());
@@ -147,23 +174,23 @@ class API
 
     public function refundOrder(string $ame_id, float $amount): array
     {
-        $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
+        $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
 
-        $refund_id = Uuid::uuid4()->toString();
-        while ($this->dbAME->refundIdExists($refund_id)) {
-            $refund_id = Uuid::uuid4()->toString();
+        $refundId = Uuid::uuid4()->toString();
+        while ($this->dbAME->refundIdExists($refundId)) {
+            $refundId = Uuid::uuid4()->toString();
         }
-        $this->mlogger->info("AME REFUND ID:" . $refund_id);
-        $url = $this->url . "/payments/" . $transaction_id . "/refunds/MAGENTO-" . $refund_id;
+        $this->mlogger->info("AME REFUND ID:" . $refundId);
+        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId . "/refunds/MAGENTO-" . $refundId;
 
-        $json_array['amount'] = $amount;
-        $json = json_encode($json_array);
+        $jsonArray['amount'] = $amount;
+        $json = json_encode($jsonArray);
         $result[0] = $this->ameRequest($url, "PUT", $json);
         $this->mlogger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) {
-            return "";
+            return [];
         }
-        $result[1] = $refund_id;
+        $result[1] = $refundId;
         return $result;
     }
 
@@ -173,11 +200,11 @@ class API
      */
     public function cancelOrder(string $ame_id): bool
     {
-        $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        if (!$transaction_id) {
+        $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
+        if (!$transactionId) {
             return false;
         }
-        $url = $this->url . "/wallet/user/payments/" . $transaction_id . "/cancel";
+        $url = $this->url . "/wallet/user/payments/" . $transactionId . "/cancel";
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url, "")) {
             return false;
@@ -187,13 +214,14 @@ class API
 
     public function consultOrder(string $ame_id): string
     {
-        $url = $this->url . "/orders/" . $ame_id;
+        $url = $this->url . "/" . $this->urlOrders . "/" . $ame_id;
         $result = $this->ameRequest($url, "GET", "");
         if ($this->hasError($result, $url)) {
             return "";
         }
         return $result;
     }
+
     public function captureOrder(string $ame_id): ?array
     {
         $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
@@ -207,73 +235,71 @@ class API
 
     public function createOrder($order): string
     {
-        /** @var \Magento\Sales\Model\Order $order */
+        /** @var Order $order */
         $this->mlogger->info("Create AME Order");
-        $url = $this->url . "/orders";
-
-        $shippingAmount = $order->getShippingAmount();
+        $url = $this->url . "/" . $this->urlOrders;
         $amount = (int)$order->getGrandTotal() * 100;
 
-        $json_array['title'] = "Pedido " . $order->getIncrementId();
-        $json_array['description'] = "Pedido " . $order->getIncrementId();
-        $json_array['amount'] = $amount;
-        $json_array['currency'] = "BRL";
-        $json_array['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
-        $json_array['attributes']['items'] = [];
+        $jsonArray['title'] = self::ORDER . $order->getIncrementId();
+        $jsonArray['description'] = self::ORDER . $order->getIncrementId();
+        $jsonArray['amount'] = $amount;
+        $jsonArray['currency'] = "BRL";
+        $jsonArray['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
+        $jsonArray['attributes']['items'] = [];
 
         $items = $order->getAllItems();
         $total_discount = 0;
         foreach ($items as $item) {
-            if (isset($array_items)) {
-                unset($array_items);
+            if (isset($arrayItems)) {
+                unset($arrayItems);
             }
-            $array_items['description'] = $item->getName() . " - SKU " . $item->getSku();
-            $array_items['quantity'] = (int)$item->getQtyOrdered();
-            $array_items['amount'] = (int)(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
+            $arrayItems['description'] = $item->getName() . " - SKU " . $item->getSku();
+            $arrayItems['quantity'] = (int)$item->getQtyOrdered();
+            $arrayItems['amount'] = (int)(($item->getRowTotal() - $item->getDiscountAmount()) * 100);
             $total_discount = $total_discount + abs($item->getDiscountAmount());
-            $json_array['attributes']['items'][] = $array_items;
+            $jsonArray['attributes']['items'][] = $arrayItems;
         }
 
-        $json_array['attributes']['customPayload']['ShippingValue'] = (int)$order->getShippingAmount() * 100;
-        $json_array['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
+        $jsonArray['attributes']['customPayload']['ShippingValue'] = (int)$order->getShippingAmount() * 100;
+        $jsonArray['attributes']['customPayload']['shippingAddress']['country'] = "BRA";
 
         $number_line = $this->scopeConfig->getValue(
             Config::ADDRESS_NUMBER,
             ScopeInterface::SCOPE_STORE
         );
-        $json_array['attributes']['customPayload']['shippingAddress']['number'] =
+        $jsonArray['attributes']['customPayload']['shippingAddress']['number'] =
             $order->getShippingAddress()->getStreet()[$number_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
+        $jsonArray['attributes']['customPayload']['shippingAddress']['city'] = $order->getShippingAddress()->getCity();
 
         $street_line = $this->scopeConfig->getValue(
             Config::ADDRESS_STREET,
             ScopeInterface::SCOPE_STORE
         );
-        $json_array['attributes']['customPayload']['shippingAddress']['street'] =
+        $jsonArray['attributes']['customPayload']['shippingAddress']['street'] =
             $order->getShippingAddress()->getStreet()[$street_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['postalCode'] =
+        $jsonArray['attributes']['customPayload']['shippingAddress']['postalCode'] =
             $order->getShippingAddress()->getPostcode();
 
         $neighborhood_line = $this->scopeConfig->getValue(
             Config::ADDRESS_NEIGHBORHOOD,
             ScopeInterface::SCOPE_STORE
         );
-        $json_array['attributes']['customPayload']['shippingAddress']['neighborhood'] =
+        $jsonArray['attributes']['customPayload']['shippingAddress']['neighborhood'] =
             $order->getShippingAddress()->getStreet()[$neighborhood_line];
 
-        $json_array['attributes']['customPayload']['shippingAddress']['state'] =
+        $jsonArray['attributes']['customPayload']['shippingAddress']['state'] =
             $this->codigoUF($order->getShippingAddress()->getRegion());
 
-        $json_array['attributes']['customPayload']['billingAddress'] =
-            $json_array['attributes']['customPayload']['shippingAddress'];
-        $json_array['attributes']['customPayload']['isFrom'] = "MAGENTO";
-        $json_array['attributes']['paymentOnce'] = true;
-        $json_array['attributes']['riskHubProvider'] = "SYNC";
-        $json_array['attributes']['origin'] = "ECOMMERCE";
+        $jsonArray['attributes']['customPayload']['billingAddress'] =
+            $jsonArray['attributes']['customPayload']['shippingAddress'];
+        $jsonArray['attributes']['customPayload']['isFrom'] = "MAGENTO";
+        $jsonArray['attributes']['paymentOnce'] = true;
+        $jsonArray['attributes']['riskHubProvider'] = "SYNC";
+        $jsonArray['attributes']['origin'] = "ECOMMERCE";
 
-        $json = json_encode($json_array);
+        $json = json_encode($jsonArray);
         $this->mlogger->info($json);
         $result = $this->ameRequest($url, "POST", $json);
 
@@ -281,13 +307,10 @@ class API
             return "";
         }
         $this->gumapi->createOrder($json, $result);
-        $result_array = json_decode($result, true);
+        $resultArray = json_decode($result, true);
 
         $payment = $order->getPayment();
-        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $result_array['id']);
-        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $result_array['amount']);
-        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $result_array['qrCodeLink']);
-        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $result_array['deepLink']);
+        $this->setAdditionalInformation($payment, $resultArray);
         $payment->save();
 
         return $result;
@@ -295,23 +318,22 @@ class API
 
     /**
      * @param $order
-     * @param array $result_array
+     * @param array $resultArray
      * @return void
      */
     public function setAdditionalInformation(
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        array $result_array
+        OrderInterface $order,
+        array $resultArray
     ): void {
         $payment = $order->getPayment();
-        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $result_array['id']);
-        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $result_array['amount']);
-        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $result_array['qrCodeLink']);
-        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $result_array['deepLink']);
-        $cashbackAmountValue = 0;
-        if (array_key_exists('cashbackAmountValue', $result_array['attributes'])) {
+        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $resultArray['id']);
+        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $resultArray['amount']);
+        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $resultArray['qrCodeLink']);
+        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $resultArray['deepLink']);
+        if (array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
             $payment->setAdditionalInformation(
                 PaymentInformation::CASHBACK_VALUE,
-                $result_array['attributes']['cashbackAmountValue']
+                $resultArray['attributes']['cashbackAmountValue']
             );
         }
     }
@@ -330,9 +352,9 @@ class API
         if (!$this->isJson($result)) {
             return false;
         }
-        $result_array = json_decode($result, true);
-        if (is_array($result_array)) {
-            if (array_key_exists("error", $result_array)) {
+        $resultArray = json_decode($result, true);
+        if (is_array($resultArray)) {
+            if (array_key_exists("error", $resultArray)) {
                 $subject = "AME Error";
                 $message = "Result: ".$result."\r\n\r\nurl: ".$url."\r\n\r\n";
                 $this->mlogger->error($subject . "-" . $message);
@@ -349,11 +371,15 @@ class API
      * @param string $string
      * @return bool
      */
-    public function isJson(string $string): bool {
+    public function isJson(string $string): bool
+    {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
     }
 
+    /**
+     * @return string
+     */
     public function getStoreName(): string
     {
         return $this->scopeConfig->getValue('ame/general/store_name', ScopeInterface::SCOPE_STORE);
@@ -362,14 +388,16 @@ class API
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
         $this->mlogger->info("ameRequest starting...");
-        $_token = $this->getToken();
-        if (!$_token) {
+        $token = $this->getToken();
+        if (!$token) {
             return "";
         }
+
         $method = strtoupper($method);
+        // phpcs:disable
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $_token];
+        $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -381,6 +409,7 @@ class API
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $result = curl_exec($ch);
         curl_close($ch);
+        // phpcs:enable
         return $result;
     }
 
@@ -403,18 +432,19 @@ class API
         }
         // get user & pass from core_config_data
         $username = $this->scopeConfig->getValue(
-            'ame/general/api_user',
+            Config::API_USER,
             ScopeInterface::SCOPE_STORE
         );
         $password = $this->scopeConfig->getValue(
-            'ame/general/api_password',
+            Config::API_PASSWORD,
             ScopeInterface::SCOPE_STORE
         );
         if (!$username || !$password) {
-            $this->mlogger->info("AME user/pass not set.");
+            $this->mlogger->error("AME user/pass not set. Please check Magento configuration");
             return "";
         }
         $url = $this->url . "/auth/oauth/token";
+        // phpcs:disable
         $ch = curl_init();
         $post = "grant_type=client_credentials";
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -443,18 +473,19 @@ class API
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
             $result = curl_exec($ch);
+            // phpcs:disable
             if ($this->hasError($result, $url, $post)) {
                 return "";
             }
         }
-        $result_array = json_decode($result, true);
-        if (!array_key_exists('access_token', $result_array)) {
+        $resultArray = json_decode($result, true);
+        if (!array_key_exists('access_token', $resultArray)) {
             return "";
         }
 
-        $expires_in = time() + (int)$result_array['expires_in'];
-        $this->storeToken($result_array['access_token'], $expires_in);
-        return $result_array['access_token'];
+        $expires_in = time() + (int)$resultArray['expires_in'];
+        $this->storeToken($resultArray['access_token'], $expires_in);
+        return $resultArray['access_token'];
     }
 
     public function storeToken(string $token, int $expires_in): void

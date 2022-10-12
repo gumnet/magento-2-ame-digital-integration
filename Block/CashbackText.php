@@ -36,6 +36,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\ScopeInterface;
+use GumNet\AME\Model\Values\Config;
 
 class CashbackText extends Template
 {
@@ -69,16 +70,15 @@ class CashbackText extends Template
         SensediaAPI $sensediaAPI,
         Http $request
     ) {
-        $this->scopeConfig = $scopeConfig;
+        parent::__construct($context);
         $this->registry = $registry;
         $this->api = $api;
 
-        if (!$scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
-            || $scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
+        if (!$this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
+            || $this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
             $this->api = $sensediaAPI;
         }
         $this->request = $request;
-        parent::__construct($context);
     }
 
     /**

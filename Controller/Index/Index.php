@@ -134,7 +134,7 @@ class Index extends Action implements CsrfAwareActionInterface
             throw new InputException($message);
         }
         if ($input['status'] == "AUTHORIZED") {
-            $this->setTransactionId($input['attributes']['orderId'], $input['id']);
+            $this->setTransactionId($input['attributes']['orderId'], $input['id'], $input['nsu']);
             $this->gumApi->queueTransaction($json);
         } else {
             $this->gumApi->queueTransactionError($json);
@@ -146,13 +146,14 @@ class Index extends Action implements CsrfAwareActionInterface
     /**
      * @param string $ameOrderId
      * @param string $ameTransactionId
+     * @param string $nsu
      * @return void
      * @throws AlreadyExistsException
      * @throws InputException
      * @throws NoSuchEntityException
      * @throws NotFoundException
      */
-    public function setTransactionId(string $ameOrderId, string $ameTransactionId)
+    public function setTransactionId(string $ameOrderId, string $ameTransactionId, string $nsu = "")
     {
         $orderCollection = $this->orderCollectionFactory->create();
         $where = "JSON_EXTRACT(additional_information, '$." . PaymentInformation::AME_ID. ") = " . $ameOrderId;
@@ -165,6 +166,9 @@ class Index extends Action implements CsrfAwareActionInterface
         $order = $orderCollection->getFirstItem();
         $payment = $order->getPayment();
         $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
+        if ($nsu) {
+            $payment->setAdditionalInformation(PaymentInformation::NSU, $nsu);
+        }
         $this->orderRepository->save($order);
     }
 

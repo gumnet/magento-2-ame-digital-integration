@@ -28,7 +28,7 @@
  */
 
 \Magento\Framework\Component\ComponentRegistrar::register(
-        \Magento\Framework\Component\ComponentRegistrar::MODULE,
-        'GumNet_AME',
-        __DIR__
-    );
+    \Magento\Framework\Component\ComponentRegistrar::MODULE,
+    'GumNet_AME',
+    __DIR__
+);
