@@ -28,7 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
         <add id="GumNet_AME::ame" title="AME Digital" module="GumNet_AME" sortOrder="41" resource="GumNet_AME::ame"/>
         <add id="GumNet_AME::configuration" title="Configuration" module="GumNet_AME" sortOrder="10" action="adminhtml/system_config/edit/section/ame" resource="GumNet_AME::configuration" parent="GumNet_AME::ame"/>

@@ -29,7 +29,6 @@
 
 namespace GumNet\AME\Controller\CaptureTransaction;
 
-use GumNet\AME\Helper\API;
 use GumNet\AME\Helper\DbAME;
 use GumNet\AME\Helper\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
@@ -49,6 +48,7 @@ use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Psr\Log\LoggerInterface;
+use Magento\Framework\Controller\Result\Raw;
 
 class Index extends Action
 {
@@ -72,7 +72,6 @@ class Index extends Action
         DbAME $dbAME,
         InvoiceService $invoiceService,
         TransactionFactory $transactionFactory,
-        API $api,
         LoggerInterface $logger,
         GumApi $gumApi,
         CollectionFactory $paymentCollectionFactory,
@@ -84,7 +83,6 @@ class Index extends Action
         $this->_dbAME = $dbAME;
         $this->_invoiceService = $invoiceService;
         $this->_transactionFactory = $transactionFactory;
-        $this->api = $api;
         $this->logger = $logger;
         $this->gumApi = $gumApi;
         $this->paymentCollectionFactory = $paymentCollectionFactory;
@@ -92,7 +90,7 @@ class Index extends Action
         parent::__construct($context);
     }
 
-    public function execute()
+    public function execute(): Raw
     {
         $transactionId = $this->getRequest()->getParam('transactionid');
         $request_ame_order_id = $this->getRequest()->getParam('orderid');
@@ -133,6 +131,7 @@ class Index extends Action
     public function getOrderByTransactionId($transactionId): ?OrderInterface
     {
         $paymentCollection = $this->paymentCollectionFactory->create();
+        /** @todo Add correct filter */
         $paymentCollection->addFieldToFilter();
         if (!$paymentCollection->count()) {
             return null;
@@ -143,14 +142,14 @@ class Index extends Action
     }
 
     /**
-     * @param OrderInterface $order
+     * @param Order $order
      * @return void
      * @throws InputException
      * @throws AlreadyExistsException
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    public function invoiceOrder(OrderInterface $order): void
+    public function invoiceOrder(Order $order): void
     {
         $invoice = $this->_invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);

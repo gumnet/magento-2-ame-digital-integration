@@ -29,80 +29,146 @@
 
 namespace GumNet\AME\Helper;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Module\ModuleList;
 use Magento\Store\Model\ScopeInterface;
+use GumNet\AME\Model\Values\Config;
+use Magento\Store\Model\StoreManagerInterface;
 
 class GumApi
 {
-    protected $_storeManager;
-    protected $_scopeConfig;
-    protected $url;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @var string
+     */
+    protected $url ="https://apiame.gum.net.br";
+
+    /**
+     * @var ModuleList
+     */
     protected $moduleList;
+
+    /**
+     * @var ProductMetadataInterface
+     */
     protected $productMetadata;
 
-    public function __construct(\Magento\Store\Model\StoreManagerInterface $storeManager,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Framework\Module\ModuleList $moduleList,
-                                \Magento\Framework\App\ProductMetadataInterface $productMetadata
-    )
-    {
-        $this->_storeManager = $storeManager;
-        $this->_scopeConfig = $scopeConfig;
-        $this->url = "https://apiame.gum.net.br";
+    /**
+     * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
+     * @param ModuleList $moduleList
+     * @param ProductMetadataInterface $productMetadata
+     */
+    public function __construct(
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig,
+        ModuleList $moduleList,
+        ProductMetadataInterface $productMetadata
+    ) {
+        $this->storeManager = $storeManager;
+        $this->scopeConfig = $scopeConfig;
         $this->moduleList = $moduleList;
         $this->productMetadata = $productMetadata;
     }
-    public function refundTransaction($ame_transaction_id,$ame_refund_id,$amount)
+
+    /**
+     * @param string $ame_transaction_id
+     * @param string $ame_refund_id
+     * @param $amount
+     * @return bool
+     */
+    public function refundTransaction(string $ame_transaction_id, string $ame_refund_id, $amount): bool
     {
         $result = $ame_refund_id . "|" . $amount;
         return $this->gumRequest("refundtransaction", $result, $ame_transaction_id);
     }
-    public function queueTransactionError($json)
+
+    /**
+     * @param string $json
+     * @return void
+     */
+    public function queueTransactionError(string $json)
     {
-        $this->apiGumCallback("/api/ame/transactionerror/","POST",$json);
+        $this->apiGumCallback("/api/ame/transactionerror/", "POST", $json);
     }
 
-    public function queueTransaction($json)
+    /**
+     * @param string $json
+     * @return void
+     */
+    public function queueTransaction(string $json): void
     {
-        $this->apiGumCallback("/api/ame/transaction/","POST",$json);
+        $this->apiGumCallback("/api/ame/transaction/", "POST", $json);
     }
 
-    public function captureTransaction($ame_transaction_id,$ame_order_id,$amount){
+    /**
+     * @param string $ame_transaction_id
+     * @param string $ame_order_id
+     * @param $amount
+     * @return bool
+     */
+    public function captureTransaction(string $ame_transaction_id, string $ame_order_id, $amount): bool
+    {
         $result = $ame_transaction_id . "|".$amount;
-        return $this->gumRequest("capturetransaction",$result,$ame_order_id);
+        return $this->gumRequest("capturetransaction", $result, $ame_order_id);
     }
-    public function createOrder($input,$result): bool
+
+    /**
+     * @param $input
+     * @param $result
+     * @return bool
+     */
+    public function createOrder($input, $result): bool
     {
-        $input_array = json_decode($input,true);
+        $input_array = json_decode($input, true);
         $input1['amount'] = $input_array['amount'];
         $json_input = json_encode($input1);
-        $result_array = json_decode($result,true);
+        $result_array = json_decode($result, true);
         $result1['id'] = $result_array['id'];
         $result1['amount'] = $result_array['amount'];
         $json_result = json_encode($result1);
 
-        $this->gumRequest("createorder",$json_result,$json_input);
+        $this->gumRequest("createorder", $json_result, $json_input);
         return true;
     }
-    public function apiGumCallback($url, $method = "GET", $json = ""){
+
+    /**
+     * @param string $url
+     * @param string $method
+     * @param string $json
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function apiGumCallback(string $url, string $method = "GET", string $json = ""): string
+    {
         $url = $this->url . $url;
-        $ch = curl_init();
 
         $json_array['environment'] = $this->getEnvironment();
-        $json_array['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
-        $json_array['username'] = $this->_scopeConfig->getValue('ame/general/api_user', ScopeInterface::SCOPE_STORE);
-        $json_array['password'] = $this->_scopeConfig->getValue('ame/general/api_password', ScopeInterface::SCOPE_STORE);
+        $json_array['siteurl'] = $this->storeManager->getStore()->getBaseUrl();
+        $json_array['username'] = $this->scopeConfig->getValue(Config::API_USER, ScopeInterface::SCOPE_STORE);
+        $json_array['password'] = $this->scopeConfig->getValue(Config::API_PASSWORD, ScopeInterface::SCOPE_STORE);
         $json_array['magentoversion'] = $this->productMetadata->getVersion();
         $json_array['moduleversion'] = $this->moduleList->getOne('GumNet_AME')['setup_version'];
-
         $json_array['api'] = "ame";
-        if (!$this->_scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE)
-            ||$this->_scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
+        if ($this->scopeConfig->getValue('ame/general/environment', ScopeInterface::SCOPE_STORE) == 3) {
             $json_array['api'] = "sensedia";
         }
-
         $json_array['callback'] = $json;
         $json_array['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";
-        $json = json_encode($json_array,JSON_PRETTY_PRINT);
+        $json = json_encode($json_array, JSON_PRETTY_PRINT);
+        // Allow curl - do not use buggy Magento classes
+        // phpcs:disable
+        $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -112,20 +178,28 @@ class GumApi
         curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         $re = curl_exec($ch);
         curl_close($ch);
+        // phpcs:enable
         return $re;
     }
 
-    public function gumRequest(string $action, string $result, string $input=""): bool
+    /**
+     * @param string $action
+     * @param string $result
+     * @param string $input
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function gumRequest(string $action, string $result, string $input = ""): bool
     {
-        $ch = curl_init();
         $environment = $this->getEnvironment();
         $post['environment'] = $environment;
-        $post['siteurl'] = $this->_storeManager->getStore()->getBaseUrl();
+        $post['siteurl'] = $this->storeManager->getStore()->getBaseUrl();
         $post['input'] = $input;
         $post['result'] = $result;
         $post['action'] = $action;
         $post['hash'] = "E2F49DA5F963DAE26F07E778FB4B9301B051AEEA6E8E08D788163023876BC14E";
-
+        // phpcs:disable
+        $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -133,15 +207,19 @@ class GumApi
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         curl_exec($ch);
-        $http_code = curl_getinfo ($ch, CURLINFO_HTTP_CODE);
+        $http_code = curl_getinfo ($ch,  CURLINFO_HTTP_CODE);
         curl_close($ch);
+        // phpcs:enable
         if ($http_code == "200") {
             return true;
         }
         return false;
     }
 
-    public function getEnvironment()
+    /**
+     * @return string
+     */
+    public function getEnvironment(): string
     {
         return "prod";
     }

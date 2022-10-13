@@ -29,33 +29,57 @@
 
 namespace GumNet\AME\Controller\PaymentConfirmation;
 
-use \Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Sales\Model\OrderRepository;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Controller\Result\Raw;
 
-class Index extends \Magento\Framework\App\Action\Action
+class Index extends Action
 {
-    protected $_request;
-    protected $_orderRepository;
+    /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                array $data = []
-                                )
-    {
-        $this->_request = $request;
-        $this->_orderRepository = $orderRepository;
+    /**
+     * @var RawFactory
+     */
+    protected $rawFactory;
+
+    /**
+     * @param Context $context
+     * @param OrderRepository $orderRepository
+     * @param RawFactory $rawFactory
+     */
+    public function __construct(
+        Context $context,
+        OrderRepository $orderRepository,
+        RawFactory $rawFactory
+    ) {
+        $this->orderRepository = $orderRepository;
+        $this->rawFactory = $rawFactory;
         parent::__construct($context);
     }
-    public function execute()
+
+    /**
+     * @return Raw
+     */
+    public function execute(): Raw
     {
-        $id = $this->_request->getParam('id');
-        if (!$id) die();
-        $order = $this->_orderRepository->get($id);
-        if ($order->hasInvoices()) {
-            echo 1;
-        } else {
-            echo 0;
+        $id = $this->getRequest()->getParam('id', '');
+        if (!$id) {
+            return $this->rawFactory->create()->setContents('0');
         }
-        die();
+        try {
+            $order = $this->orderRepository->get($id);
+        } catch (\Exception $e) {
+            return $this->rawFactory->create()->setContents('0');
+        }
+        $result = '0';
+        if ($order->hasInvoices()) {
+            $result = '1';
+        }
+        return $this->rawFactory->create()->setContents($result);
     }
 }

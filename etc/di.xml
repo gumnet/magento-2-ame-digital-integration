@@ -28,7 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="GumNet\AME\Api\Data\AmeConfigInterface" type="GumNet\AME\Model\Data\AmeConfig"/>
     <preference for="GumNet\AME\Api\AmeConfigRepositoryInterface" type="GumNet\AME\Model\AmeConfigRepository"/>
 </config>

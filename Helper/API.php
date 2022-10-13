@@ -38,13 +38,14 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
-use \Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use GumNet\AME\Model\Values\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 
 class API
 {
     const ORDER = "Pedido ";
+
     protected $mlogger;
 
     protected $scopeConfig;
@@ -68,6 +69,9 @@ class API
 
     protected $urlPayments = "payments";
 
+    protected $urlCancelTransaction = "pagamentos";
+
+    protected $urlCancelEnd = "";
 
     /**
      * @param LoggerInterface $mlogger
@@ -96,6 +100,7 @@ class API
 
     /**
      * @return float
+     * @throws LocalizedException
      * @throws NoSuchEntityException
      */
     public function getCashBackPercent(): float
@@ -110,6 +115,7 @@ class API
 
     /**
      * @return float
+     * @throws LocalizedException
      * @throws NoSuchEntityException
      */
     public function generateCashbackFromOrder(): float
@@ -176,13 +182,18 @@ class API
     {
         $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
 
+        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId;
+
         $refundId = Uuid::uuid4()->toString();
         while ($this->dbAME->refundIdExists($refundId)) {
             $refundId = Uuid::uuid4()->toString();
         }
-        $this->mlogger->info("AME REFUND ID:" . $refundId);
-        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId . "/refunds/MAGENTO-" . $refundId;
+        if (stristr($this->url, "63333")) {
 
+            $url .= "/refunds/MAGENTO-" . $refundId;
+        } else {
+            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
+        }
         $jsonArray['amount'] = $amount;
         $json = json_encode($jsonArray);
         $result[0] = $this->ameRequest($url, "PUT", $json);
@@ -198,13 +209,9 @@ class API
      * @param string $ame_id
      * @return bool
      */
-    public function cancelOrder(string $ame_id): bool
+    public function cancelTransaction(string $transactionId): bool
     {
-        $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        if (!$transactionId) {
-            return false;
-        }
-        $url = $this->url . "/wallet/user/payments/" . $transactionId . "/cancel";
+        $url = $this->url . "/" . $this->urlCancelTransaction ."/" . $transactionId . "/" . $this->urlCancelEnd;
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url, "")) {
             return false;
@@ -220,17 +227,6 @@ class API
             return "";
         }
         return $result;
-    }
-
-    public function captureOrder(string $ame_id): ?array
-    {
-        $ame_transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        $url = $this->url . "/wallet/user/payments/" . $ame_transaction_id . "/capture";
-        $result = $this->ameRequest($url, "PUT", "");
-        if ($this->hasError($result, $url)) {
-            return null;
-        }
-        return json_decode($result, true);
     }
 
     public function createOrder($order): string
@@ -388,20 +384,33 @@ class API
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
         $this->mlogger->info("ameRequest starting...");
-        $token = $this->getToken();
-        if (!$token) {
-            return "";
+        if (stristr($this->url, "63333")) {
+            if (!$token = $this->getToken()) {
+                return "";
+            }
+            $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
+        } else {
+            if (!$client_id = $this->scopeConfig->getValue('ame/general/api_user')) {
+                return "";
+            }
+            if (!$access_token = $this->scopeConfig->getValue('ame/general/api_password')) {
+                return "";
+            }
+            $header = [
+                "Content-Type: application/json",
+                "client_id: " . $client_id,
+                "access_token: ". $access_token
+            ];
         }
 
         $method = strtoupper($method);
+        // Allow curl - do not use buggy Magento classes
         // phpcs:disable
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//        curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
         if ($method == "POST" || $method == "PUT") {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
         }
@@ -444,6 +453,7 @@ class API
             return "";
         }
         $url = $this->url . "/auth/oauth/token";
+        // Allow curl - do not use buggy Magento classes
         // phpcs:disable
         $ch = curl_init();
         $post = "grant_type=client_credentials";

@@ -31,7 +31,8 @@
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="ame_config" resource="default" engine="innodb" comment="AME Configuration">
-        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" padding="10" identity="true" comment="ID"/>
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false"
+                padding="10" identity="true" comment="ID"/>
         <column xsi:type="varchar" name="ame_config" nullable="false" length="255" comment="AME Config"/>
         <column xsi:type="varchar" name="ame_value" nullable="false" length="255" comment="AME Value"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">

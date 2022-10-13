@@ -29,8 +29,6 @@
 
 namespace GumNet\AME\Helper;
 
-use \Ramsey\Uuid\Uuid;
-
 class SensediaAPI extends API
 {
     protected $url = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
@@ -39,99 +37,17 @@ class SensediaAPI extends API
 
     protected $urlPayments = "pagamentos";
 
-    public function refundOrder($ame_id, $amount)
-    {
-        $this->mlogger->info("AME REFUND ORDER:" . $ame_id);
-        $this->mlogger->info("AME REFUND amount:" . $amount);
+    protected $urlCancelTransaction = "wallet/user/payments";
 
-        $transaction_id = $this->dbAME->getTransactionIdByOrderId($ame_id);
-        $this->mlogger->info("AME REFUND TRANSACTION:" . $transaction_id);
+    protected $urlCancelEnd = "cancel";
 
-        $refund_id = Uuid::uuid4()->toString();
-        while ($this->dbAME->refundIdExists($refund_id)) {
-            $refund_id = Uuid::uuid4()->toString();
-        }
-        $this->mlogger->info("AME REFUND ID:" . $refund_id);
-        $url = $this->url . "/pagamentos/" . $transaction_id;// . "/refunds/MAGENTO-" . $refund_id;
-        $this->mlogger->info("AME REFUND URL:" . $url);
-        $json_array['amount'] = $amount;
-        $json_array['refundId'] = "MAGENTO-".$refund_id;
-        $json = json_encode($json_array);
-        $this->mlogger->info("AME REFUND JSON:" . $json);
-        $result[0] = $this->ameRequest($url, "PUT", $json);
-        $this->mlogger->info("AME REFUND Result:" . $result[0]);
-        if ($this->hasError($result[0], $url, $json))
-            return false;
-        $result[1] = $refund_id;
-        return $result;
-    }
     public function cancelOrder(string $ame_id): bool
     {
         $url = $this->url . "/ordens/" . $ame_id;
         $result = $this->ameRequest($url, "DELETE", "");
-        if ($this->hasError(
-            $result,
-            $url,
-            ""
-        )) {
+        if ($this->hasError($result, $url, "")) {
             return false;
         }
         return true;
-    }
-
-    public function cancelTransaction(string $transaction_id): bool
-    {
-        if (!$transaction_id) {
-            return false;
-        }
-        $url = $this->url . "/pagamentos/" . $transaction_id;
-        $result = $this->ameRequest($url, "DELETE", "");
-        if ($this->hasError(
-            $result,
-            $url,
-            ""
-        )) {
-            return false;
-        }
-        return true;
-    }
-
-    public function ameRequest(string $url, string $method = "GET", string $json = ""): string
-    {
-        $this->mlogger->info("ameRequest starting...");
-        if (!$client_id = $this->scopeConfig->getValue('ame/general/api_user')) {
-            return "";
-        }
-        if (!$access_token = $this->scopeConfig->getValue('ame/general/api_password')) {
-            return "";
-        }
-        $method = strtoupper($method);
-        $this->mlogger->info("ameRequest URL:" . $url);
-        $this->mlogger->info("ameRequest METHOD:" . $method);
-        if ($json) {
-            $this->mlogger->info("ameRequest JSON:" . $json);
-        }
-        $headers = [
-            "Content-Type: application/json",
-            "client_id: " . $client_id,
-            "access_token: ". $access_token
-        ];
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        if ($method == "POST" || $method == "PUT") {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-        }
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        $result = curl_exec($ch);
-        $this->mlogger->info("ameRequest OUTPUT:" . $result);
-        $this->logger->log(curl_getinfo($ch, CURLINFO_HTTP_CODE), "header", $url, $json);
-        $this->logger->log($result, "info", $url, $json);
-        curl_close($ch);
-        return $result;
     }
 }

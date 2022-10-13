@@ -32,6 +32,7 @@ namespace GumNet\AME\Block;
 use GumNet\AME\Helper\API;
 use GumNet\AME\Helper\SensediaAPI;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
@@ -59,7 +60,7 @@ class CashbackText extends Template
      * CashbackText constructor.
      * @param Context $context
      * @param Registry $registry
-     * @param API $_api
+     * @param API $api
      * @param SensediaAPI $sensediaAPI
      * @param Http $request
      */
@@ -74,8 +75,7 @@ class CashbackText extends Template
         $this->registry = $registry;
         $this->api = $api;
 
-        if (!$this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
-            || $this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
+        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) === 3) {
             $this->api = $sensediaAPI;
         }
         $this->request = $request;
@@ -87,9 +87,13 @@ class CashbackText extends Template
     public function isShowCashbackProductsListEnabled(): bool
     {
         return (bool)$this->_scopeConfig
-            ->getValue("ame/exhibition/show_cashback_products_list", ScopeInterface::SCOPE_STORE);
+            ->getValue(Config::EXHIBITION_LIST, ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @return float
+     * @throws NoSuchEntityException
+     */
     public function getCashbackPercent()
     {
         return $this->api->getCashbackPercent();
@@ -97,19 +101,14 @@ class CashbackText extends Template
 
     /**
      * @return float
+     * @throws NoSuchEntityException
      */
     public function getCashbackValue(): float
     {
         if ($this->request->getFullActionName() == 'catalog_product_view') {
-            if (!$product = $this->getProduct()) {
-                $product = $this->registry->registry('product');
-                return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
-            }
-        }
-        if (isset($product)) {
+            $product = $this->registry->registry('product');
             return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
         }
         return 0;
     }
 }
-
