@@ -36,20 +36,6 @@
         <column xsi:type="varchar" name="ame_config" nullable="false" length="255" comment="AME Config"/>
         <column xsi:type="varchar" name="ame_value" nullable="false" length="255" comment="AME Value"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
-            <column name="id"/>
-        </constraint>
-    </table>
-    <table name="ame_callback" resource="default" engine="innodb" comment="AME Callback">
-        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false"
-                padding="10" identity="true" comment="Entity ID"/>
-        <column xsi:type="varchar" name="content" nullable="false" length="255" comment="Content"/>
-        <column xsi:type="varchar" name="status" nullable="false"
-                default="pending" length="255" comment="Status"/>
-        <column xsi:type="int" name="retries" unsigned="true" nullable="false"
-                padding="11" default="0" comment="Retries"/>
-        <column name="created_at" nullable="false" xsi:type="datetime" default="CURRENT_TIMESTAMP" on_update="false"/>
-        <column name="updated_at" nullable="true" xsi:type="datetime" default="CURRENT_TIMESTAMP" on_update="true"/>
-        <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="entity_id"/>
         </constraint>
     </table>

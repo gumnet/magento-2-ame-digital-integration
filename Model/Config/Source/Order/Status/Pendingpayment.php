@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Model\Config\Source\Order\Status;
+namespace GumNet\AME\Model\Values\Config\Source\Order\Status;
 
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Config\Source\Order\Status;

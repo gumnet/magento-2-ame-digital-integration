@@ -60,7 +60,7 @@ class AmeConfig extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     {
         $connection = $this->getConnection();
 
-        $select = $connection->select()->from('ame_config', 'id')->where('config = :config');
+        $select = $connection->select()->from('ame_config', 'entity_id')->where('ame_config = :config');
 
         $bind = [':config' => (string)$config];
 

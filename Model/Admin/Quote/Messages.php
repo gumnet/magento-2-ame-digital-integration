@@ -29,7 +29,7 @@
 
 namespace GumNet\AME\Model\Admin\Quote;
 
-use Magento\Security\Model\ResourceModel\AdminSessionInfo\Collection;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Backend\Model\UrlInterface;
 use Magento\Backend\Model\Auth\Session;
 use Magento\Framework\Notification\MessageInterface;
@@ -37,23 +37,26 @@ use Magento\Framework\Notification\MessageInterface;
 class Messages implements MessageInterface
 {
     protected $backendUrl;
-    private $adminSessionInfoCollection;
     protected $authSession;
     protected $_moduleLIst;
 
     private $cookie_name = "AmeGumShown";
 
+    /**
+     * @param UrlInterface $backendUrl
+     * @param Session $authSession
+     * @param ModuleListInterface $moduleList
+     */
     public function __construct(
-        Collection $adminSessionInfoCollection,
         UrlInterface $backendUrl,
         Session $authSession,
-        \Magento\Framework\Module\ModuleListInterface $moduleList
+        ModuleListInterface $moduleList
     ) {
         $this->authSession = $authSession;
         $this->backendUrl = $backendUrl;
-        $this->adminSessionInfoCollection = $adminSessionInfoCollection;
         $this->_moduleLIst = $moduleList;
     }
+
     public function getText()
     {
         $message = __('Módulo AME - nova versão identificada - '.$this->getLatestVersion().'<br>
@@ -61,27 +64,34 @@ class Messages implements MessageInterface
         Contato: Gustavo Ulyssea - suporte@gum.net.br');
         return $message;
     }
+
     public function getIdentity()
     {
         return md5('GUMNET_AME' . $this->authSession->getUser()->getLogdate());
     }
+
     public function isDisplayed()
     {
-            $current_version = $this->getCurrentVersion();
-            $latest_version = $this->getLatestVersion();
-            if (version_compare($current_version, $latest_version, "<")) {
-                return true;
-            }
-            return false;
+        $current_version = $this->getCurrentVersion();
+        $latest_version = $this->getLatestVersion();
+        if (version_compare($current_version, $latest_version, "<")) {
+            return true;
+        }
+        return false;
     }
-    public function getSeverity()
+
+    public function getSeverity(): int
     {
         return \Magento\Framework\Notification\MessageInterface::SEVERITY_MINOR;
     }
-    public function getCurrentVersion(){
+
+    public function getCurrentVersion()
+    {
         return $this->_moduleLIst->getOne('GumNet_AME')['setup_version'];
     }
-    public function getLatestVersion(){
+
+    public function getLatestVersion(): string
+    {
         return file_get_contents('https://apiame.gum.net.br/latestversion.txt');
     }
 }

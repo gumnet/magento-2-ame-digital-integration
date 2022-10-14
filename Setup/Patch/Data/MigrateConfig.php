@@ -8,7 +8,7 @@ use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Eav\Model\Entity\Setup\Context;
-use GumNet\AME\Values\Config;
+use GumNet\AME\Model\Values\Config;
 
 class MigrateConfig implements DataPatchInterface
 {

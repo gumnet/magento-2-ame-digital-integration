@@ -34,7 +34,7 @@ use Magento\Catalog\Block\Product\ListProduct;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Element\Template;
-use GumNet\AME\Values\Config;
+use GumNet\AME\Model\Values\Config;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 

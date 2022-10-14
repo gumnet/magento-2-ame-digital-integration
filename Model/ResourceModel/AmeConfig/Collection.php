@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace GumNet\Ame\Model\ResourceModel\AmeConfig;
 
-use GumNet\AME\Model\AmeConfig;
+use GumNet\AME\Model\Data\AmeConfig;
 use GumNet\AME\Model\ResourceModel\AmeConfig as AmeConfigResource;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 

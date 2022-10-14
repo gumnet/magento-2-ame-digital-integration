@@ -4,6 +4,7 @@ namespace GumNet\AME\Model\Values;
 
 class Config
 {
+    const ACTIVE = 'payment/ame/active';
     const TABLE_CORE_DATA = 'core_config_data';
     const API_USER_OLD = 'ame/general/api_user';
     const API_USER = 'payment/ame/api_user';

@@ -36,6 +36,7 @@ use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Exception\IntegrationException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
@@ -45,8 +46,9 @@ use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Store\Model\ScopeInterface;
-use GumNet\AME\Values\Config;
+use GumNet\AME\Model\Values\Config;
 
 /**
  * Pay In Store payment method model
@@ -119,7 +121,7 @@ class AME extends AbstractMethod
             $directory
         );
         $this->ame = $api;
-        if ($scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
+        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
             $this->ame = $sensediaAPI;
         }
     }
@@ -138,7 +140,12 @@ class AME extends AbstractMethod
         $order->save();
         return $this;
     }
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null): bool
+
+    /**
+     * @param CartInterface|null $quote
+     * @return bool
+     */
+    public function isAvailable(CartInterface $quote = null): bool
     {
         return (bool)$this->_scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE);
     }
@@ -150,7 +157,7 @@ class AME extends AbstractMethod
      * @throws LocalizedException
      * @throws Exception
      */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount): AME
+    public function refund(InfoInterface $payment, $amount): AME
     {
         if (!$this->canRefund()) {
             throw new LocalizedException(__('The refund action is not available.'));
@@ -159,7 +166,7 @@ class AME extends AbstractMethod
             $ameId = $payment->getAdditionalInformation('ame_id');
             $this->ame->refundOrder($ameId, $amount * 100);
         } catch (\Exception $e) {
-            throw new Exception(__('Payment API refund error.'));
+            throw new IntegrationException(__('Payment API refund error.'));
         }
         return $this;
     }

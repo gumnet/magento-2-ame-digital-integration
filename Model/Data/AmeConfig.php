@@ -45,7 +45,7 @@ class AmeConfig extends AbstractExtensibleModel implements AmeConfigInterface
     /**
      * @inheritDoc
      */
-    public function setId(int $id): AmeConfigInterface
+    public function setId($id): AmeConfigInterface
     {
         return $this->setData(self::KEY_ID, $id);
     }

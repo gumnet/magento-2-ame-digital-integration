@@ -48,7 +48,7 @@ class ObserverForDisabledFrontendPg implements ObserverInterface
     {
         $result = $observer->getEvent()->getResult();
         $methodInstance = $observer->getEvent()->getMethodInstance();
-        if ($methodInstance->getCode() === 'ame' && $this->scopeConfig->get(Config::ENABLED) === 0) {
+        if ($methodInstance->getCode() === 'ame' && $this->scopeConfig->get(Config::ACTIVE) === 0) {
             $result->setData('is_available', false);
         }
     }

@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace GumNet\AME\Model;
 
 use GumNet\AME\Api\Data\AmeConfigInterface;
+use GumNet\AME\Model\Data\AmeConfigFactory;
 use GumNet\AME\Api\AmeConfigRepositoryInterface;
 use GumNet\AME\Model\ResourceModel\AmeConfig as AmeConfigResource;
 use Magento\Framework\Api\ExtensibleDataObjectConverter;
