@@ -29,9 +29,6 @@
  */
  -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="GumNet_AME" type="GumNet\AME\Block\LayoutProcessor" sortOrder="100"/>
-    </type>
     <type name="Magento\Catalog\Block\Product\ListProduct" shared="false">
         <plugin name="gumnet_ame_product_list_text" type="GumNet\AME\Plugin\ProductListPlugin" disabled="false" sortOrder="999" />
     </type>
