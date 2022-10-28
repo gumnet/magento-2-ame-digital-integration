@@ -24,4 +24,5 @@ class Config
     const ADDRESS_NEIGHBORHOOD = 'payment/ame/address_neighborhood';
     const EXHIBITION_LIST_OLD = 'ame/exhibition/show_cashback_products_list';
     const EXHIBITION_LIST = 'payment/ame/show_cashback_products_list';
+    const TRUST_WALLET_ENABLED = 'payment/ame/trust_wallet_enabled';
 }

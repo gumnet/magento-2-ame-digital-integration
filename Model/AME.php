@@ -46,7 +46,9 @@ use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Api\Data\PaymentMethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 

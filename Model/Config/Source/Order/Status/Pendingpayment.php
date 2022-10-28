@@ -36,17 +36,17 @@ class Pendingpayment extends Status
 {
     protected $_stateStatuses = [Order::STATE_NEW];
     protected $_isInitializeNeeded = true;
-    protected $_canAuthorize 				= false;
-    protected $_canCapture 					= true;
-    protected $_code 						= 'ame';
-    protected $_canCapturePartial       	= true;
-    protected $_canVoid                		= true;
-    protected $_canCancel              		= true;
-    protected $_canUseForMultishipping 		= false;
-    protected $_canReviewPayment 			= true;
+    protected $_canAuthorize = false;
+    protected $_canCapture = true;
+    protected $_code = 'ame';
+    protected $_canCapturePartial       = true;
+    protected $_canVoid                = true;
+    protected $_canCancel              = true;
+    protected $_canUseForMultishipping = false;
+    protected $_canReviewPayment = true;
     protected $_countryFactory;
-    protected $_supportedCurrencyCodes 		= ['BRL'];
-    protected $_canUseInternal          	= false;
+    protected $_supportedCurrencyCodes = ['BRL'];
+    protected $_canUseInternal          = false;
     protected $_cart;
-    protected $_canFetchTransactionInfo 	= true;
+    protected $_canFetchTransactionInfo = true;
 }

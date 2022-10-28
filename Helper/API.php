@@ -422,6 +422,14 @@ class API
         return $result;
     }
 
+    public function trustWalletIsEnabled()
+    {
+        return (bool)$this->scopeConfig->getValue(
+            Config::API_USER,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
     public function getTokenFromDb(): string
     {
         $config = $this->ameConfigRepository->getByConfig('token_expires');

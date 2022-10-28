@@ -38,4 +38,11 @@
         <plugin name="gumnet_ame_order_qrcode_plugin" type="GumNet\AME\Plugin\Order\Info"
                 disabled="false" sortOrder="999" />
     </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="gumnet_ame_config_provider" xsi:type="object">GumNet\AME\Model\Ui\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
