@@ -28,7 +28,7 @@
  */
 namespace GumNet\AME\Block;
 
-use GumNet\AME\Model\Values\Config;
+use Magento\Sales\Model\Order\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Checkout\Block\Onepage\Success;
 use Magento\Customer\Model\Session as CustomerSession;

@@ -137,9 +137,9 @@ class AME extends AbstractMethod
     public function order(InfoInterface $payment, $amount): AME
     {
         $order = $payment->getOrder();
-        $result = $this->ame->createOrder($order);
-        $order->addStatusHistoryComment('AME Order ID: ' . $result['id']);
-        $order->save();
+        $resultArray = json_decode($this->ame->createOrder($order), true);
+
+        $order->addStatusHistoryComment('AME Order ID: ' . $resultArray['id']);
         return $this;
     }
 

@@ -307,7 +307,6 @@ class API
 
         $payment = $order->getPayment();
         $this->setAdditionalInformation($payment, $resultArray);
-        $payment->save();
 
         return $result;
     }
@@ -318,10 +317,9 @@ class API
      * @return void
      */
     public function setAdditionalInformation(
-        OrderInterface $order,
+        $payment,
         array $resultArray
     ): void {
-        $payment = $order->getPayment();
         $payment->setAdditionalInformation(PaymentInformation::AME_ID, $resultArray['id']);
         $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $resultArray['amount']);
         $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $resultArray['qrCodeLink']);
