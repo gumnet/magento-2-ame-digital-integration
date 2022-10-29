@@ -99,13 +99,11 @@ class AmeConfigRepository implements AmeConfigRepositoryInterface
     public function get(int $id): AmeConfigInterface
     {
         $ameConfig = $this->ameConfigFactory->create()
-            ->load($id);
-
+            ->load($id, 'entity_id');
         if ($ameConfig->getId() === null) {
             throw NoSuchEntityException::singleField('entity_id', $id);
         }
-
-        return $ameConfig->getDataModel();
+        return $ameConfig;
     }
 
     /**

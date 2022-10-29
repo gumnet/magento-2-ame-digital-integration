@@ -62,10 +62,16 @@ class CreditMemoObserver implements ObserverInterface
         $method = $payment->getMethod();
         if($method=="ame") {
             $valor = $refund->getGrandTotal() * 100;
-            $refund = $this->_apiAME->refundOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $valor);
+            $refund = $this->_apiAME->refundOrder(
+                $this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $valor);
             if ($refund) {
                 $refund[0] = json_decode($refund[0], true);
-                $this->_dbAME->insertRefund($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $refund[1], $refund[0]['operationId'], $valor, $refund[0]['status']);
+                $this->_dbAME->insertRefund(
+                    $this->_dbAME->getAmeIdByIncrementId(
+                        $order->getIncrementId()),
+                    $refund[1],
+                    $refund[0]['operationId'], $valor, $refund[0]['status']
+                );
             } else {
                 throw new LocalizedException(__('Houve um erro efetuando o reembolso.'));
             }

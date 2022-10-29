@@ -3,11 +3,13 @@
         <input type="radio"
                name="payment[method]"
                class="radio"
-               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
-        <label data-bind="attr: {'for': getCode()}" class="label"><!-- <span data-bind="text: getTitle()"></span> -->
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked,
+                click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
+        <label data-bind="attr: {'for': getCode()}" class="label">
+            <!-- <span data-bind="text: getTitle()"></span> -->
             <img data-bind="attr: {src: getLogoImagePath()}"  class="amepayment-icon"/>
         </label>
-        <span data-bind="html: setCashbackTxt()"></span>
+        <span data-bind="html: getCashbackTxt()"></span>
     </div>
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->

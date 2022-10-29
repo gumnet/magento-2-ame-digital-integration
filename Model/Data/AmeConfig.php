@@ -30,10 +30,15 @@
 namespace GumNet\AME\Model\Data;
 
 use GumNet\AME\Api\Data\AmeConfigInterface;
+use GumNet\AME\Model\ResourceModel\AmeConfig as AmeConfigResource;
 use Magento\Framework\Model\AbstractExtensibleModel;
 
 class AmeConfig extends AbstractExtensibleModel implements AmeConfigInterface
 {
+    public function _construct()
+    {
+        $this->_init(\GumNet\AME\Model\ResourceModel\AmeConfig::class);
+    }
     /**
      * @inheritDoc
      */

@@ -49,6 +49,7 @@ use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\Controller\Result\Raw;
+use GumNet\AME\Model\Values\Config;
 
 class Index extends Action
 {
