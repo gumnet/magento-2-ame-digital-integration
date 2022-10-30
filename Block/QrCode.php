@@ -49,23 +49,20 @@ class QrCode extends Success
      */
     protected $customerSession;
 
-    /**
-     * @param Context $context
-     * @param CheckoutSession $checkoutSession
-     * @param CustomerSession $customerSession
-     * @param Config $orderConfig
-     * @param ContextAlias $httpContext
-     */
+    protected $assetRepository;
+
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
         CustomerSession $customerSession,
         Config $orderConfig,
-        ContextAlias $httpContext
+        ContextAlias $httpContext,
+        \Magento\Framework\View\Asset\Repository $assetRepository
     ) {
         parent::__construct($context, $checkoutSession, $orderConfig, $httpContext);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
+        $this->assetRepository = $assetRepository;
     }
 
     /**
@@ -73,7 +70,10 @@ class QrCode extends Success
      */
     public function getCashbackValue(): float
     {
-        return (float)$this->getOrder()->getPayment()->getAdditionalInformation('cashback_amount') * 0.01;
+        if ($order = $this->getOrder()) {
+            return (float)$order->getPayment()->getAdditionalInformation('cashback_amount') * 0.01;
+        }
+        return 0;
     }
 
     /**
@@ -81,14 +81,20 @@ class QrCode extends Success
      */
     public function getPrice(): float
     {
-        return $this->getOrder()->getGrandTotal();
+        if ($order = $this->getOrder()) {
+            return $order->getGrandTotal();
+        }
+        return 0;
     }
 
     /**
-     * @return Order
+     * @return Order|null
      */
-    public function getOrder(): Order
+    public function getOrder(): ?Order
     {
+        if (!$this->customerSession->isLoggedIn()) {
+            return null;
+        }
         return $this->checkoutSession->getLastRealOrder();
     }
 
@@ -97,7 +103,10 @@ class QrCode extends Success
      */
     public function getCustomerId(): int
     {
-        return $this->customerSession->getCustomer()->getId();
+        if (!$this->customerSession->isLoggedIn()) {
+            return 0;
+        }
+        return $this->customerSession->getCustomerId();
     }
 
     /**
@@ -105,7 +114,10 @@ class QrCode extends Success
      */
     public function getDeepLink(): string
     {
-        return $this->getOrder()->getPayment()->getAdditionalInformation(PaymentInformation::DEEP_LINK);
+        if ($order = $this->getOrder()) {
+            return $order->getPayment()->getAdditionalInformation(PaymentInformation::DEEP_LINK);
+        }
+        return "";
     }
 
     /**
@@ -113,7 +125,10 @@ class QrCode extends Success
      */
     public function getQrCodeLink(): string
     {
-        return $this->getOrder()->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
+        if ($order = $this->getOrder()) {
+            $order->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
+        }
+        return "";
     }
 
     /**
@@ -121,6 +136,14 @@ class QrCode extends Success
      */
     public function getPaymentMethod(): string
     {
-        return $this->getOrder()->getPayment()->getMethod();
+        if ($order = $this->getOrder()) {
+            return $order->getPayment()->getMethod();
+        }
+        return "";
+    }
+
+    public function getLogoUrl(): ?string
+    {
+        return $this->assetRepository->getUrl("GumNet_AME::images/ame-digital.png");
     }
 }
