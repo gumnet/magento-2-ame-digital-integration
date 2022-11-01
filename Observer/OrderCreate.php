@@ -74,8 +74,7 @@ class OrderCreate implements ObserverInterface
                 $order = $this->order->load($orderid);
             }
         }
-        $payment = $order->getPayment();
-        $method = $payment->getMethod();
+        $method = $order->getPayment()->getMethod();
         if($method=="ame") {
             $pendingStatus = $this->scopeConfig->getValue(Config::STATUS_CREATED, ScopeInterface::SCOPE_STORE);
             $order->setState('new')->setStatus($pendingStatus);

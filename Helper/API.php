@@ -33,7 +33,6 @@ use GumNet\AME\Api\AmeConfigRepositoryInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -44,7 +43,7 @@ use GumNet\AME\Model\Values\PaymentInformation;
 
 class API
 {
-    const ORDER = "Pedido ";
+    public const ORDER = "Pedido ";
 
     protected $mlogger;
 
@@ -60,16 +59,13 @@ class API
 
     protected $curl;
 
-//    protected = "https://api.dev.amedigital.com/api";
-//    protected = "https://api.hml.amedigital.com/api";
-
-    protected $url = "https://ame19gwci.gum.net.br:63333/api";
+    protected $url = Config::AME_API_URL;
 
     protected $urlOrders = "orders";
 
     protected $urlPayments = "payments";
 
-    protected $urlCancelTransaction = "pagamentos";
+    protected $urlCancelTransaction = "wallet/user/payments";
 
     protected $urlCancelEnd = "";
 
@@ -178,6 +174,12 @@ class API
         $this->ameConfigRepository->save($config);
     }
 
+    /**
+     * @param string $ame_id
+     * @param float $amount
+     * @return array
+     * @throws \Exception
+     */
     public function refundOrder(string $ame_id, float $amount): array
     {
         $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
@@ -219,6 +221,10 @@ class API
         return true;
     }
 
+    /**
+     * @param string $ame_id
+     * @return string
+     */
     public function consultOrder(string $ame_id): string
     {
         $url = $this->url . "/" . $this->urlOrders . "/" . $ame_id;
@@ -229,10 +235,14 @@ class API
         return $result;
     }
 
+    /**
+     * @param $order
+     * @return string
+     * @throws NoSuchEntityException
+     */
     public function createOrder($order): string
     {
         /** @var Order $order */
-        $this->mlogger->info("Create AME Order");
         $url = $this->url . "/" . $this->urlOrders;
         $amount = (int)$order->getGrandTotal() * 100;
 
@@ -338,6 +348,12 @@ class API
         return $this->storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
     }
 
+    /**
+     * @param string $result
+     * @param string $url
+     * @param string $input
+     * @return bool
+     */
     public function hasError(string $result, string $url, string $input = ""): bool
     {
         if (!$this->isJson($result)) {
@@ -376,6 +392,12 @@ class API
         return $this->scopeConfig->getValue('ame/general/store_name', ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @param string $url
+     * @param string $method
+     * @param string $json
+     * @return string
+     */
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
         if (stristr($this->url, "63333")) {
@@ -384,10 +406,10 @@ class API
             }
             $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
         } else {
-            if (!$client_id = $this->scopeConfig->getValue('ame/general/api_user')) {
+            if (!$client_id = $this->scopeConfig->getValue(Config::API_USER)) {
                 return "";
             }
-            if (!$access_token = $this->scopeConfig->getValue('ame/general/api_password')) {
+            if (!$access_token = $this->scopeConfig->getValue(Config::API_PASSWORD)) {
                 return "";
             }
             $header = [
@@ -416,6 +438,9 @@ class API
         return $result;
     }
 
+    /**
+     * @return bool
+     */
     public function trustWalletIsEnabled()
     {
         return (bool)$this->scopeConfig->getValue(
@@ -424,6 +449,10 @@ class API
         );
     }
 
+    /**
+     * @return string
+     * @throws NoSuchEntityException
+     */
     public function getTokenFromDb(): string
     {
         $config = $this->ameConfigRepository->getByConfig('token_expires');
@@ -435,6 +464,10 @@ class API
         return "";
     }
 
+    /**
+     * @return string
+     * @throws NoSuchEntityException
+     */
     public function getToken(): string
     {
         // check if existing token will be expired within 10 minutes
@@ -500,13 +533,20 @@ class API
         return $resultArray['access_token'];
     }
 
-    public function storeToken(string $token, int $expires_in): void
+    /**
+     * @param string $token
+     * @param int $expires_in
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function storeToken(string $token, int $expiresIn): void
     {
-        $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
+        $ameConfig = $this->ameConfigRepository->getByConfig(Config::TOKEN_VALUE);
         $ameConfig->setValue($token);
         $this->ameConfigRepository->save($ameConfig);
-        $ameConfig = $this->ameConfigRepository->getByConfig('token_expires');
-        $ameConfig->setValue($expires_in);
+        $ameConfig = $this->ameConfigRepository->getByConfig(Config::TOKEN_EXPIRES);
+        $ameConfig->setValue($expiresIn);
         $this->ameConfigRepository->save($ameConfig);
     }
 

@@ -47,9 +47,7 @@ use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
-use Magento\Payment\Model\MethodInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Api\Data\PaymentMethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 
@@ -154,9 +152,13 @@ class AME extends AbstractMethod
         array $resultArray
     ): void {
         $payment->setAdditionalInformation(PaymentInformation::AME_ID, $resultArray['id']);
-        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $resultArray['amount']);
-        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $resultArray['qrCodeLink']);
-        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $resultArray['deepLink']);
+        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $resultArray[PaymentInformation::AMOUNT]);
+        $payment->setAdditionalInformation(
+            PaymentInformation::QR_CODE_LINK,
+            $resultArray[PaymentInformation::QR_CODE_LINK]
+        );
+        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $resultArray[PaymentInformation::DEEP_LINK]);
+        $payment->setAdditionalInformation(PaymentInformation::NSU, $resultArray[PaymentInformation::NSU]);
         if (array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
             $payment->setAdditionalInformation(
                 PaymentInformation::CASHBACK_VALUE,

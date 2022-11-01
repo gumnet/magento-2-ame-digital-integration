@@ -29,54 +29,94 @@
 
 namespace GumNet\AME\Observer;
 
+use GumNet\AME\Helper\API;
+use GumNet\AME\Helper\DbAME;
+use GumNet\AME\Helper\GumApi;
+use GumNet\AME\Helper\SensediaAPI;
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Api\Data\OrderInterface;
 
 class CreditMemoObserver implements ObserverInterface
 {
-    protected $_apiAME;
-    protected $_sensediaAPI;
-    protected $_order;
-    protected $_gumAPI;
-    protected $_dbAME;
+    /**
+     * @var API
+     */
+    protected $apiAME;
 
+    /**
+     * @var
+     */
+    protected $sensediaAPI;
+
+    /**
+     * @var OrderInterface
+     */
+    protected $order;
+
+    /**
+     * @var GumApi
+     */
+    protected $gumAPI;
+
+    /**
+     * @var DbAME
+     */
+    protected $dbAME;
+
+    /**
+     * @param API $api
+     * @param SensediaAPI $sensediaAPI
+     * @param OrderInterface $order
+     * @param GumApi $gumAPI
+     * @param DbAME $dbAME
+     */
     public function __construct(
-        \GumNet\AME\Helper\API $api,
-        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        \GumNet\AME\Helper\GumApi $gumAPI,
-        \GumNet\AME\Helper\DbAME $dbAME
-    )
-    {
-        $this->_apiAME = $sensediaAPI;
-        $this->_order = $order;
-        $this->_gumAPI = $gumAPI;
-        $this->_dbAME = $dbAME;
+        API $api,
+        SensediaAPI $sensediaAPI,
+        OrderInterface $order,
+        GumApi $gumAPI,
+        DbAME $dbAME
+    ) {
+        $this->apiAME = $api;
+        $this->order = $order;
+        $this->gumAPI = $gumAPI;
+        $this->dbAME = $dbAME;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @param Observer $observer
+     * @return $this|void
+     * @throws LocalizedException
+     */
+    public function execute(Observer $observer)
     {
         $refund = $observer->getEvent()->getCreditmemo();
         $order = $refund->getOrder();
         $payment = $order->getPayment();
         $method = $payment->getMethod();
-        if($method=="ame") {
+        if ($method=="ame") {
             $valor = $refund->getGrandTotal() * 100;
-            $refund = $this->_apiAME->refundOrder(
-                $this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $valor);
+            $refund = $this->apiAME->refundOrder(
+                $this->dbAME->getAmeIdByIncrementId($order->getIncrementId()),
+                $valor
+            );
             if ($refund) {
                 $refund[0] = json_decode($refund[0], true);
-                $this->_dbAME->insertRefund(
-                    $this->_dbAME->getAmeIdByIncrementId(
-                        $order->getIncrementId()),
+                $this->dbAME->insertRefund(
+                    $this->dbAME->getAmeIdByIncrementId(
+                        $order->getIncrementId()
+                    ),
                     $refund[1],
-                    $refund[0]['operationId'], $valor, $refund[0]['status']
+                    $refund[0]['operationId'],
+                    $valor,
+                    $refund[0]['status']
                 );
             } else {
-                throw new LocalizedException(__('Houve um erro efetuando o reembolso.'));
+                throw new LocalizedException(__('There was an error processing the refund.'));
             }
         }
         return $this;
-
     }
 }

@@ -29,21 +29,27 @@
 
 namespace GumNet\AME\Helper;
 
+use GumNet\AME\Model\Values\Config;
+
 class SensediaAPI extends API
 {
-    protected $url = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
+    protected $url = Config::SENSEDIA_API_URL;
 
     protected $urlOrders = "ordens";
 
     protected $urlPayments = "pagamentos";
 
-    protected $urlCancelTransaction = "wallet/user/payments";
+    protected $urlCancelTransaction = "pagamentos";
 
     protected $urlCancelEnd = "cancel";
 
-    public function cancelOrder(string $ame_id): bool
+    /**
+     * @param string $ameId
+     * @return bool
+     */
+    public function cancelOrder(string $ameId): bool
     {
-        $url = $this->url . "/ordens/" . $ame_id;
+        $url = $this->url . $this->urlOrders . $ameId;
         $result = $this->ameRequest($url, "DELETE", "");
         if ($this->hasError($result, $url, "")) {
             return false;
