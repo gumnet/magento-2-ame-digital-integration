@@ -303,10 +303,6 @@ class API
             return "";
         }
         $this->gumapi->createOrder($json, $result);
-        $resultArray = json_decode($result, true);
-
-        $payment = $order->getPayment();
-        $this->setAdditionalInformation($payment, $resultArray);
 
         return $result;
     }
@@ -330,6 +326,7 @@ class API
                 $resultArray['attributes']['cashbackAmountValue']
             );
         }
+        $payment->save();
     }
 
     /**
@@ -381,7 +378,6 @@ class API
 
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
-        $this->mlogger->info("ameRequest starting...");
         if (stristr($this->url, "63333")) {
             if (!$token = $this->getToken()) {
                 return "";

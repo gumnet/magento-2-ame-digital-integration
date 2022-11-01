@@ -126,7 +126,7 @@ class QrCode extends Success
     public function getQrCodeLink(): string
     {
         if ($order = $this->getOrder()) {
-            $order->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
+            return $order->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
         }
         return "";
     }

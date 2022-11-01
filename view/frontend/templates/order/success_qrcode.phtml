@@ -44,7 +44,7 @@ if ($block->getPaymentMethod() === "ame" && $block->getOrder()) {
         <div id='success_ame_internal'>
             &nbsp;<br>
             <div id="success_ame_value_txt">
-                <img alt="AME Logo" src="<?=$block->escapeHtml($ame_logo)?>" width="150"><br><br>
+                <img alt="AME Logo" src="<?=$block->escapeUrl($ame_logo)?>" width="150"><br><br>
                 Valor da compra:
             </div>
             <div id="success_ame_value">
@@ -58,15 +58,15 @@ if ($block->getPaymentMethod() === "ame" && $block->getOrder()) {
                 </div> em até 30 dias.</div><br>
                     <?php } ?>
             <div id="success_ame_facil">Pagar com a AME é fácil e rápido!</div>
-            <img id="success_ame_qrcode" alt="QR Code" src='<?=$block->escapeHtml($block->getQrCodeLink())?>'/>
+            <img id="success_ame_qrcode" alt="QR Code" src='<?=$block->escapeUrl($block->getQrCodeLink())?>'/>
             <div id="success_ame_info">1. Abra o aplicativo Ame Digital. Se você ainda não tem, <br>baixe no
-                <img src="<?=$block->escapeHtml($block->getViewFileUrl('GumNet_AME::images/google-logo.svg'))?>"
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/google-logo.svg'))?>"
                      alt='Google Play' height="16">
                 ou na
-                <img src="<?=$block->escapeHtml($block->getViewFileUrl('GumNet_AME::images/apple-logo.svg'))?>"
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/apple-logo.svg'))?>"
                      alt='App Store' height="16"><br>
                 2. Clique em pagar
-                <img src="<?=$block->escapeHtml($block->getViewFileUrl('GumNet_AME::images/ame-small-logo.svg'))?>"
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/ame-small-logo.svg'))?>"
                      alt='AME Logo'>
                 e aponte para o QR Code.<br>
                 3. Pronto, agora é só finalizar o pagamento com Ame.<br>
@@ -79,7 +79,7 @@ if ($block->getPaymentMethod() === "ame" && $block->getOrder()) {
         </center>
         <script>
             if(window.innerWidth<=500){
-                window.location = "<?=$block->escapeHtml($block->getDeepLink());?>";
+                window.location = "<?=$block->escapeUrl($block->getDeepLink());?>";
             }
         </script>
     </div>

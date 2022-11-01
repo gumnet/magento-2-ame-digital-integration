@@ -31,6 +31,7 @@ namespace GumNet\AME\Model;
 
 use GumNet\AME\Helper\API;
 use GumNet\AME\Helper\SensediaAPI;
+use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
@@ -138,9 +139,30 @@ class AME extends AbstractMethod
     {
         $order = $payment->getOrder();
         $resultArray = json_decode($this->ame->createOrder($order), true);
-
+        $this->setAdditionalInformation($payment, $resultArray);
         $order->addStatusHistoryComment('AME Order ID: ' . $resultArray['id']);
         return $this;
+    }
+
+    /**
+     * @param $order
+     * @param array $resultArray
+     * @return void
+     */
+    public function setAdditionalInformation(
+        $payment,
+        array $resultArray
+    ): void {
+        $payment->setAdditionalInformation(PaymentInformation::AME_ID, $resultArray['id']);
+        $payment->setAdditionalInformation(PaymentInformation::AMOUNT, $resultArray['amount']);
+        $payment->setAdditionalInformation(PaymentInformation::QR_CODE_LINK, $resultArray['qrCodeLink']);
+        $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $resultArray['deepLink']);
+        if (array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
+            $payment->setAdditionalInformation(
+                PaymentInformation::CASHBACK_VALUE,
+                $resultArray['attributes']['cashbackAmountValue']
+            );
+        }
     }
 
     /**
