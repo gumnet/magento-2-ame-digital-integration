@@ -41,9 +41,6 @@
                 <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="instructions" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Instructions</label>
-                </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -86,10 +83,12 @@
                     <label>Bairro</label>
                     <source_model>GumNet\AME\Model\Values\Config\AddressLines</source_model>
                 </field>
+                <!-- temporarily disabled feature
                 <field id="show_cashback_products_list" translate="label" type="select" sortOrder="160" showInDefault="1">
                     <label>Exibir informações de cashback na lista de produtos</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                -->
             </group>
         </section>
     </system>

@@ -28,10 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
+      xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
 <body>
     <referenceContainer name="content">
-        <block class="Magento\Framework\View\Element\Template" name="checkout_logo_ame" template="GumNet_AME::ame_logo_checkout.phtml" after="-" />
+        <block class="Magento\Framework\View\Element\Template" name="checkout_logo_ame"
+               template="GumNet_AME::ame_logo_checkout.phtml" after="-" />
     </referenceContainer>
     <referenceBlock name="checkout.root">
         <arguments>

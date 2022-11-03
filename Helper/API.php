@@ -69,6 +69,8 @@ class API
 
     protected $urlCancelEnd = "";
 
+    protected $urlTrustWallet = "charges";
+
     /**
      * @param LoggerInterface $mlogger
      * @param ScopeConfigInterface $scopeConfig
@@ -251,6 +253,7 @@ class API
         $jsonArray['amount'] = $amount;
         $jsonArray['currency'] = "BRL";
         $jsonArray['attributes']['transactionChangedCallbackUrl'] = $this->getCallbackUrl();
+        $jsonArray = $this->addTrustWalletData($jsonArray);
         $jsonArray['attributes']['items'] = [];
 
         $items = $order->getAllItems();
@@ -318,6 +321,19 @@ class API
     }
 
     /**
+     * @param array $jsonArray
+     * @return array
+     */
+    public function addTrustWalletData(array $jsonArray): array
+    {
+        if ($this->scopeConfig->getValue(Config::TRUST_WALLET_ENABLED, ScopeInterface::SCOPE_STORE)) {
+            $jsonArray['subType'] = "TRUST_WALLET";
+            $jsonArray['attributes']['TrustWallet']['enabled'] = true;
+        }
+        return $jsonArray;
+    }
+
+    /**
      * @param $order
      * @param array $resultArray
      * @return void
@@ -337,6 +353,37 @@ class API
             );
         }
         $payment->save();
+    }
+
+    /**
+     * @param string $trustWalletId
+     * @param float $value
+     * @param string $title
+     * @param string $description
+     * @param array $items
+     * @return string
+     * @throws NoSuchEntityException
+     */
+    public function chargeTrustWallet(
+        string $trustWalletId,
+        float $value,
+        string $title,
+        string $description,
+        array $items
+    ): string {
+        $url = "";
+        $jsonArray = [
+            'linkUuid' => $trustWalletId,
+            'amountInCents' => (int)$value * 100,
+            'title' => $title,
+            'description' => $description,
+            'attributes' =>
+            [
+                'transactionChangedCallbackUrl' => $this->getCallbackUrl(),
+                'items' => $items
+            ]
+        ];
+        return $this->ameRequest($url, "POST", json_encode($jsonArray));
     }
 
     /**

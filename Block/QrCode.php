@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection ALL */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)

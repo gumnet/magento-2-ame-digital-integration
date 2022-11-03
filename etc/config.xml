@@ -32,12 +32,19 @@
     <default>
         <payment>
             <ame>
-                <active>1</active>
-                <title>AME</title>
-                <order_status>pending</order_status>
-                <instructions>Instruction.</instructions>
                 <payment_action>order</payment_action>
                 <model>GumNet\AME\Model\AME</model>
+                <active>1</active>
+                <title>AME</title>
+                <sort_order>1</sort_order>
+                <environment>1</environment>
+                <trust_wallet_enabled>0</trust_wallet_enabled>
+                <order_status_created>pending</order_status_created>
+                <order_status_payment_received>processing</order_status_payment_received>
+                <address_street>0</address_street>
+                <address_number>1</address_number>
+                <address_neighborhood>2</address_neighborhood>
+                <show_cashback_products_list>0</show_cashback_products_list>
             </ame>
         </payment>
     </default>
