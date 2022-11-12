@@ -69,7 +69,7 @@ class API
 
     protected $urlCancelEnd = "";
 
-    protected $urlTrustWallet = "charges";
+    protected $urlTrustWallet = "cobrancas";
 
     /**
      * @param LoggerInterface $mlogger

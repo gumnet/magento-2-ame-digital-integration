@@ -35,6 +35,8 @@ class SensediaAPI extends API
 {
     protected $url = Config::SENSEDIA_API_URL;
 
+    protected $urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_URL;
+
     protected $urlOrders = "ordens";
 
     protected $urlPayments = "pagamentos";
@@ -42,6 +44,8 @@ class SensediaAPI extends API
     protected $urlCancelTransaction = "pagamentos";
 
     protected $urlCancelEnd = "cancel";
+
+//    protected $urlTrustWallet = "cobrancas";
 
     /**
      * @param string $ameId

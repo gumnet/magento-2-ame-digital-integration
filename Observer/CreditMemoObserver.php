@@ -37,6 +37,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Api\Data\OrderInterface;
+use GumNet\AME\Model\Values\PaymentInformation;
 
 class CreditMemoObserver implements ObserverInterface
 {
@@ -65,6 +66,8 @@ class CreditMemoObserver implements ObserverInterface
      */
     protected $dbAME;
 
+    protected $scopeConfig;
+
     /**
      * @param API $api
      * @param SensediaAPI $sensediaAPI
@@ -77,12 +80,14 @@ class CreditMemoObserver implements ObserverInterface
         SensediaAPI $sensediaAPI,
         OrderInterface $order,
         GumApi $gumAPI,
-        DbAME $dbAME
+        DbAME $dbAME,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
         $this->apiAME = $api;
         $this->order = $order;
         $this->gumAPI = $gumAPI;
         $this->dbAME = $dbAME;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -93,13 +98,14 @@ class CreditMemoObserver implements ObserverInterface
     public function execute(Observer $observer)
     {
         $refund = $observer->getEvent()->getCreditmemo();
+        /** @var \Magento\Sales\Model\Order $order */
         $order = $refund->getOrder();
         $payment = $order->getPayment();
         $method = $payment->getMethod();
         if ($method=="ame") {
             $valor = $refund->getGrandTotal() * 100;
             $refund = $this->apiAME->refundOrder(
-                $this->dbAME->getAmeIdByIncrementId($order->getIncrementId()),
+                $payment->getAdditionalInformation(PaymentInformation::AME_ID),
                 $valor
             );
             if ($refund) {

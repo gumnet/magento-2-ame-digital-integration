@@ -55,7 +55,6 @@ class Index extends Action
 {
     protected $_scopeConfig;
     protected $orderRepository;
-    protected $_dbAME;
     protected $_invoiceService;
     protected $_transactionFactory;
     protected $api;
@@ -70,7 +69,6 @@ class Index extends Action
         Context $context,
         ScopeConfigInterface $scopeConfig,
         OrderRepository $orderRepository,
-        DbAME $dbAME,
         InvoiceService $invoiceService,
         TransactionFactory $transactionFactory,
         LoggerInterface $logger,
@@ -81,7 +79,6 @@ class Index extends Action
     ) {
         $this->_scopeConfig = $scopeConfig;
         $this->orderRepository = $orderRepository;
-        $this->_dbAME = $dbAME;
         $this->_invoiceService = $invoiceService;
         $this->_transactionFactory = $transactionFactory;
         $this->logger = $logger;
@@ -106,7 +103,8 @@ class Index extends Action
         $order->addStatusHistoryComment($comment);
         $order->save();
 
-        $amount = $this->_dbAME->getTransactionAmount($transactionId);
+        $amount = $order->getGrandTotal();
+
         $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
         return $this->rawResultFactory->create()->setContents('');
     }
