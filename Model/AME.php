@@ -158,7 +158,6 @@ class AME extends AbstractMethod
             $resultArray[PaymentInformation::QR_CODE_LINK]
         );
         $payment->setAdditionalInformation(PaymentInformation::DEEP_LINK, $resultArray[PaymentInformation::DEEP_LINK]);
-        $payment->setAdditionalInformation(PaymentInformation::NSU, $resultArray[PaymentInformation::NSU]);
         if (array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
             $payment->setAdditionalInformation(
                 PaymentInformation::CASHBACK_VALUE,
