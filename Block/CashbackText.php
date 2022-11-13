@@ -29,8 +29,8 @@
 
 namespace GumNet\AME\Block;
 
-use GumNet\AME\Helper\API;
-use GumNet\AME\Helper\SensediaAPI;
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\SensediaApiClient;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
@@ -47,7 +47,7 @@ class CashbackText extends Template
     protected $registry;
 
     /**
-     * @var SensediaAPI
+     * @var SensediaApiClient
      */
     protected $api;
 
@@ -60,15 +60,15 @@ class CashbackText extends Template
      * CashbackText constructor.
      * @param Context $context
      * @param Registry $registry
-     * @param API $api
-     * @param SensediaAPI $sensediaAPI
+     * @param ApiClient $api
+     * @param SensediaApiClient $sensediaAPI
      * @param Http $request
      */
     public function __construct(
         Context $context,
         Registry $registry,
-        API $api,
-        SensediaAPI $sensediaAPI,
+        ApiClient $api,
+        SensediaApiClient $sensediaAPI,
         Http $request
     ) {
         parent::__construct($context);

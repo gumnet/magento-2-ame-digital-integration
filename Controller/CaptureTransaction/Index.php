@@ -29,7 +29,6 @@
 
 namespace GumNet\AME\Controller\CaptureTransaction;
 
-use GumNet\AME\Helper\DbAME;
 use GumNet\AME\Helper\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Action\Action;

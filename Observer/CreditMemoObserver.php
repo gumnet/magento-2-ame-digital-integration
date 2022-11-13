@@ -29,10 +29,10 @@
 
 namespace GumNet\AME\Observer;
 
-use GumNet\AME\Helper\API;
+use GumNet\AME\Model\ApiClient;
 use GumNet\AME\Helper\DbAME;
 use GumNet\AME\Helper\GumApi;
-use GumNet\AME\Helper\SensediaAPI;
+use GumNet\AME\Model\SensediaApiClient;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
@@ -69,15 +69,15 @@ class CreditMemoObserver implements ObserverInterface
     protected $scopeConfig;
 
     /**
-     * @param API $api
-     * @param SensediaAPI $sensediaAPI
+     * @param ApiClient $api
+     * @param SensediaApiClient $sensediaAPI
      * @param OrderInterface $order
      * @param GumApi $gumAPI
      * @param DbAME $dbAME
      */
     public function __construct(
-        API $api,
-        SensediaAPI $sensediaAPI,
+        ApiClient $api,
+        SensediaApiClient $sensediaAPI,
         OrderInterface $order,
         GumApi $gumAPI,
         DbAME $dbAME,
@@ -85,7 +85,7 @@ class CreditMemoObserver implements ObserverInterface
     ) {
         $this->apiAME = $api;
         $this->order = $order;
-        $this->gumAPI = $gumAPI;
+        $this->gumApiClient = $gumAPI;
         $this->dbAME = $dbAME;
         $this->scopeConfig = $scopeConfig;
     }

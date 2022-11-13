@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Helper;
+namespace GumNet\AME\Model;
 
 use GumNet\AME\Api\AmeConfigRepositoryInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -41,7 +41,7 @@ use Ramsey\Uuid\Uuid;
 use GumNet\AME\Model\Values\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 
-class API
+class ApiClient
 {
     public const ORDER = "Pedido ";
 

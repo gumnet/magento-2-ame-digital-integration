@@ -29,8 +29,8 @@
 
 namespace GumNet\AME\Model;
 
-use GumNet\AME\Helper\API;
-use GumNet\AME\Helper\SensediaAPI;
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\SensediaApiClient;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Api\AttributeValueFactory;
@@ -86,8 +86,8 @@ class AME extends AbstractMethod
      * @param Data $paymentData
      * @param ScopeConfigInterface $scopeConfig
      * @param Logger $logger
-     * @param API $api
-     * @param SensediaAPI $sensediaAPI
+     * @param ApiClient $api
+     * @param SensediaApiClient $sensediaAPI
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -101,8 +101,8 @@ class AME extends AbstractMethod
         Data $paymentData,
         ScopeConfigInterface $scopeConfig,
         Logger $logger,
-        API $api,
-        SensediaAPI $sensediaAPI,
+        ApiClient $api,
+        SensediaApiClient $sensediaAPI,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = [],
@@ -191,7 +191,7 @@ class AME extends AbstractMethod
             $ameId = $payment->getAdditionalInformation('ame_id');
             $this->ame->refundOrder($ameId, $amount * 100);
         } catch (\Exception $e) {
-            throw new IntegrationException(__('Payment API refund error.'));
+            throw new IntegrationException(__('Payment ApiClient refund error.'));
         }
         return $this;
     }

@@ -102,7 +102,7 @@ class Index extends Action implements CsrfAwareActionInterface
         RawFactory  $resultFactory,
         CollectionFactory $orderCollectionFactory,
         GumApi $gumApi,
-        \GumNet\AME\Helper\API $api,
+        \GumNet\AME\Model\ApiClient $api,
         array $data = []
     ) {
         $this->context = $context;

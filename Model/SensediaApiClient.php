@@ -27,11 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Helper;
+namespace GumNet\AME\Model;
 
 use GumNet\AME\Model\Values\Config;
 
-class SensediaAPI extends API
+class SensediaApiClient extends ApiClient
 {
     protected $url = Config::SENSEDIA_API_URL;
 

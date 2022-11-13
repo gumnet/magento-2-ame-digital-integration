@@ -38,8 +38,8 @@ if (array_key_exists('discount', $quote->getTotals())) {
     $grandTotal = $checkoutSession->getQuote()->getGrandTotal() - $quote->getTotals()['discount']->getValue();
 }
 
-$api = $objectManager->get('GumNet\AME\Helper\API');
-/** @var \GumNet\AME\Helper\API $cashbackPercent */
+$api = $objectManager->get('GumNet\AME\Model\ApiClient');
+/** @var \GumNet\AME\Model\ApiClient $cashbackPercent */
 $cashbackPercent = $api->getCashbackPercent();
 $cashbackValue = $grandTotal * $cashbackPercent * 0.01;
 

@@ -28,7 +28,7 @@
  */
 namespace GumNet\AME\Model\Ui;
 
-use GumNet\AME\Helper\API;
+use GumNet\AME\Model\ApiClient;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\View\Asset\Repository;
@@ -53,12 +53,12 @@ class ConfigProvider implements ConfigProviderInterface
     /**
      * @param Repository $assertRepository
      * @param Session $checkoutSession
-     * @param API $api
+     * @param ApiClient $api
      */
     public function __construct(
         Repository $assertRepository,
         Session $checkoutSession,
-        API $api
+        ApiClient $api
     ) {
         $this->assertRepository = $assertRepository;
         $this->checkoutSession = $checkoutSession;
@@ -78,7 +78,7 @@ class ConfigProvider implements ConfigProviderInterface
             $grandTotal = $quote->getGrandTotal() - $quote->getTotals()['discount']->getValue();
         }
 
-        /** @var API $cashbackPercent */
+        /** @var ApiClient $cashbackPercent */
         $cashbackPercent = $this->api->getCashbackPercent();
         $cashbackValue = $grandTotal * $cashbackPercent * 0.01;
 

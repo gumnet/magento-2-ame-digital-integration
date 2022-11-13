@@ -38,7 +38,7 @@ class Cancel
 
     public function __construct(
         \Magento\Sales\Model\OrderRepository $orderRepository,
-        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
+        \GumNet\AME\Model\SensediaApiClient $sensediaAPI,
         \GumNet\AME\Helper\DbAME $dbAME
     ) {
         $this->orderRepository = $orderRepository;
