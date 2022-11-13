@@ -51,8 +51,6 @@ class ApiClient
 
     protected $storeManager;
 
-    protected $dbAME;
-
     protected $gumapi;
 
     protected $ameConfigRepository;
@@ -75,7 +73,6 @@ class ApiClient
      * @param LoggerInterface $mlogger
      * @param ScopeConfigInterface $scopeConfig
      * @param StoreManagerInterface $storeManager
-     * @param DbAME $dbAME
      * @param GumApi $gumApi
      * @param AmeConfigRepositoryInterface $ameConfigRepository
      */
@@ -83,14 +80,12 @@ class ApiClient
         LoggerInterface $mlogger,
         ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
-        DbAME $dbAME,
         GumApi $gumApi,
         AmeConfigRepositoryInterface $ameConfigRepository
     ) {
         $this->mlogger = $mlogger;
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
-        $this->dbAME = $dbAME;
 
         $this->gumapi = $gumApi;
         $this->ameConfigRepository = $ameConfigRepository;
@@ -177,40 +172,42 @@ class ApiClient
     }
 
     /**
-     * @param string $ame_id
+     * @param string $ameId
      * @param float $amount
      * @return array
      * @throws \Exception
      */
-    public function refundOrder(string $ame_id, float $amount): array
+    public function refundOrder(string $ameId, float $amount): array
     {
-        $transactionId = $this->dbAME->getTransactionIdByOrderId($ame_id);
-
-        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId;
-
-        $refundId = Uuid::uuid4()->toString();
-        while ($this->dbAME->refundIdExists($refundId)) {
-            $refundId = Uuid::uuid4()->toString();
-        }
-        if (stristr($this->url, "63333")) {
-
-            $url .= "/refunds/MAGENTO-" . $refundId;
-        } else {
-            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
-        }
-        $jsonArray['amount'] = $amount;
-        $json = json_encode($jsonArray);
-        $result[0] = $this->ameRequest($url, "PUT", $json);
-        $this->mlogger->info("AME REFUND Result:" . $result[0]);
-        if ($this->hasError($result[0], $url, $json)) {
-            return [];
-        }
-        $result[1] = $refundId;
-        return $result;
+        return [];
+        // review dbame
+//        $transactionId = $this->dbAME->getTransactionIdByOrderId($ameId);
+//
+//        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId;
+//
+//        $refundId = Uuid::uuid4()->toString();
+//        while ($this->dbAME->refundIdExists($refundId)) {
+//            $refundId = Uuid::uuid4()->toString();
+//        }
+//        if (stristr($this->url, "63333")) {
+//
+//            $url .= "/refunds/MAGENTO-" . $refundId;
+//        } else {
+//            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
+//        }
+//        $jsonArray['amount'] = $amount;
+//        $json = json_encode($jsonArray);
+//        $result[0] = $this->ameRequest($url, "PUT", $json);
+//        $this->mlogger->info("AME REFUND Result:" . $result[0]);
+//        if ($this->hasError($result[0], $url, $json)) {
+//            return [];
+//        }
+//        $result[1] = $refundId;
+//        return $result;
     }
 
     /**
-     * @param string $ame_id
+     * @param string $ameId
      * @return bool
      */
     public function cancelTransaction(string $transactionId): bool
@@ -224,12 +221,12 @@ class ApiClient
     }
 
     /**
-     * @param string $ame_id
+     * @param string $ameId
      * @return string
      */
-    public function consultOrder(string $ame_id): string
+    public function consultOrder(string $ameId): string
     {
-        $url = $this->url . "/" . $this->urlOrders . "/" . $ame_id;
+        $url = $this->url . "/" . $this->urlOrders . "/" . $ameId;
         $result = $this->ameRequest($url, "GET", "");
         if ($this->hasError($result, $url)) {
             return "";

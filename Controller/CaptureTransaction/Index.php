@@ -29,7 +29,7 @@
 
 namespace GumNet\AME\Controller\CaptureTransaction;
 
-use GumNet\AME\Helper\GumApi;
+use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -44,6 +44,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Psr\Log\LoggerInterface;
@@ -91,7 +92,10 @@ class Index extends Action
     {
         $transactionId = $this->getRequest()->getParam('transactionid');
         $request_ame_order_id = $this->getRequest()->getParam('orderid');
-        $order = $this->getOrderByTransactionId($transactionId);
+        if (!$order = $this->getOrderByTransactionId($transactionId)) {
+            $message = __("AME Callback - ERROR Not found order with transaction ID" . $request_ame_order_id);
+            throw new InputException($message);
+        }
         $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
         if ($request_ame_order_id != $ameOrderId) {
             $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
@@ -129,8 +133,10 @@ class Index extends Action
     public function getOrderByTransactionId($transactionId): ?OrderInterface
     {
         $paymentCollection = $this->paymentCollectionFactory->create();
-        /** @todo Add correct filter */
-        $paymentCollection->addFieldToFilter();
+        $paymentCollection->getSelect()->where(
+            "JSON_EXTRACT(additional_information, '$.".PaymentInformation::TRANSACTION_ID."') = '"
+            . $transactionId ."'"
+        );
         if (!$paymentCollection->count()) {
             return null;
         }

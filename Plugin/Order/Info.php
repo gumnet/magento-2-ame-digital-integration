@@ -29,7 +29,6 @@
 
 namespace GumNet\AME\Plugin\Order;
 
-use GumNet\AME\Helper\DbAME;
 use Magento\Framework\App\Request\Http;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use GumNet\AME\Model\Values\PaymentInformation;

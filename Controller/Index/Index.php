@@ -29,7 +29,7 @@
 
 namespace GumNet\AME\Controller\Index;
 
-use GumNet\AME\Helper\GumApi;
+use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;

@@ -31,7 +31,7 @@ namespace GumNet\AME\Observer;
 
 use GumNet\AME\Model\ApiClient;
 use GumNet\AME\Helper\DbAME;
-use GumNet\AME\Helper\GumApi;
+use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\SensediaApiClient;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;

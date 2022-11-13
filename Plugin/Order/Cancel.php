@@ -30,29 +30,47 @@
 
 namespace GumNet\AME\Plugin\Order;
 
+use GumNet\AME\Model\SensediaApiClient;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderRepository;
+
 class Cancel
 {
+    /**
+     * @var OrderRepository
+     */
     protected $orderRepository;
-    protected $api;
-    protected $dbAME;
 
+    /**
+     * @var SensediaApiClient
+     */
+    protected $api;
+
+    /**
+     * @param OrderRepository $orderRepository
+     * @param SensediaApiClient $sensediaAPI
+     */
     public function __construct(
-        \Magento\Sales\Model\OrderRepository $orderRepository,
-        \GumNet\AME\Model\SensediaApiClient $sensediaAPI,
-        \GumNet\AME\Helper\DbAME $dbAME
+        OrderRepository $orderRepository,
+        SensediaApiClient $sensediaAPI
     ) {
         $this->orderRepository = $orderRepository;
         $this->api = $sensediaAPI;
-        $this->dbAME = $dbAME;
     }
+
+    /**
+     * @param Order $subject
+     * @return void
+     */
     public function beforeCancel(
-        \Magento\Sales\Model\Order $subject
+        Order $subject
     ) {
         $order = $subject;
         if ($order->getPayment->getMethod() == 'ame') {
             if (!$order->hasInvoices()) {
-                $ame_id = $this->dbAME->getAmeIdByIncrementId($order->getIncrementId());
-                $this->api->cancelOrder($ame_id);
+                $ameId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
+                $this->api->cancelOrder($ameId);
             }
         }
     }
