@@ -27,27 +27,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-$assetRepo = $objectManager->get('Magento\Framework\View\Asset\Repository');
-$ame_logo = $assetRepo->getUrl("GumNet_AME::images/ame-logo.png");
-/** @var \Magento\Checkout\Model\Session $checkoutSession */
-$checkoutSession = $objectManager->get('Magento\Checkout\Model\Session');
-$quote = $checkoutSession->getQuote();
-$grandTotal = $checkoutSession->getQuote()->getTotals()['grand_total']->getValue();
-if (array_key_exists('discount', $quote->getTotals())) {
-    $grandTotal = $checkoutSession->getQuote()->getGrandTotal() - $quote->getTotals()['discount']->getValue();
+namespace GumNet\AME\Model;
+
+use GumNet\AME\Model\Values\Config;
+
+class SensediaTrustClient extends ApiClient
+{
+    protected $url = Config::SENSEDIA_API_URL;
+
+    protected $urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_URL;
+
+    protected $urlOrders = "ordens";
+
+    protected $urlPayments = "pagamentos";
+
+    protected $urlCancelTransaction = "pagamentos";
+
+    protected $urlCancelEnd = "cancel";
+
+//    protected $urlTrustWallet = "cobrancas";
+
+    /**
+     * @param string $ameId
+     * @return bool
+     */
+    public function cancelOrder(string $ameId): bool
+    {
+        $url = $this->url . $this->urlOrders . $ameId;
+        $result = $this->ameRequest($url, "DELETE", "");
+        if ($this->hasError($result, $url, "")) {
+            return false;
+        }
+        return true;
+    }
 }
-
-$api = $objectManager->get('GumNet\AME\Model\ApiClient');
-/** @var \GumNet\AME\Model\ApiClient $cashbackPercent */
-$cashbackPercent = $api->getCashbackPercent();
-$cashbackValue = $grandTotal * $cashbackPercent * 0.01;
-
-$cashback_text = "";
-
-$cashback_text = "&nbsp;&nbsp;Receba R$"
-    . number_format($cashbackValue, "2", ",", ".")
-    . " de volta com a AME Digital";
-?>
-<div id="ameLogoHtml" style="display: none;"><?php echo $ame_logo; ?></div>
-<div id="cashbackTxtHtml" style="display: none;"><?php echo $cashback_text; ?></div>

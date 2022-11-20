@@ -61,7 +61,11 @@ class Config
     // hardcoded values
     public const AME_API_URL = "https://ame19gwci.gum.net.br:63333/api";
     public const SENSEDIA_API_URL = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
+    public const SENSEDIA_API_DEV_URL = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
+
     public const SENSEDIA_TRUST_WALLET_URL = "https://ame19gwci.gum.net.br:63334/cobranca-confiavel/v1";
+
+    public const SENSEDIA_TRUST_WALLET_DEV_URL = "http://api-amedigital.sensedia.com/hml/cobranca-confiavel/v1";
 
     // Stored for dev purposes only
     //    public const AME_API_URL = "https://api.dev.amedigital.com/api";

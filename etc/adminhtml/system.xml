@@ -57,7 +57,7 @@
                 </field>
                 <field id="environment" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Ambiente</label>
-                    <source_model>GumNet\AME\Model\Values\Config\Environment</source_model>
+                    <source_model>GumNet\AME\Model\Config\Environment</source_model>
                 </field>
                 <field id="trust_wallet_enabled" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Trust Wallet</label>
@@ -73,15 +73,15 @@
                 </field>
                 <field id="address_street" translate="label" type="select" sortOrder="130" showInDefault="1">
                     <label>Rua</label>
-                    <source_model>GumNet\AME\Model\Values\Config\AddressLines</source_model>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <field id="address_number" translate="label" type="select" sortOrder="140" showInDefault="1">
                     <label>Número</label>
-                    <source_model>GumNet\AME\Model\Values\Config\AddressLines</source_model>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <field id="address_neighborhood" translate="label" type="select" sortOrder="150" showInDefault="1">
                     <label>Bairro</label>
-                    <source_model>GumNet\AME\Model\Values\Config\AddressLines</source_model>
+                    <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <!-- temporarily disabled feature
                 <field id="show_cashback_products_list" translate="label" type="select" sortOrder="160" showInDefault="1">

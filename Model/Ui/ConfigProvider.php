@@ -29,9 +29,13 @@
 namespace GumNet\AME\Model\Ui;
 
 use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\SensediaApiClient;
+use GumNet\AME\Model\Values\Config;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Asset\Repository;
+use Magento\Store\Model\ScopeInterface;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -50,6 +54,8 @@ class ConfigProvider implements ConfigProviderInterface
      */
     protected $api;
 
+    protected $scopeConfig;
+
     /**
      * @param Repository $assertRepository
      * @param Session $checkoutSession
@@ -58,11 +64,17 @@ class ConfigProvider implements ConfigProviderInterface
     public function __construct(
         Repository $assertRepository,
         Session $checkoutSession,
-        ApiClient $api
+        ApiClient $api,
+        SensediaApiClient $sensediaApi,
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->assertRepository = $assertRepository;
         $this->checkoutSession = $checkoutSession;
+        $this->scopeConfig = $scopeConfig;
         $this->api = $api;
+        if ($this->scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
+            $this->api = $sensediaApi;
+        }
     }
 
     /**

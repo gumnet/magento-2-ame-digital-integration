@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Model\Values\Config;
+namespace GumNet\AME\Model\Config;
 
 use Magento\Framework\Option\ArrayInterface;
 

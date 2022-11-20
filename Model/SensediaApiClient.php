@@ -33,19 +33,12 @@ use GumNet\AME\Model\Values\Config;
 
 class SensediaApiClient extends ApiClient
 {
-    protected $url = Config::SENSEDIA_API_URL;
-
-    protected $urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_URL;
-
-    protected $urlOrders = "ordens";
-
-    protected $urlPayments = "pagamentos";
-
-    protected $urlCancelTransaction = "pagamentos";
-
-    protected $urlCancelEnd = "cancel";
-
-//    protected $urlTrustWallet = "cobrancas";
+    public const URL = Config::SENSEDIA_API_DEV_URL;
+    public const URL_TRUST_WALLET = Config::SENSEDIA_TRUST_WALLET_DEV_URL;
+    public const URL_ORDERS = 'ordens';
+    public const URLPAYMENTS = 'pagamentos';
+    public const URL_CANCEL_TRANSACTION = 'pagamentos';
+    public const URL_CANCEL_END = 'cancel';
 
     /**
      * @param string $ameId
@@ -53,7 +46,7 @@ class SensediaApiClient extends ApiClient
      */
     public function cancelOrder(string $ameId): bool
     {
-        $url = $this->url . $this->urlOrders . $ameId;
+        $url = static::URL . static::URL_ORDERS . $ameId;
         $result = $this->ameRequest($url, "DELETE", "");
         if ($this->hasError($result, $url, "")) {
             return false;
