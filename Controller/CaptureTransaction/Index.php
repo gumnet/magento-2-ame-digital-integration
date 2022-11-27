@@ -121,7 +121,7 @@ class Index extends Action
     public function getNsu(string $transactionId)
     {
         $order = $this->getOrderByTransactionId($transactionId);
-        return $order->getPayment()->getAdditionalInformation(Config::NSU);
+        return $order->getPayment()->getAdditionalInformation(PaymentInformation::NSU);
     }
 
     /**

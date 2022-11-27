@@ -29,8 +29,7 @@
 
 namespace GumNet\AME\Model;
 
-use GumNet\AME\Model\ApiClient;
-use GumNet\AME\Model\SensediaApiClient;
+use GumNet\AME\Model\Config\Environment;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Api\AttributeValueFactory;
@@ -122,7 +121,8 @@ class AME extends AbstractMethod
             $directory
         );
         $this->ame = $api;
-        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
+        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
+            === Environment::ENV_SENSEDIA_LABEL) {
             $this->ame = $sensediaAPI;
         }
     }
@@ -188,8 +188,8 @@ class AME extends AbstractMethod
             throw new LocalizedException(__('The refund action is not available.'));
         }
         try {
-            $ameId = $payment->getAdditionalInformation('ame_id');
-            $this->ame->refundOrder($ameId, $amount * 100);
+            $transactionId = $payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID);
+            $this->ame->refundOrder($transactionId, $amount * 100);
         } catch (\Exception $e) {
             throw new IntegrationException(__('Payment ApiClient refund error.'));
         }

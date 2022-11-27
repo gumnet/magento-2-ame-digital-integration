@@ -29,9 +29,11 @@
 
 namespace GumNet\AME\Model;
 
+use GumNet\AME\Model\Config\Environment;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Module\ModuleList;
+use Magento\Mtf\Config\FileResolver\ScopeConfig;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 use Magento\Store\Model\StoreManagerInterface;
@@ -221,7 +223,8 @@ class GumApi
      */
     public function getEnvironment(): string
     {
-        return "prod";
+        $envInt = $this->scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE);
+        return $envInt === Environment::ENV_SENSEDIA_VALUE ? "prod" : "sensedia";
     }
 }
 

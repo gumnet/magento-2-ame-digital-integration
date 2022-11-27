@@ -29,6 +29,7 @@
 namespace GumNet\AME\Model\Ui;
 
 use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\Config\Environment;
 use GumNet\AME\Model\SensediaApiClient;
 use GumNet\AME\Model\Values\Config;
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -72,7 +73,8 @@ class ConfigProvider implements ConfigProviderInterface
         $this->checkoutSession = $checkoutSession;
         $this->scopeConfig = $scopeConfig;
         $this->api = $api;
-        if ($this->scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) == 3) {
+        if ($this->scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
+            === Environment::ENV_SENSEDIA_VALUE) {
             $this->api = $sensediaApi;
         }
     }

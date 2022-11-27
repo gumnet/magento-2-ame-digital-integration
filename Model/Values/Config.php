@@ -54,6 +54,8 @@ class Config
     public const EXHIBITION_LIST = 'payment/ame/show_cashback_products_list';
     public const TRUST_WALLET_ENABLED = 'payment/ame/trust_wallet_enabled';
 
+    // Environments
+
     // ame_config values
     public const TOKEN_VALUE = 'token_value';
     public const TOKEN_EXPIRES = 'token_expires';

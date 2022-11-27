@@ -191,38 +191,34 @@ class ApiClient
     }
 
     /**
-     * @param string $ameId
+     * @param string $transactionId
      * @param float $amount
      * @return array
      * @throws \Exception
      */
-    public function refundOrder(string $ameId, float $amount): array
+    public function refundOrder(string $transactionId, float $amount): array
     {
-        return [];
-        // review dbame
-//        $transactionId = $this->dbAME->getTransactionIdByOrderId($ameId);
-//
-//        $url = static::URL . "/" . static::URL_PAYMENTS ."/" . $transactionId;
-//
-//        $refundId = Uuid::uuid4()->toString();
-//        while ($this->dbAME->refundIdExists($refundId)) {
-//            $refundId = Uuid::uuid4()->toString();
-//        }
-//        if (stristr(static::URL, "63333")) {
-//
-//            $url .= "/refunds/MAGENTO-" . $refundId;
-//        } else {
-//            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
-//        }
-//        $jsonArray['amount'] = $amount;
-//        $json = json_encode($jsonArray);
-//        $result[0] = $this->ameRequest($url, "PUT", $json);
-//        $this->logger->info("AME REFUND Result:" . $result[0]);
-//        if ($this->hasError($result[0], $url, $json)) {
-//            return [];
-//        }
-//        $result[1] = $refundId;
-//        return $result;
+        $url = static::URL . "/" . static::URL_PAYMENTS ."/" . $transactionId;
+
+        $refundId = Uuid::uuid4()->toString();
+        while ($this->dbAME->refundIdExists($refundId)) {
+            $refundId = Uuid::uuid4()->toString();
+        }
+        if (stristr(static::URL, "63333")) {
+
+            $url .= "/refunds/MAGENTO-" . $refundId;
+        } else {
+            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
+        }
+        $jsonArray['amount'] = $amount;
+        $json = json_encode($jsonArray);
+        $result[0] = $this->ameRequest($url, "PUT", $json);
+        $this->logger->info("AME REFUND Result:" . $result[0]);
+        if ($this->hasError($result[0], $url, $json)) {
+            return [];
+        }
+        $result[1] = $refundId;
+        return $result;
     }
 
     /**

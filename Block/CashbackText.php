@@ -30,6 +30,7 @@
 namespace GumNet\AME\Block;
 
 use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\Config\Environment;
 use GumNet\AME\Model\SensediaApiClient;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -75,7 +76,8 @@ class CashbackText extends Template
         $this->registry = $registry;
         $this->api = $api;
 
-        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE) === 3) {
+        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
+            === Environment::ENV_SENSEDIA_VALUE) {
             $this->api = $sensediaAPI;
         }
         $this->request = $request;

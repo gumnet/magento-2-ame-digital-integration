@@ -29,6 +29,7 @@
 
 namespace GumNet\AME\Controller\Index;
 
+use GumNet\AME\Model\ApiClient;
 use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Action\Action;
@@ -37,7 +38,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
-use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -68,11 +70,6 @@ class Index extends Action implements CsrfAwareActionInterface
     protected $orderRepository;
 
     /**
-     * @var RawFactory
-     */
-    protected $resultFactory;
-
-    /**
      * @var CollectionFactory
      */
     protected $orderCollectionFactory;
@@ -89,7 +86,6 @@ class Index extends Action implements CsrfAwareActionInterface
      * @param RequestInterface $request
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderRepository $orderRepository
-     * @param RawFactory $resultFactory
      * @param CollectionFactory $orderCollectionFactory
      * @param GumApi $gumApi
      * @param array $data
@@ -99,17 +95,15 @@ class Index extends Action implements CsrfAwareActionInterface
         RequestInterface $request,
         ScopeConfigInterface$scopeConfig,
         OrderRepository $orderRepository,
-        RawFactory  $resultFactory,
         CollectionFactory $orderCollectionFactory,
         GumApi $gumApi,
-        \GumNet\AME\Model\ApiClient $api,
+        ApiClient $api,
         array $data = []
     ) {
         $this->context = $context;
         $this->request = $request;
         $this->scopeConfig = $scopeConfig;
         $this->orderRepository = $orderRepository;
-        $this->resultFactory = $resultFactory;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->gumApi = $gumApi;
         $this->api = $api;
@@ -133,13 +127,15 @@ class Index extends Action implements CsrfAwareActionInterface
             $message = __('AME Callback - JSON missing keys- ' . $json);
             throw new InputException($message);
         }
+        $debitWalletId = $input['debitWalletId'] ?? "";
         if ($input['status'] == "AUTHORIZED") {
-            $this->setTransactionId($input['attributes']['orderId'], $input['id'], $input['nsu']);
+            $this->setTransactionId($input['attributes']['orderId'], $input['id'], $input['nsu'], $debitWalletId);
             $this->gumApi->queueTransaction($json);
         } else {
             $this->gumApi->queueTransactionError($json);
         }
-        $result = $this->resultFactory->create();
+        /** @var Raw $result */
+        $result = $this->context->getResultFactory()->create(ResultFactory::TYPE_RAW);
         return $result->setContents('');
     }
 
@@ -147,17 +143,25 @@ class Index extends Action implements CsrfAwareActionInterface
      * @param string $ameOrderId
      * @param string $ameTransactionId
      * @param string $nsu
+     * @param string $debitWalledId
      * @return void
      * @throws AlreadyExistsException
      * @throws InputException
      * @throws NoSuchEntityException
      * @throws NotFoundException
      */
-    public function setTransactionId(string $ameOrderId, string $ameTransactionId, string $nsu = "")
-    {
+    public function setTransactionId(
+        string $ameOrderId,
+        string $ameTransactionId,
+        string $nsu = "",
+        string $debitWalledId = ""
+    ): void {
         $orderCollection = $this->orderCollectionFactory->create();
-        $where = "JSON_EXTRACT(additional_information, '$." . PaymentInformation::AME_ID. ") = " . $ameOrderId;
-        $orderCollection->getSelect('additional_filter')->where($where);
+        $where = "JSON_EXTRACT(sales_order_payment.additional_information, \"$."
+            . PaymentInformation::AME_ID. "\") = '" . $ameOrderId . "'";
+        $orderCollection->getSelect('additional_filter')
+            ->join('sales_order_payment', 'main_table.entity_id = sales_order_payment.parent_id')
+            ->where($where);
         if (!$orderCollection->count()) {
             $message = __("AME Callback - Order with ID '" . $ameOrderId . "' not found.");
             throw new \Magento\Framework\Exception\NotFoundException($message);
