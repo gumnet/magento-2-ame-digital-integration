@@ -30,6 +30,7 @@
 namespace GumNet\AME\Model;
 
 use GumNet\AME\Api\AmeConfigRepositoryInterface;
+use GumNet\AME\Model\Config\Environment;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -43,13 +44,19 @@ use GumNet\AME\Model\Values\PaymentInformation;
 
 class ApiClient
 {
-    public const ORDER = "Pedido ";
-    public const URL = Config::AME_API_URL;
-    public const URL_ORDERS = "orders";
-    public const URL_PAYMENTS = "payments";
-    public const URL_CANCEL_TRANSACTION = "wallet/user/payments";
-    public const URL_CANCEL_END = "";
-    public const URL_TRUST_WALLET = "cobrancas";
+    public const ORDER = 'Pedido ';
+
+    protected $url = Config::AME_API_URL;
+
+    protected $urlOrders = "orders";
+
+    protected $urlPayments = "payments";
+
+    protected $urlCancelTransaction = "wallet/user/payments";
+
+    protected $urlCancelEnd = "";
+
+    protected $urlTrustWallet = "cobrancas";
 
     /**
      * @var LoggerInterface
@@ -76,6 +83,8 @@ class ApiClient
      */
     protected $ameConfigRepository;
 
+    protected $apiType = 0;
+
 
     /**
      * @param LoggerInterface $logger
@@ -97,6 +106,19 @@ class ApiClient
 
         $this->gumapi = $gumApi;
         $this->ameConfigRepository = $ameConfigRepository;
+        $this->setApiDetails();
+    }
+
+    protected function setApiDetails()
+    {
+        if ($this->getApiType() == Environment::ENV_SENSEDIA_VALUE) {
+            $this->url = Config::SENSEDIA_API_DEV_URL_V2;
+            $this->urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_DEV_URL;
+            $this->urlOrders = 'ordens';
+            $this->urlPayments = 'pagamentos';
+            $this->urlCancelTransaction = 'pagamentos';
+            $this->urlCancelEnd = 'cancel';
+        }
     }
 
     /**
@@ -106,8 +128,8 @@ class ApiClient
      */
     public function getCashBackPercent(): float
     {
-        $cashback_updated_at = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
-        if (time() < $cashback_updated_at + 3600) {
+        $cashbackUpdatedAt = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
+        if (time() < $cashbackUpdatedAt + 3600) {
             return (float)$this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
         } else {
             return $this->generateCashbackFromOrder();
@@ -121,7 +143,7 @@ class ApiClient
      */
     public function generateCashbackFromOrder(): float
     {
-        $url = static::URL . "/" . static::URL_ORDERS;
+        $url = $this->url . "/" . $this->urlOrders;
         $orderId = rand(1000, 1000000);
 
         $jsonArray = [
@@ -169,24 +191,24 @@ class ApiClient
             && array_key_exists('cashbackAmountValue', $resultArray['attributes'])) {
             $cashbackAmountValue = $resultArray['attributes']['cashbackAmountValue'];
         }
-        $cashback_percent = $cashbackAmountValue/100;
-        $this->setCashbackPercent($cashback_percent);
-        return (float)$cashback_percent;
+        $cashbackPercent = $cashbackAmountValue/100;
+        $this->setCashbackPercent($cashbackPercent);
+        return (float)$cashbackPercent;
     }
 
     /**
-     * @param $cashback_percent
+     * @param $cashbackPercent
      * @return void
      * @throws NoSuchEntityException
      * @throws LocalizedException
      */
-    protected function setCashbackPercent($cashback_percent): void
+    protected function setCashbackPercent($cashbackPercent): void
     {
         $config = $this->ameConfigRepository->getByConfig('cashback_updated_at');
         $config->setValue(time());
         $this->ameConfigRepository->save($config);
         $config = $this->ameConfigRepository->getByConfig('cashback_percent');
-        $config->setValue($cashback_percent);
+        $config->setValue($cashbackPercent);
         $this->ameConfigRepository->save($config);
     }
 
@@ -198,13 +220,13 @@ class ApiClient
      */
     public function refundOrder(string $transactionId, float $amount): array
     {
-        $url = static::URL . "/" . static::URL_PAYMENTS ."/" . $transactionId;
+        $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId;
 
         $refundId = Uuid::uuid4()->toString();
         while ($this->dbAME->refundIdExists($refundId)) {
             $refundId = Uuid::uuid4()->toString();
         }
-        if (stristr(static::URL, "63333")) {
+        if (stristr($this->url, "63333")) {
 
             $url .= "/refunds/MAGENTO-" . $refundId;
         } else {
@@ -227,7 +249,7 @@ class ApiClient
      */
     public function cancelTransaction(string $transactionId): bool
     {
-        $url = static::URL . "/" . static::URL_CANCEL_TRANSACTION ."/" . $transactionId . "/" . static::URL_CANCEL_END;
+        $url = $this->url . "/" . $this->urlCancelTransaction ."/" . $transactionId . "/" . $this->urlCancelEnd;
         $result = $this->ameRequest($url, "PUT", "");
         if ($this->hasError($result, $url, "")) {
             return false;
@@ -241,7 +263,7 @@ class ApiClient
      */
     public function consultOrder(string $ameId): string
     {
-        $url = static::URL . "/" . static::URL_ORDERS . "/" . $ameId;
+        $url = $this->url . "/" . $this->urlOrders . "/" . $ameId;
         $result = $this->ameRequest($url, "GET", "");
         if ($this->hasError($result, $url)) {
             return "";
@@ -257,7 +279,7 @@ class ApiClient
     public function createOrder($order): string
     {
         /** @var Order $order */
-        $url = static::URL . "/" . static::URL_ORDERS;
+        $url = $this->url . "/" . $this->urlOrders;
         $amount = (int)$order->getGrandTotal() * 100;
 
         $number_line = $this->scopeConfig->getValue(
@@ -467,7 +489,7 @@ class ApiClient
      */
     public function ameRequest(string $url, string $method = "GET", string $json = ""): string
     {
-        if (stristr(static::URL, "63333")) {
+        if ($this->getApiType() != Environment::ENV_SENSEDIA_VALUE) {
             if (!$token = $this->getToken()) {
                 return "";
             }
@@ -481,8 +503,12 @@ class ApiClient
             }
             $header = [
                 "Content-Type: application/json",
-                "client_id: " . $client_id,
-                "access_token: ". $access_token
+                // Ses v1
+//                "client_id: " . $client_id,
+//                "access_token: ". $access_token
+            // Ses v2
+//            "Authorization: " . base64_encode($client_id . ":" . $access_token)
+            "Authorization: ZTY4ZGUyZWItMWM2MC0zZDdjLWI0ZDItOTY5ZjRiYzg2ZGI3OjljYTg1NTJkLTZmMjctM2MyYy04OWQ5LTNkYTVjYTU5ZDBkMQ=="
             ];
         }
 
@@ -502,6 +528,9 @@ class ApiClient
         $result = curl_exec($ch);
         curl_close($ch);
         // phpcs:enable
+        $this->logger->info("AME API URL: " . $url);
+        $this->logger->info("AME API Input: " . $json);
+        $this->logger->info("AME API Result: " . $result);
         return $result;
     }
 
@@ -511,7 +540,7 @@ class ApiClient
     public function trustWalletIsEnabled()
     {
         return (bool)$this->scopeConfig->getValue(
-            Config::API_USER,
+            Config::TRUST_WALLET_ENABLED,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -554,7 +583,7 @@ class ApiClient
             $this->logger->error("AME user/pass not set. Please check Magento configuration");
             return "";
         }
-        $url = static::URL . "/auth/oauth/token";
+        $url = $this->url . "/auth/oauth/token";
         // Allow curl - do not use buggy Magento classes
         // phpcs:disable
         $ch = curl_init();
@@ -600,9 +629,20 @@ class ApiClient
         return $resultArray['access_token'];
     }
 
+    public function getApiType(): int
+    {
+        if (!$this->apiType) {
+            $this->apiType = $this->scopeConfig->getValue(
+                Config::ENVIRONMENT,
+                ScopeInterface::SCOPE_STORE
+            );
+        }
+        return $this->apiType;
+    }
+
     /**
      * @param string $token
-     * @param int $expires_in
+     * @param int $expiresIn
      * @return void
      * @throws LocalizedException
      * @throws NoSuchEntityException
@@ -618,10 +658,10 @@ class ApiClient
     }
 
     /**
-     * @param string $txt_uf
+     * @param string $txtUf
      * @return string
      */
-    public function codigoUF(string $txt_uf): string
+    public function codigoUF(string $txtUf): string
     {
         $array_ufs = array("Rondônia" => "RO",
             "Acre" => "AC",
@@ -652,7 +692,7 @@ class ApiClient
             "Distrito Federal" => "DF");
         $uf = "RJ";
         foreach ($array_ufs as $key => $value) {
-            if ($key == $txt_uf) {
+            if ($key == $txtUf) {
                 $uf = $value;
                 break;
             }

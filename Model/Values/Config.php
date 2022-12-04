@@ -65,6 +65,8 @@ class Config
     public const SENSEDIA_API_URL = "https://ame19gwci.gum.net.br:63334/transacoes/v1";
     public const SENSEDIA_API_DEV_URL = "http://api-amedigital.sensedia.com/hml/transacoes/v1";
 
+    public const SENSEDIA_API_DEV_URL_V2 = "http://api-amedigital.sensedia.com/hml/transacoes/v2";
+
     public const SENSEDIA_TRUST_WALLET_URL = "https://ame19gwci.gum.net.br:63334/cobranca-confiavel/v1";
 
     public const SENSEDIA_TRUST_WALLET_DEV_URL = "http://api-amedigital.sensedia.com/hml/cobranca-confiavel/v1";

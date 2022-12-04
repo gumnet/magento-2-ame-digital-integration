@@ -121,10 +121,6 @@ class AME extends AbstractMethod
             $directory
         );
         $this->ame = $api;
-        if ($this->_scopeConfig->getValue(Config::ENVIRONMENT, ScopeInterface::SCOPE_STORE)
-            === Environment::ENV_SENSEDIA_LABEL) {
-            $this->ame = $sensediaAPI;
-        }
     }
 
     /**
