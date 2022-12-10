@@ -27,18 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace GumNet\AME\Block;
+namespace GumNet\AME\ViewModel;
 
 use GumNet\AME\Model\ApiClient;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
-use Magento\Framework\View\Element\Template;
-use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 
-class CashbackText extends Template
+class CashbackText implements ArgumentInterface
 {
     /**
      * @var Registry
@@ -56,22 +56,27 @@ class CashbackText extends Template
     protected $request;
 
     /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
      * CashbackText constructor.
-     * @param Context $context
      * @param Registry $registry
      * @param ApiClient $api
      * @param Http $request
+     * @param ScopeInterface $scopeConfig
      */
     public function __construct(
-        Context $context,
         Registry $registry,
         ApiClient $api,
-        Http $request
+        Http $request,
+        ScopeConfigInterface $scopeConfig
     ) {
-        parent::__construct($context);
         $this->registry = $registry;
         $this->api = $api;
         $this->request = $request;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -79,13 +84,12 @@ class CashbackText extends Template
      */
     public function isShowCashbackProductsListEnabled(): bool
     {
-        return (bool)$this->_scopeConfig
+        return (bool)$this->scopeConfig
             ->getValue(Config::EXHIBITION_LIST, ScopeInterface::SCOPE_STORE);
     }
 
     /**
      * @return float
-     * @throws NoSuchEntityException
      */
     public function getCashbackPercent()
     {
@@ -94,13 +98,16 @@ class CashbackText extends Template
 
     /**
      * @return float
-     * @throws NoSuchEntityException
      */
     public function getCashbackValue(): float
     {
-        if ($this->request->getFullActionName() == 'catalog_product_view') {
-            $product = $this->registry->registry('product');
-            return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
+        try {
+            if ($this->request->getFullActionName() == 'catalog_product_view') {
+                $product = $this->registry->registry('product');
+                return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
+            }
+        } catch (NoSuchEntityException $e) {
+            return 0;
         }
         return 0;
     }

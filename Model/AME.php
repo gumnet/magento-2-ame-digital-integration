@@ -86,7 +86,6 @@ class AME extends AbstractMethod
      * @param ScopeConfigInterface $scopeConfig
      * @param Logger $logger
      * @param ApiClient $api
-     * @param SensediaApiClient $sensediaAPI
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -101,7 +100,6 @@ class AME extends AbstractMethod
         ScopeConfigInterface $scopeConfig,
         Logger $logger,
         ApiClient $api,
-        SensediaApiClient $sensediaAPI,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = [],

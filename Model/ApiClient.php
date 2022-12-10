@@ -52,6 +52,8 @@ class ApiClient
 
     protected $urlPayments = "payments";
 
+    protected $urlTransaction = "";
+
     protected $urlCancelTransaction = "wallet/user/payments";
 
     protected $urlCancelEnd = "";
@@ -112,27 +114,29 @@ class ApiClient
     protected function setApiDetails()
     {
         if ($this->getApiType() == Environment::ENV_SENSEDIA_VALUE) {
-            $this->url = Config::SENSEDIA_API_DEV_URL_V2;
-            $this->urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_DEV_URL;
-            $this->urlOrders = 'ordens';
+            $this->url = Config::SENSEDIA_API_URL;
+            $this->urlOrders = 'transactions/v1/orders';
+            $this->urlTransaction = 'transactions/v1';
             $this->urlPayments = 'pagamentos';
-            $this->urlCancelTransaction = 'pagamentos';
+            $this->urlCancelTransaction = 'transactions/v1/payments';
             $this->urlCancelEnd = 'cancel';
         }
     }
 
     /**
      * @return float
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function getCashBackPercent(): float
     {
-        $cashbackUpdatedAt = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
-        if (time() < $cashbackUpdatedAt + 3600) {
-            return (float)$this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
-        } else {
-            return $this->generateCashbackFromOrder();
+        try {
+            $cashbackUpdatedAt = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
+            if (time() < $cashbackUpdatedAt + 3600) {
+                return (float)$this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
+            } else {
+                return $this->generateCashbackFromOrder();
+            }
+        } catch (LocalizedException $e) {
+            return 0;
         }
     }
 
@@ -213,6 +217,27 @@ class ApiClient
     }
 
     /**
+     * @param string $ameId
+     * @return bool
+     */
+    public function cancelOrder(string $ameId): bool
+    {
+
+        $url = $this->url . $this->urlOrders . $ameId;
+        if ($this->getApiType() == Environment::ENV_SENSEDIA_VALUE) {
+            $ameOrder = $this->consultOrder($ameId);
+            $jsonArray = json_decode($ameOrder, true);
+            $ownerId = $jsonArray['ownerId'];
+            $url = $this->url . "/transactions/v1/customers/" . $ownerId . "/orders/" . $ameId;
+        }
+        $result = $this->ameRequest($url, "DELETE", "");
+        if ($this->hasError($result, $url, "")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @param string $transactionId
      * @param float $amount
      * @return array
@@ -249,8 +274,13 @@ class ApiClient
      */
     public function cancelTransaction(string $transactionId): bool
     {
+        $method = "PUT";
+        if ($this->getApiType() == Environment::ENV_SENSEDIA_VALUE) {
+            $method = "POST";
+        }
         $url = $this->url . "/" . $this->urlCancelTransaction ."/" . $transactionId . "/" . $this->urlCancelEnd;
-        $result = $this->ameRequest($url, "PUT", "");
+
+        $result = $this->ameRequest($url, $method, "");
         if ($this->hasError($result, $url, "")) {
             return false;
         }
@@ -412,7 +442,7 @@ class ApiClient
         string $description,
         array $items
     ): string {
-        $url = "";
+        $url = $this->url . "/";
         $jsonArray = [
             'linkUuid' => $trustWalletId,
             'amountInCents' => (int)$value * 100,
@@ -485,32 +515,15 @@ class ApiClient
      * @param string $url
      * @param string $method
      * @param string $json
+     * @param bool $enableLog
      * @return string
      */
-    public function ameRequest(string $url, string $method = "GET", string $json = ""): string
+    public function ameRequest(string $url, string $method = "GET", string $json = "", bool $enableLog = true): string
     {
-        if ($this->getApiType() != Environment::ENV_SENSEDIA_VALUE) {
-            if (!$token = $this->getToken()) {
-                return "";
-            }
-            $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
-        } else {
-            if (!$client_id = $this->scopeConfig->getValue(Config::API_USER)) {
-                return "";
-            }
-            if (!$access_token = $this->scopeConfig->getValue(Config::API_PASSWORD)) {
-                return "";
-            }
-            $header = [
-                "Content-Type: application/json",
-                // Ses v1
-//                "client_id: " . $client_id,
-//                "access_token: ". $access_token
-            // Ses v2
-//            "Authorization: " . base64_encode($client_id . ":" . $access_token)
-            "Authorization: ZTY4ZGUyZWItMWM2MC0zZDdjLWI0ZDItOTY5ZjRiYzg2ZGI3OjljYTg1NTJkLTZmMjctM2MyYy04OWQ5LTNkYTVjYTU5ZDBkMQ=="
-            ];
+        if (!$token = $this->getToken()) {
+            return "";
         }
+        $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
 
         $method = strtoupper($method);
         // Allow curl - do not use buggy Magento classes
@@ -528,9 +541,11 @@ class ApiClient
         $result = curl_exec($ch);
         curl_close($ch);
         // phpcs:enable
-        $this->logger->info("AME API URL: " . $url);
-        $this->logger->info("AME API Input: " . $json);
-        $this->logger->info("AME API Result: " . $result);
+        if ($enableLog) {
+            $this->logger->info("AME API URL: " . $url);
+            $this->logger->info("AME API Input: " . $json);
+            $this->logger->info("AME API Result: " . $result);
+        }
         return $result;
     }
 
@@ -553,7 +568,7 @@ class ApiClient
     {
         $config = $this->ameConfigRepository->getByConfig('token_expires');
         $token_expires = (int)$config->getValue();
-        if (time() + 600 < $token_expires) {
+        if (time() + Config::TOKEN_EXPIRES_SECONDS < $token_expires) {
             $ameConfig = $this->ameConfigRepository->getByConfig('token_value');
             return $ameConfig->getValue();
         }
@@ -584,6 +599,9 @@ class ApiClient
             return "";
         }
         $url = $this->url . "/auth/oauth/token";
+        if ($this->getApiType() === Environment::ENV_SENSEDIA_VALUE) {
+            $url = $this->url . "/auth/v1/login";
+        }
         // Allow curl - do not use buggy Magento classes
         // phpcs:disable
         $ch = curl_init();
@@ -629,6 +647,9 @@ class ApiClient
         return $resultArray['access_token'];
     }
 
+    /**
+     * @return int
+     */
     public function getApiType(): int
     {
         if (!$this->apiType) {

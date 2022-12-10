@@ -26,38 +26,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+declare(strict_types=1);
 
-namespace GumNet\AME\Model;
+namespace GumNet\AME\Test\ViewModel;
 
-use GumNet\AME\Model\Values\Config;
+use GumNet\AME\ViewModel\CashbackText;
+use GumNet\AME\Model\ApiClient;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\Registry;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class SensediaTrustClient extends ApiClient
+class CashbackTextTest extends TestCase
 {
-    protected $url = Config::SENSEDIA_API_URL;
+    private MockObject $registry;
+    private MockObject $apiClient;
+    private MockObject $request;
+    private MockObject $scopeConfig;
+    private CashbackText $cashbackText;
 
-    protected $urlTrustWallet = Config::SENSEDIA_TRUST_WALLET_URL;
-
-    protected $urlOrders = "ordens";
-
-    protected $urlPayments = "pagamentos";
-
-    protected $urlCancelTransaction = "pagamentos";
-
-    protected $urlCancelEnd = "cancel";
-
-//    protected $urlTrustWallet = "cobrancas";
-
-    /**
-     * @param string $ameId
-     * @return bool
-     */
-    public function cancelOrder(string $ameId): bool
+    protected function setUp(): void
     {
-        $url = $this->url . $this->urlOrders . $ameId;
-        $result = $this->ameRequest($url, "DELETE", "");
-        if ($this->hasError($result, $url, "")) {
-            return false;
-        }
-        return true;
+        $this->registry = $this->createMock(Registry::class);
+        $this->apiClient = $this->createMock(ApiClient::class);
+        $this->request = $this->createMock(Http::class);
+        $this->scopeConfig = $this->createMock(ScopeConfigInterface::class);
+
+        $this->cashbackText = new CashbackText(
+            $this->registry,
+            $this->apiClient,
+            $this->request,
+            $this->scopeConfig
+        );
+    }
+
+    public function testIsShowCashbackProductsListEnabled()
+    {
+        $this->scopeConfig->method('getValue')
+            ->willReturn('1');
+        $this->assertSame(true, $this->cashbackText->isShowCashbackProductsListEnabled());
     }
 }
