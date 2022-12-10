@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
@@ -27,19 +26,46 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="payment_method_is_active">
-        <observer name="disable_pg_ame" instance="GumNet\AME\Observer\ObserverForDisabledFrontendPg" />
-    </event>
-    <event name="checkout_submit_before">
-        <observer name="ame_validate_form" instance="GumNet\AME\Observer\ValidateForm"  />
-    </event>
-    <event name="order_cancel_after">
-        <observer name="ame_order_cancel" instance="GumNet\AME\Observer\CancelOrder"  />
-    </event>
-    <event name="sales_order_payment_refund">
-        <observer name="ame_order_refund" instance="GumNet\AME\Observer\CreditMemoRefund"  />
-    </event>
-</config>
+
+namespace GumNet\AME\Observer;
+
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\Values\PaymentInformation as PaymentInformationAlias;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Model\Order\Creditmemo;
+use Magento\Sales\Model\Order\Payment;
+
+class CreditMemoRefund implements ObserverInterface
+{
+    /**
+     * @var ApiClient
+     */
+    protected $apiClient;
+
+    /**
+     * @param ApiClient $apiClient
+     */
+    public function __construct(
+        ApiClient $apiClient
+    ) {
+        $this->apiClient = $apiClient;
+    }
+
+    /**
+     * @param Observer $observer
+     * @return void
+     */
+    public function execute(Observer $observer): void
+    {
+        /** @var Payment $payment */
+        $payment = $observer->getEvent()->getPayment();
+        if ($payment->getMethod() == \GumNet\AME\Model\AME::CODE) {
+            /** @var Creditmemo $creditMemo */
+            $creditMemo = $observer->getEvent()->getCreditmemo();
+            if ($transactionId = $payment->getAdditionalInformation(PaymentInformationAlias::TRANSACTION_ID)) {
+                $this->apiClient->refundOrder($transactionId, $creditMemo->getGrandTotal());
+            }
+        }
+    }
+}
