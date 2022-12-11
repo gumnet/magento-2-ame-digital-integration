@@ -47,16 +47,16 @@
                 </field>
                 <field id="api_user" translate="label" type="text" sortOrder="70" showInDefault="1">
                     <label>Client ID</label>
-                    <comment><![CDATA[Client_id pertence a empresa que gerencia o e-commerce ou integração própria.]]></comment>
+                    <comment><![CDATA[Client_id - ID do usuário.]]></comment>
                     <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="api_password" translate="label" type="text" sortOrder="80" showInDefault="1">
-                    <label>Access Token</label>
-                    <comment><![CDATA[Access_token chave fixa utilizada pelos estabelecimento. Cada CNPJ possui seu próprio access_token.]]></comment>
+                    <label>Client Secret</label>
+                    <comment><![CDATA[Client Secret.]]></comment>
                     <validate>required-entry validate-uuid</validate>
                 </field>
                 <field id="environment" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Ambiente</label>
+                    <label>Environment</label>
                     <source_model>GumNet\AME\Model\Config\Environment</source_model>
                 </field>
                 <field id="trust_wallet_enabled" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -72,15 +72,15 @@
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>
                 <field id="address_street" translate="label" type="select" sortOrder="130" showInDefault="1">
-                    <label>Rua</label>
+                    <label>Street</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <field id="address_number" translate="label" type="select" sortOrder="140" showInDefault="1">
-                    <label>Número</label>
+                    <label>Number</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <field id="address_neighborhood" translate="label" type="select" sortOrder="150" showInDefault="1">
-                    <label>Bairro</label>
+                    <label>District</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
                 <!-- temporarily disabled feature

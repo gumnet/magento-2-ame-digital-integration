@@ -166,7 +166,7 @@ class AME extends AbstractMethod
      */
     public function isAvailable(CartInterface $quote = null): bool
     {
-        return (bool)$this->_scopeConfig->getValue('payment/ame/active', ScopeInterface::SCOPE_STORE);
+        return (bool)$this->_scopeConfig->getValue(Config::ACTIVE, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -182,10 +182,23 @@ class AME extends AbstractMethod
             throw new LocalizedException(__('The refund action is not available.'));
         }
         try {
-            $transactionId = $payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID);
-            $this->ame->refundOrder($transactionId, $amount * 100);
+            if ($transactionId = $payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID)) {
+                $this->ame->refundOrder($transactionId, $amount * 100);
+            }
         } catch (\Exception $e) {
             throw new IntegrationException(__('Payment ApiClient refund error.'));
+        }
+        return $this;
+    }
+
+    /**
+     * @param InfoInterface $payment
+     * @return AME
+     */
+    public function cancel(InfoInterface $payment): AME
+    {
+        if ($ameId = $payment->getAdditionalInformation(PaymentInformation::AME_ID)) {
+            $this->ame->cancelOrder($ameId);
         }
         return $this;
     }

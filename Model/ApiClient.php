@@ -29,6 +29,7 @@
 
 namespace GumNet\AME\Model;
 
+use CyberSource\BankTransfer\Controller\Index\Pay;
 use GumNet\AME\Api\AmeConfigRepositoryInterface;
 use GumNet\AME\Model\Config\Environment;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -248,18 +249,14 @@ class ApiClient
         $url = $this->url . "/" . $this->urlPayments ."/" . $transactionId;
 
         $refundId = Uuid::uuid4()->toString();
-        while ($this->dbAME->refundIdExists($refundId)) {
-            $refundId = Uuid::uuid4()->toString();
-        }
-        if (stristr($this->url, "63333")) {
-
-            $url .= "/refunds/MAGENTO-" . $refundId;
-        } else {
-            $jsonArray['refundId'] = "MAGENTO-" . $refundId;
-        }
+        $url .= "/refunds/MAGENTO-" . $refundId;
         $jsonArray['amount'] = $amount;
         $json = json_encode($jsonArray);
-        $result[0] = $this->ameRequest($url, "PUT", $json);
+        $method = "PUT";
+        if($this->getApiType() == Environment::ENV_SENSEDIA_VALUE) {
+            $method = "POST";
+        }
+        $result[0] = $this->ameRequest($url, $method, $json);
         $this->logger->info("AME REFUND Result:" . $result[0]);
         if ($this->hasError($result[0], $url, $json)) {
             return [];

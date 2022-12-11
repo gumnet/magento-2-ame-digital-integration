@@ -36,10 +36,4 @@
     <event name="checkout_submit_before">
         <observer name="ame_validate_form" instance="GumNet\AME\Observer\ValidateForm"  />
     </event>
-    <event name="order_cancel_after">
-        <observer name="ame_order_cancel" instance="GumNet\AME\Observer\CancelOrder"  />
-    </event>
-    <event name="sales_order_payment_refund">
-        <observer name="ame_order_refund" instance="GumNet\AME\Observer\CreditMemoRefund"  />
-    </event>
 </config>
