@@ -29,7 +29,6 @@
 
 namespace GumNet\AME\Model;
 
-use GumNet\AME\Model\Config\Environment;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Api\AttributeValueFactory;
@@ -38,6 +37,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\IntegrationException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
@@ -74,6 +74,9 @@ class AME extends AbstractMethod
     protected $_maxAmount = null;
     protected $_supportedCurrencyCodes = ['BRL'];
 
+    /**
+     * @var ApiClient
+     */
     protected $ame;
 
     /**
@@ -126,6 +129,8 @@ class AME extends AbstractMethod
      * @param InfoInterface $payment
      * @param float $amount
      * @return AME
+     * @throws NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function order(InfoInterface $payment, $amount): AME
     {
@@ -201,5 +206,13 @@ class AME extends AbstractMethod
             $this->ame->cancelOrder($ameId);
         }
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canRefund(): bool
+    {
+        return true;
     }
 }

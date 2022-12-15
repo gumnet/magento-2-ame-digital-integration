@@ -79,17 +79,7 @@ class AmeConfigRepository implements AmeConfigRepositoryInterface
      */
     public function save(AmeConfigInterface $ameConfig): AmeConfigInterface
     {
-        $ameConfigData = $this->extensibleDataObjectConverter->toNestedArray(
-            $ameConfig,
-            [],
-            AmeConfigInterface::class
-        );
-
-        $ameConfigModel = $this->ameConfigFactory->create()
-            ->setData($ameConfigData);
-
-        $this->resource->save($ameConfigModel);
-
+        $this->resource->save($ameConfig);
         return $ameConfig;
     }
 

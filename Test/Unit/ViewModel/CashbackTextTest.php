@@ -32,6 +32,7 @@ namespace GumNet\AME\Test\ViewModel;
 
 use GumNet\AME\ViewModel\CashbackText;
 use GumNet\AME\Model\ApiClient;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Registry;
@@ -44,6 +45,7 @@ class CashbackTextTest extends TestCase
     private MockObject $apiClient;
     private MockObject $request;
     private MockObject $scopeConfig;
+    private MockObject $productModel;
     private CashbackText $cashbackText;
 
     protected function setUp(): void
@@ -52,6 +54,7 @@ class CashbackTextTest extends TestCase
         $this->apiClient = $this->createMock(ApiClient::class);
         $this->request = $this->createMock(Http::class);
         $this->scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $this->productModel = $this->createMock(Product::class);
 
         $this->cashbackText = new CashbackText(
             $this->registry,
@@ -66,5 +69,30 @@ class CashbackTextTest extends TestCase
         $this->scopeConfig->method('getValue')
             ->willReturn('1');
         $this->assertSame(true, $this->cashbackText->isShowCashbackProductsListEnabled());
+    }
+
+    public function testGetCashbackPercent()
+    {
+        $this->apiClient->expects($this->once())
+            ->method('getCashbackPercent')
+            ->willReturn(10.0);
+        $this->assertSame(10.0, $this->cashbackText->getCashbackPercent());
+    }
+
+    public function testGetCashbackValue()
+    {
+        $this->request->expects($this->once())
+            ->method('getFullActionName')
+            ->willReturn('catalog_product_view');
+        $this->registry->expects($this->once())
+            ->method('registry')
+            ->willReturn($this->productModel);
+        $this->productModel->expects($this->once())
+            ->method('getFinalPrice')
+            ->willReturn(100.0);
+        $this->apiClient->expects($this->once())
+            ->method('getCashbackPercent')
+            ->willReturn(10.0);
+        $this->assertEquals(10.0, $this->cashbackText->getCashbackValue());
     }
 }

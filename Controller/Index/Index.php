@@ -44,8 +44,10 @@ use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\NotFoundException;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Magento\TestFramework\Helper\Api;
 
 class Index extends Action implements CsrfAwareActionInterface
 {
@@ -79,6 +81,9 @@ class Index extends Action implements CsrfAwareActionInterface
      */
     protected $gumApi;
 
+    /**
+     * @var ApiClient
+     */
     protected $api;
 
     /**
@@ -88,6 +93,7 @@ class Index extends Action implements CsrfAwareActionInterface
      * @param OrderRepository $orderRepository
      * @param CollectionFactory $orderCollectionFactory
      * @param GumApi $gumApi
+     * @param ApiClient $api
      * @param array $data
      */
     public function __construct(
@@ -131,12 +137,39 @@ class Index extends Action implements CsrfAwareActionInterface
         if ($input['status'] == "AUTHORIZED") {
             $this->setTransactionId($input['attributes']['orderId'], $input['id'], $input['nsu'], $debitWalletId);
             $this->gumApi->queueTransaction($json);
+        } elseif ($input['status'] == "CANCELED") {
+            $this->cancelOrder($input['attributes']['orderId']);
+            $this->gumApi->queueTransactionError($json);
         } else {
             $this->gumApi->queueTransactionError($json);
         }
         /** @var Raw $result */
         $result = $this->context->getResultFactory()->create(ResultFactory::TYPE_RAW);
         return $result->setContents('');
+    }
+
+    /**
+     * @param string $ameOrderId
+     * @return void
+     * @throws NotFoundException
+     */
+    public function cancelOrder(string $ameOrderId): void
+    {
+        /** @var Order $order */
+        if ($order = $this->getOrderByAmeId($ameOrderId)) {
+            if (!$order->isCanceled() && $order->canCancel()) {
+                $order->addCommentToStatusHistory(__('Received cancel API callback'));
+                $order->cancel()->save();
+            }
+        } else {
+            /* @note This allows developers to process a not found canceled order callback. */
+            $this->_eventManager->dispatch(
+                'ame_callback_order_not_found_canceled',
+                [
+                    'ame_order_id' => $ameOrderId
+                ]
+            );
+        }
     }
 
     /**
@@ -148,7 +181,6 @@ class Index extends Action implements CsrfAwareActionInterface
      * @throws AlreadyExistsException
      * @throws InputException
      * @throws NoSuchEntityException
-     * @throws NotFoundException
      */
     public function setTransactionId(
         string $ameOrderId,
@@ -156,6 +188,33 @@ class Index extends Action implements CsrfAwareActionInterface
         string $nsu = "",
         string $debitWalledId = ""
     ): void {
+        if ($order = $this->getOrderByAmeId($ameOrderId)) {
+            $payment = $order->getPayment();
+            $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
+            if ($nsu) {
+                $payment->setAdditionalInformation(PaymentInformation::NSU, $nsu);
+            }
+            $order->addCommentToStatusHistory('Transaction ID: ' . $ameTransactionId | "NSU: " . $nsu);
+            $this->orderRepository->save($order);
+        } else {
+            /* @note This allows developers to process a not found APPROVED order callback. */
+            $this->_eventManager->dispatch(
+                'ame_callback_order_not_found_approved',
+                [
+                    'ame_order_id' => $ameOrderId,
+                    'ame_transaction_id' => $ameTransactionId,
+                    'nsu' => $nsu
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param string $ameOrderId
+     * @return null|Order
+     */
+    public function getOrderByAmeId(string $ameOrderId): ?Order
+    {
         $orderCollection = $this->orderCollectionFactory->create();
         $where = "JSON_EXTRACT(sales_order_payment.additional_information, \"$."
             . PaymentInformation::AME_ID. "\") = '" . $ameOrderId . "'";
@@ -163,17 +222,10 @@ class Index extends Action implements CsrfAwareActionInterface
             ->join('sales_order_payment', 'main_table.entity_id = sales_order_payment.parent_id')
             ->where($where);
         if (!$orderCollection->count()) {
-            $message = __("AME Callback - Order with ID '" . $ameOrderId . "' not found.");
-            throw new \Magento\Framework\Exception\NotFoundException($message);
+            return null;
         }
         /** @var \Magento\Sales\Model\Order $order */
-        $order = $orderCollection->getFirstItem();
-        $payment = $order->getPayment();
-        $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
-        if ($nsu) {
-            $payment->setAdditionalInformation(PaymentInformation::NSU, $nsu);
-        }
-        $this->orderRepository->save($order);
+        return $orderCollection->getFirstItem();
     }
 
     /**

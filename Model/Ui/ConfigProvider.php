@@ -46,7 +46,7 @@ class ConfigProvider implements ConfigProviderInterface
     protected $checkoutSession;
 
     /**
-     * @var API
+     * @var ApiClient
      */
     protected $api;
 

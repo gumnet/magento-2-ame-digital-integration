@@ -32,8 +32,8 @@ namespace GumNet\AME\Model;
 use GumNet\AME\Model\Config\Environment;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Module\ModuleList;
-use Magento\Mtf\Config\FileResolver\ScopeConfig;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 use Magento\Store\Model\StoreManagerInterface;
@@ -88,6 +88,8 @@ class GumApi
      * @param string $ame_refund_id
      * @param $amount
      * @return bool
+     * @throws NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function refundTransaction(string $ame_transaction_id, string $ame_refund_id, $amount): bool
     {
@@ -98,6 +100,8 @@ class GumApi
     /**
      * @param string $json
      * @return void
+     * @throws NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function queueTransactionError(string $json)
     {
@@ -107,6 +111,8 @@ class GumApi
     /**
      * @param string $json
      * @return void
+     * @throws NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function queueTransaction(string $json): void
     {
@@ -118,6 +124,8 @@ class GumApi
      * @param string $ame_order_id
      * @param $amount
      * @return bool
+     * @throws NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function captureTransaction(string $ame_transaction_id, string $ame_order_id, $amount): bool
     {
@@ -129,6 +137,7 @@ class GumApi
      * @param $input
      * @param $result
      * @return bool
+     * @throws NoSuchEntityException
      */
     public function createOrder($input, $result): bool
     {
@@ -149,7 +158,7 @@ class GumApi
      * @param string $method
      * @param string $json
      * @return string
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function apiGumCallback(string $url, string $method = "GET", string $json = ""): string
     {
@@ -189,7 +198,7 @@ class GumApi
      * @param string $result
      * @param string $input
      * @return bool
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function gumRequest(string $action, string $result, string $input = ""): bool
     {

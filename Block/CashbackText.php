@@ -85,7 +85,6 @@ class CashbackText extends Template
 
     /**
      * @return float
-     * @throws NoSuchEntityException
      */
     public function getCashbackPercent()
     {

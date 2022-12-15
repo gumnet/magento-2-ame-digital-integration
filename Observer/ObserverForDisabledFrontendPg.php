@@ -33,27 +33,34 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use GumNet\AME\Model\Values\Config;
+use GumNet\AME\Model\AME;
 
 class ObserverForDisabledFrontendPg implements ObserverInterface
 {
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $scopeConfig;
 
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
     }
 
+    /**
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         $result = $observer->getEvent()->getResult();
         $methodInstance = $observer->getEvent()->getMethodInstance();
-        if ($methodInstance->getCode() === 'ame' && $this->scopeConfig->get(Config::ACTIVE) === 0) {
+        if ($methodInstance->getCode() === AME::CODE && $this->scopeConfig->getValue(Config::ACTIVE) === 0) {
             $result->setData('is_available', false);
         }
-    }
-    protected function getDisableAreas(): array
-    {
-        return [];
     }
 }

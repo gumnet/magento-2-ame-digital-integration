@@ -29,10 +29,10 @@
 
 namespace GumNet\AME\Model;
 
-use CyberSource\BankTransfer\Controller\Index\Pay;
 use GumNet\AME\Api\AmeConfigRepositoryInterface;
 use GumNet\AME\Model\Config\Environment;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\IntegrationException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
@@ -59,7 +59,9 @@ class ApiClient
 
     protected $urlCancelEnd = "";
 
-    protected $urlTrustWallet = "cobrancas";
+    protected $urlTrustWallet = "trust-wallet/v1/orders";
+
+    protected $urlOrderTrustWallet = "transactions/v1/orders";
 
     /**
      * @var LoggerInterface
@@ -186,7 +188,7 @@ class ApiClient
             $jsonArray['attributes']['customPayload']['shippingAddress'];
 
         $json = json_encode($jsonArray);
-        $result = $this->ameRequest($url, "POST", $json);
+        $result = $this->ameRequest($url, "POST", $json, false);
         $resultArray = json_decode($result, true);
         if ($this->hasError($result, $url, $json)) {
             return 0;
@@ -302,11 +304,15 @@ class ApiClient
      * @param $order
      * @return string
      * @throws NoSuchEntityException
+     * @throws IntegrationException
      */
     public function createOrder($order): string
     {
         /** @var Order $order */
         $url = $this->url . "/" . $this->urlOrders;
+        if ($this->trustWalletIsEnabled()) {
+            $url = $this->url . "/" . $this->urlOrderTrustWallet;
+        }
         $amount = (int)$order->getGrandTotal() * 100;
 
         $number_line = $this->scopeConfig->getValue(
@@ -358,6 +364,10 @@ class ApiClient
         $json = json_encode($jsonArray);
         $this->logger->info($json);
         $result = $this->ameRequest($url, "POST", $json);
+        if (!$this->isJson($result)) {
+            $this->logger->critical("AME API invalid JSON: " . $result);
+            throw new IntegrationException(__('There was an error placing your order. Please contact support.'));
+        }
 
         if ($this->hasError($result, $url, $json)) {
             return "";
@@ -396,7 +406,7 @@ class ApiClient
     {
         if ($this->scopeConfig->getValue(Config::TRUST_WALLET_ENABLED, ScopeInterface::SCOPE_STORE)) {
             $jsonArray['subType'] = "TRUST_WALLET";
-            $jsonArray['attributes']['TrustWallet']['enabled'] = true;
+            $jsonArray['attributes']['trustWallet']['enabled'] = true;
         }
         return $jsonArray;
     }
@@ -514,12 +524,14 @@ class ApiClient
      * @param string $json
      * @param bool $enableLog
      * @return string
+     * @throws NoSuchEntityException
      */
     public function ameRequest(string $url, string $method = "GET", string $json = "", bool $enableLog = true): string
     {
         if (!$token = $this->getToken()) {
             return "";
         }
+        $this->logger->info("AME using token: " . $token);
         $header = ['Content-Type: application/json', 'Authorization: Bearer ' . $token];
 
         $method = strtoupper($method);
@@ -575,6 +587,7 @@ class ApiClient
     /**
      * @return string
      * @throws NoSuchEntityException
+     * @throws LocalizedException
      */
     public function getToken(): string
     {
@@ -671,7 +684,7 @@ class ApiClient
         $ameConfig->setValue($token);
         $this->ameConfigRepository->save($ameConfig);
         $ameConfig = $this->ameConfigRepository->getByConfig(Config::TOKEN_EXPIRES);
-        $ameConfig->setValue($expiresIn);
+        $ameConfig->setValue((string)$expiresIn);
         $this->ameConfigRepository->save($ameConfig);
     }
 

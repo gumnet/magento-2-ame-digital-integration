@@ -93,22 +93,27 @@ class Index extends Action
         $transactionId = $this->getRequest()->getParam('transactionid');
         $request_ame_order_id = $this->getRequest()->getParam('orderid');
         if (!$order = $this->getOrderByTransactionId($transactionId)) {
-            $message = __("AME Callback - ERROR Not found order with transaction ID" . $request_ame_order_id);
-            throw new InputException($message);
+            /* @note the following event should be used to process not found orders */
+            $this->_eventManager->dispatch(
+                'ame_callback_order_not_found_captured',
+                [
+                    'ame_order_id' => $request_ame_order_id,
+                    'ame_transaction_id' => $transactionId,
+                ]
+            );
+        } else {
+            $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
+            if ($request_ame_order_id != $ameOrderId) {
+                $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
+                throw new InputException($message);
+            }
+            $this->invoiceOrder($order);
+            $comment = 'AME transaction ID: ' . $transactionId . PHP_EOL . 'NSU: ' . $this->getNsu($transactionId);
+            $order->addStatusHistoryComment($comment);
+            $order->save();
+            $amount = $order->getGrandTotal();
+            $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
         }
-        $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
-        if ($request_ame_order_id != $ameOrderId) {
-            $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
-            throw new InputException($message);
-        }
-        $this->invoiceOrder($order);
-        $comment = 'AME transaction ID: '. $transactionId . PHP_EOL . 'NSU: '.$this->getNsu($transactionId);
-        $order->addStatusHistoryComment($comment);
-        $order->save();
-
-        $amount = $order->getGrandTotal();
-
-        $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
         return $this->rawResultFactory->create()->setContents('');
     }
 
