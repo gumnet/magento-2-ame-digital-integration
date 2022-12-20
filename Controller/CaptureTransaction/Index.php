@@ -31,6 +31,7 @@ namespace GumNet\AME\Controller\CaptureTransaction;
 
 use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
+use http\Exception\InvalidArgumentException;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -53,18 +54,58 @@ use GumNet\AME\Model\Values\Config;
 
 class Index extends Action
 {
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $_scopeConfig;
+
+    /**
+     * @var OrderRepository
+     */
     protected $orderRepository;
+
+    /**
+     * @var InvoiceService
+     */
     protected $_invoiceService;
+
+    /**
+     * @var TransactionFactory
+     */
     protected $_transactionFactory;
-    protected $api;
+
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
+
+    /**
+     * @var GumApi
+     */
     protected $gumApi;
 
+    /**
+     * @var CollectionFactory
+     */
     protected $paymentCollectionFactory;
 
+    /**
+     * @var RawFactory
+     */
     protected $rawResultFactory;
 
+    /**
+     * @param Context $context
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepository $orderRepository
+     * @param InvoiceService $invoiceService
+     * @param TransactionFactory $transactionFactory
+     * @param LoggerInterface $logger
+     * @param GumApi $gumApi
+     * @param CollectionFactory $paymentCollectionFactory
+     * @param RawFactory $rawResultFactory
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         ScopeConfigInterface $scopeConfig,
@@ -88,31 +129,54 @@ class Index extends Action
         parent::__construct($context);
     }
 
+    /**
+     * @return Raw
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function execute(): Raw
     {
-        $transactionId = $this->getRequest()->getParam('transactionid');
-        $request_ame_order_id = $this->getRequest()->getParam('orderid');
-        if (!$order = $this->getOrderByTransactionId($transactionId)) {
-            /* @note the following event should be used to process not found orders */
-            $this->_eventManager->dispatch(
-                'ame_callback_order_not_found_captured',
-                [
-                    'ame_order_id' => $request_ame_order_id,
-                    'ame_transaction_id' => $transactionId,
-                ]
-            );
-        } else {
-            $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
-            if ($request_ame_order_id != $ameOrderId) {
-                $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
-                throw new InputException($message);
+        $transactionId = $this->getRequest()->getParam('transactionid', '');
+        if (!$request_ame_order_id = $this->getRequest()->getParam('orderid', '')) {
+            if ($ameOriginOrderId = $this->getRequest()->getParam('originorderid', '')) {
+                $this->_eventManager->dispatch(
+                /* @note the following event should be used to process trust wallet additional charge */
+                'ame_callback_trust_wallet_captured',
+                    [
+                        'ame_original_order_id' => $ameOriginOrderId,
+                        'ame_transaction_id' => $transactionId,
+                    ]
+                );
+            } else {
+                $params = json_encode($this->getRequest()->getParams());
+                $this->logger->error('AME - Invalid capture transaction callback - ' . $params);
+                throw new InvalidArgumentException('AME - Invalid capture transaction callback');
             }
-            $this->invoiceOrder($order);
-            $comment = 'AME transaction ID: ' . $transactionId . PHP_EOL . 'NSU: ' . $this->getNsu($transactionId);
-            $order->addStatusHistoryComment($comment);
-            $order->save();
-            $amount = $order->getGrandTotal();
-            $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
+        } else {
+            if (!$order = $this->getOrderByTransactionId($transactionId)) {
+                /* @note the following event should be used to process not found orders */
+                $this->_eventManager->dispatch(
+                    'ame_callback_order_not_found_captured',
+                    [
+                        'ame_order_id' => $request_ame_order_id,
+                        'ame_transaction_id' => $transactionId,
+                    ]
+                );
+            } else {
+                $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
+                if ($request_ame_order_id != $ameOrderId) {
+                    $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
+                    throw new InputException($message);
+                }
+                $this->invoiceOrder($order);
+                $comment = 'AME transaction ID: ' . $transactionId . PHP_EOL . 'NSU: ' . $this->getNsu($transactionId);
+                $order->addStatusHistoryComment($comment);
+                $order->save();
+                $amount = $order->getGrandTotal();
+                $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
+            }
         }
         return $this->rawResultFactory->create()->setContents('');
     }

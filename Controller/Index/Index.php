@@ -48,6 +48,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\TestFramework\Helper\Api;
+use Psr\Log\LoggerInterface;
 
 class Index extends Action implements CsrfAwareActionInterface
 {
@@ -94,6 +95,7 @@ class Index extends Action implements CsrfAwareActionInterface
      * @param CollectionFactory $orderCollectionFactory
      * @param GumApi $gumApi
      * @param ApiClient $api
+     * @param LoggerInterface $logger
      * @param array $data
      */
     public function __construct(
@@ -104,6 +106,8 @@ class Index extends Action implements CsrfAwareActionInterface
         CollectionFactory $orderCollectionFactory,
         GumApi $gumApi,
         ApiClient $api,
+        LoggerInterface $logger,
+
         array $data = []
     ) {
         $this->context = $context;
@@ -113,6 +117,7 @@ class Index extends Action implements CsrfAwareActionInterface
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->gumApi = $gumApi;
         $this->api = $api;
+        $this->logger = $logger;
         parent::__construct($context);
     }
 
@@ -126,22 +131,52 @@ class Index extends Action implements CsrfAwareActionInterface
             $message = __('AME Callback - invalid JSON - ' . $json);
             throw new InputException($message);
         }
+        $this->logger->info('AME callback received - ' . $json);
         $input = json_decode($json, true);
         // verify if id exists
         if (!array_key_exists('id', $input)
             || !array_key_exists('attributes', $input)) {
-            $message = __('AME Callback - JSON missing keys- ' . $json);
+            $message = __('AME Callback - JSON missing keys - ' . $json);
             throw new InputException($message);
         }
-        $debitWalletId = $input['debitWalletId'] ?? "";
-        if ($input['status'] == "AUTHORIZED") {
-            $this->setTransactionId($input['attributes']['orderId'], $input['id'], $input['nsu'], $debitWalletId);
+        if (isset($input['attributes'])
+            && isset($input['attributes']['trustWallet'])
+            && isset($input['attributes']['trustWallet']['originOrderUuid'])
+        ) {
+            // Valid trustWallet additional charge callback
             $this->gumApi->queueTransaction($json);
-        } elseif ($input['status'] == "CANCELED") {
-            $this->cancelOrder($input['attributes']['orderId']);
-            $this->gumApi->queueTransactionError($json);
+            $this->_eventManager->dispatch(
+                'ame_callback_trust_wallet_additional_charge',
+                [
+                    'ame_original_order_id' => $input['attributes']['trustWallet']['originOrderUuid'],
+                    'ame_transaction_id' => $input['id'],
+                    'callback_json' => $json
+                ]
+            );
         } else {
-            $this->gumApi->queueTransactionError($json);
+            $debitWalletId = $input['debitWalletId'] ?? "";
+            $trustWalletId = "";
+            if (isset($input['attributes'])
+                && isset($input['attributes']['trustWallet'])
+                && isset($input['attributes']['trustWallet']['uuid'])) {
+                $trustWalletId = $input['attributes']['trustWallet']['uuid'];
+            }
+            if ($input['status'] == "AUTHORIZED") {
+                $this->setTransactionId(
+                    $input['attributes']['orderId'],
+                    $input['id'],
+                    $input['nsu'],
+                    $debitWalletId,
+                    $trustWalletId,
+                    $json
+                );
+                $this->gumApi->queueTransaction($json);
+            } elseif ($input['status'] == "CANCELED") {
+                $this->cancelOrder($input['attributes']['orderId']);
+                $this->gumApi->queueTransactionError($json);
+            } else {
+                $this->gumApi->queueTransactionError($json);
+            }
         }
         /** @var Raw $result */
         $result = $this->context->getResultFactory()->create(ResultFactory::TYPE_RAW);
@@ -177,6 +212,8 @@ class Index extends Action implements CsrfAwareActionInterface
      * @param string $ameTransactionId
      * @param string $nsu
      * @param string $debitWalledId
+     * @param string $trustWalletId
+     * @param string $json
      * @return void
      * @throws AlreadyExistsException
      * @throws InputException
@@ -186,13 +223,18 @@ class Index extends Action implements CsrfAwareActionInterface
         string $ameOrderId,
         string $ameTransactionId,
         string $nsu = "",
-        string $debitWalledId = ""
+        string $debitWalledId = "",
+        string $trustWalletId = "",
+        string $json = ""
     ): void {
         if ($order = $this->getOrderByAmeId($ameOrderId)) {
             $payment = $order->getPayment();
             $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
             if ($nsu) {
                 $payment->setAdditionalInformation(PaymentInformation::NSU, $nsu);
+            }
+            if ($trustWalletId) {
+                $payment->setAdditionalInformation(PaymentInformation::TRUST_WALLET_UUID, $trustWalletId);
             }
             $order->addCommentToStatusHistory('Transaction ID: ' . $ameTransactionId | "NSU: " . $nsu);
             $this->orderRepository->save($order);
@@ -203,7 +245,9 @@ class Index extends Action implements CsrfAwareActionInterface
                 [
                     'ame_order_id' => $ameOrderId,
                     'ame_transaction_id' => $ameTransactionId,
-                    'nsu' => $nsu
+                    'nsu' => $nsu,
+                    'trust_wallet_id' => $trustWalletId,
+                    'callback_json' => $json
                 ]
             );
         }

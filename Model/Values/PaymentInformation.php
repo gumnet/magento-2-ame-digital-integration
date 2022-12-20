@@ -38,6 +38,7 @@ class PaymentInformation
     public const CASHBACK_VALUE = 'cashbackAmountValue';
     public const TRANSACTION_ID = 'transaction_id';
     public const NSU = "nsu";
+    public const TRUST_WALLET_UUID = 'trust_wallet_uuid';
 
     // old v1 tables
     public const OLD_AME_ORDER_TABLE = 'ame_order';
