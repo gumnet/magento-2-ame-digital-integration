@@ -29,6 +29,9 @@
 
 namespace GumNet\AME\Setup\Patch\Data;
 
+use GumNet\AME\Api\Data\AmeConfigInterface;
+use GumNet\AME\Model\ResourceModel\AmeConfig;
+use GumNet\AME\Model\Values\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
@@ -72,6 +75,7 @@ class MigrateAmeTables implements DataPatchInterface
         $this->appState->setAreaCode(Area::AREA_ADMINHTML);
         $conn = $this->setup->getConnection();
         $conn->startSetup();
+        $this->addConfigLines();
         $tableAmeOrder = $conn->getTableName(PaymentInformation::OLD_AME_ORDER_TABLE);
         if ($conn->isTableExists($tableAmeOrder)) {
             $this->migrateAmeOrder($tableAmeOrder);
@@ -83,6 +87,35 @@ class MigrateAmeTables implements DataPatchInterface
         }
 
         $conn->endSetup();
+    }
+
+    public function addConfigLines(): void
+    {
+        $conn = $this->setup->getConnection();
+        $table = $conn->getTableName(AmeConfig::TABLE);
+        if (!$conn->fetchOne($conn->select()->from($table, 'COUNT(*)'))) {
+            $data = [
+                [
+                    AmeConfigInterface::AME_OPTION => Config::TOKEN_VALUE,
+                    AmeConfigInterface::AME_VALUE => '0'
+                ],
+                [
+                    AmeConfigInterface::AME_OPTION => Config::TOKEN_EXPIRES,
+                    AmeConfigInterface::AME_VALUE => '0'
+                ],
+                [
+                    AmeConfigInterface::AME_OPTION => Config::CASHBACK_PERCENT,
+                    AmeConfigInterface::AME_VALUE => '0'
+                ],
+                [
+                    AmeConfigInterface::AME_OPTION => Config::CASHBACK_UPDATED_AT,
+                    AmeConfigInterface::AME_VALUE => '0'
+                ],
+            ];
+            foreach ($data as $singleLine) {
+                $this->setup->getConnection()->insert($table, $singleLine);
+            }
+        }
     }
 
     public function migrateAmeOrder(string $tableAmeOrder): void
@@ -159,7 +192,7 @@ class MigrateAmeTables implements DataPatchInterface
                     PaymentInformation::TRANSACTION_ID,
                     $transactionEntry[PaymentInformation::OLD_AME_TRANSACTION_ID]
                 );
-                $order->setPayment($order);
+                $order->setPayment($payment);
                 $this->orderRepository->save($order);
             }
         }

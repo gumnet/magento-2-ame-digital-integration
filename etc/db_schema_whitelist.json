@@ -2,7 +2,7 @@
   "ame_config": {
     "column": {
       "id": true,
-      "ame_config": true,
+      "ame_option": true,
       "ame_value": true
     }
   }

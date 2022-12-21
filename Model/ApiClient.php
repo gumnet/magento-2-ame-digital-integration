@@ -132,9 +132,9 @@ class ApiClient
     public function getCashBackPercent(): float
     {
         try {
-            $cashbackUpdatedAt = $this->ameConfigRepository->getByConfig('cashback_updated_at')->getValue();
+            $cashbackUpdatedAt = $this->ameConfigRepository->getByConfig(Config::CASHBACK_UPDATED_AT)->getValue();
             if (time() < $cashbackUpdatedAt + 3600) {
-                return (float)$this->ameConfigRepository->getByConfig('cashback_percent')->getValue();
+                return (float)$this->ameConfigRepository->getByConfig(Config::CASHBACK_PERCENT)->getValue();
             } else {
                 return $this->generateCashbackFromOrder();
             }
@@ -211,10 +211,10 @@ class ApiClient
      */
     protected function setCashbackPercent($cashbackPercent): void
     {
-        $config = $this->ameConfigRepository->getByConfig('cashback_updated_at');
+        $config = $this->ameConfigRepository->getByConfig(Config::CASHBACK_UPDATED_AT);
         $config->setValue(time());
         $this->ameConfigRepository->save($config);
-        $config = $this->ameConfigRepository->getByConfig('cashback_percent');
+        $config = $this->ameConfigRepository->getByConfig(Config::CASHBACK_PERCENT);
         $config->setValue($cashbackPercent);
         $this->ameConfigRepository->save($config);
     }

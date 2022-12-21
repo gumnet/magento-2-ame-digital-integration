@@ -37,7 +37,7 @@ class AmeConfig extends AbstractExtensibleModel implements AmeConfigInterface
 {
     public function _construct()
     {
-        $this->_init(\GumNet\AME\Model\ResourceModel\AmeConfig::class);
+        $this->_init(AmeConfigResource::class);
     }
     /**
      * @inheritDoc

@@ -59,6 +59,8 @@ class Config
     // ame_config values
     public const TOKEN_VALUE = 'token_value';
     public const TOKEN_EXPIRES = 'token_expires';
+    public const CASHBACK_PERCENT = 'cashback_percent';
+    public const CASHBACK_UPDATED_AT = 'cashback_updated_at';
 
     public const TOKEN_EXPIRES_SECONDS = 600;
 

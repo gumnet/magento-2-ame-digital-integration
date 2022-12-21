@@ -31,11 +31,16 @@ declare(strict_types=1);
 
 namespace GumNet\AME\Model\ResourceModel;
 
+use GumNet\AME\Api\Data\AmeConfigInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+
 /**
  * @codeCoverageIgnore
  */
-class AmeConfig extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+class AmeConfig extends AbstractDb
 {
+    public const TABLE = 'ame_config';
+    public const KEY_ID = 'entity_id';
     /**
      * {@inheritdoc}
      */
@@ -53,14 +58,16 @@ class AmeConfig extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      */
     protected function _construct()
     {
-        $this->_init('ame_config', 'entity_id');
+        $this->_init(self::TABLE, self::KEY_ID);
     }
 
     public function getIdByConfig(string $config): int
     {
         $connection = $this->getConnection();
 
-        $select = $connection->select()->from('ame_config', 'entity_id')->where("ame_option = '" . $config . "'");
+        $select = $connection->select()
+            ->from(self::TABLE, self::KEY_ID)
+            ->where(AmeConfigInterface::AME_OPTION . " = '" . $config . "'");
         return (int)$connection->fetchOne($select);
     }
 }
