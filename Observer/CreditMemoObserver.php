@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<!--
+<?php
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
@@ -27,11 +26,56 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
-    <menu>
-        <add id="GumNet_AME::ame" title="AME Digital" module="GumNet_AME" sortOrder="41" resource="GumNet_AME::ame"/>
-        <add id="GumNet_AME::configuration" title="Configuration" module="GumNet_AME" sortOrder="10" action="adminhtml/system_config/edit/section/ame" resource="GumNet_AME::configuration" parent="GumNet_AME::ame"/>
-    </menu>
-</config>
+
+namespace GumNet\AME\Observer;
+
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\GumApi;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Order\Creditmemo;
+
+class CreditMemoObserver implements ObserverInterface
+{
+    /**
+     * @var ApiClient
+     */
+    protected $api;
+
+    /**
+     * @var GumApi
+     */
+    protected $gumApi;
+
+    /**
+     * @param ApiClient $api
+     * @param GumApi $gumApi
+     */
+    public function __construct(
+        ApiClient $api,
+        GumApi $gumApi
+    ) {
+        $this->api = $api;
+        $this->gumApi = $gumApi;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function execute(Observer $observer): void
+    {
+        /** @var Creditmemo $refund */
+        $refund = $observer->getEvent()->getCreditmemo();
+        $payment = $refund->getOrder()->getPayment();
+        if ($payment->getMethod() == "ame") {
+            if (!$this->api->refundOrder(
+                (string)$payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID),
+                $refund->getGrandTotal() * 100
+            )) {
+                throw new LocalizedException(__('Houve um erro efetuando o reembolso.'));
+            }
+        }
+    }
+}

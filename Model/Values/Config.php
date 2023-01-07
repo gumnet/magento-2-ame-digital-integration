@@ -54,6 +54,8 @@ class Config
     public const EXHIBITION_LIST = 'payment/ame/show_cashback_products_list';
     public const TRUST_WALLET_ENABLED = 'payment/ame/trust_wallet_enabled';
 
+    public const CANCEL_PENDING_DAYS = 'payment/ame/cancel_pending_days';
+
     // Environments
 
     // ame_config values

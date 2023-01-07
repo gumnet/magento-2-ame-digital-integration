@@ -28,7 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
     <default>
         <payment>
             <ame>
@@ -44,6 +45,7 @@
                 <address_number>1</address_number>
                 <address_neighborhood>2</address_neighborhood>
                 <show_cashback_products_list>0</show_cashback_products_list>
+                <cancel_pending_days>0</cancel_pending_days>
             </ame>
         </payment>
     </default>

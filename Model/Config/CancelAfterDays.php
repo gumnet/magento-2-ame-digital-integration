@@ -27,23 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** @var \Magento\Framework\View\Element\Template $block */
-/** @var \GumNet\AME\ViewModel\CashbackText $cashbackText */
-$cashbackText = $block->getCashbackText();
-if ($cashbackText->isShowCashbackProductsListEnabled() && $cashbackText->getCashbackPercent()) {
-?>
-<div class="products-list-ame-info">
-    <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/logo-ame.svg'));?>" width="45">
-    <span class="product-list-ame-text" style="color: #5f5f5f;"> receba</span>
-    <span class="product-list-ame-value" style="color: #f6235e; font-size: 15px">
-        R$<?=$block->escapeHtml(
-            number_format($cashbackText->getCashbackValue(), 2, ",", ".")
-        )?>
-    </span>
-    <span class="product-list-ame-text" style="color: #1b0487;">
-        (<?php echo $cashbackText->getCashbackPercent(); ?>% de volta)
-    </span>
-</div>
-<?php
+namespace GumNet\AME\Model\Config;
+
+use Magento\Framework\Option\ArrayInterface;
+
+class CancelAfterDays implements ArrayInterface
+{
+    public function toOptionArray()
+    {
+        $result[] = ['value' => 0, 'label' => __('Disabled')];
+        for ($i=0; $i<=30; $i++) {
+            $result[] = ['value' => (string)$i, 'label' => $i . " " . __('day(s)')];
+        }
+        return $result;
+    }
 }
-?>

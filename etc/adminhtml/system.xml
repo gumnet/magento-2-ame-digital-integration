@@ -45,12 +45,12 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-                <field id="api_user" translate="label" type="text" sortOrder="70" showInDefault="1">
+                <field id="api_user" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Client ID</label>
                     <comment><![CDATA[Client_id - ID do usuário.]]></comment>
                     <validate>required-entry validate-uuid</validate>
                 </field>
-                <field id="api_password" translate="label" type="text" sortOrder="80" showInDefault="1">
+                <field id="api_password" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Client Secret</label>
                     <comment><![CDATA[Client Secret.]]></comment>
                     <validate>required-entry validate-uuid</validate>
@@ -64,24 +64,23 @@
                     <comment><![CDATA[Client Secret.]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="address_street" translate="label" type="select" sortOrder="130" showInDefault="1">
+                <field id="address_street" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Street</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
-                <field id="address_number" translate="label" type="select" sortOrder="140" showInDefault="1">
+                <field id="address_number" translate="label" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Number</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
-                <field id="address_neighborhood" translate="label" type="select" sortOrder="150" showInDefault="1">
+                <field id="address_neighborhood" translate="label" type="select" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>District</label>
                     <source_model>GumNet\AME\Model\Config\AddressLines</source_model>
                 </field>
-                <!-- temporarily disabled feature
-                <field id="show_cashback_products_list" translate="label" type="select" sortOrder="160" showInDefault="1">
-                    <label>Exibir informações de cashback na lista de produtos</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                <field id="cancel_pending_days" translate="label" type="select" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Cancel pending orders after</label>
+                    <comment><![CDATA[Client Secret.]]></comment>
+                    <source_model>GumNet\AME\Model\Config\CancelAfterDays</source_model>
                 </field>
-                -->
             </group>
         </section>
     </system>

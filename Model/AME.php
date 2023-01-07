@@ -47,6 +47,7 @@ use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
 use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
 
@@ -134,9 +135,12 @@ class AME extends AbstractMethod
      */
     public function order(InfoInterface $payment, $amount): AME
     {
+        /** @var  \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
         $resultArray = json_decode($this->ame->createOrder($order), true);
         $this->setAdditionalInformation($payment, $resultArray);
+        $newStatus = "pending_payment";
+        $order->setState(Order::STATE_PENDING_PAYMENT)->setStatus($newStatus);
         $order->addStatusHistoryComment('AME Order ID: ' . $resultArray['id']);
         return $this;
     }
