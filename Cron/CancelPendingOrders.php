@@ -28,7 +28,7 @@
  */
 declare(strict_types=1);
 
-namespace GumNet\AME\Observer;
+namespace GumNet\AME\Cron;
 
 use GumNet\AME\Model\AME;
 use GumNet\AME\Model\Values\Config;
