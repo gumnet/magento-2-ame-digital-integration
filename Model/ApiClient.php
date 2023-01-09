@@ -313,7 +313,7 @@ class ApiClient
         if ($this->trustWalletIsEnabled()) {
             $url = $this->url . "/" . $this->urlOrderTrustWallet;
         }
-        $amount = (int)$order->getGrandTotal() * 100;
+        $amount = (int)($order->getGrandTotal() * 100);
 
         $number_line = $this->scopeConfig->getValue(
             Config::ADDRESS_NUMBER,
@@ -338,7 +338,7 @@ class ApiClient
                 'transactionChangedCallbackUrl' => $this->getCallbackUrl(),
                 'items' => $this->getItemsArray($order),
                 'customPayload' => [
-                    'ShippingValue' => (int)$order->getShippingAmount() * 100,
+                    'ShippingValue' => (int)($order->getShippingAmount() * 100),
                     'shippingAddress' => [
                         'country' => 'BRA',
                         'number' => $order->getShippingAddress()->getStreet()[$number_line],
@@ -452,7 +452,7 @@ class ApiClient
         $url = $this->url . "/";
         $jsonArray = [
             'linkUuid' => $trustWalletId,
-            'amountInCents' => (int)$value * 100,
+            'amountInCents' => (int)($value * 100),
             'title' => $title,
             'description' => $description,
             'attributes' =>

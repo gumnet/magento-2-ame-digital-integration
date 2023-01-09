@@ -236,7 +236,7 @@ class Index extends Action implements CsrfAwareActionInterface
             if ($trustWalletId) {
                 $payment->setAdditionalInformation(PaymentInformation::TRUST_WALLET_UUID, $trustWalletId);
             }
-            $order->addCommentToStatusHistory('Transaction ID: ' . $ameTransactionId | "NSU: " . $nsu);
+            $order->addCommentToStatusHistory('Transaction ID: ' . $ameTransactionId . " | NSU: " . $nsu);
             $this->orderRepository->save($order);
         } else {
             /* @note This allows developers to process a not found APPROVED order callback. */

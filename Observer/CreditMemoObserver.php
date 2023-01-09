@@ -29,6 +29,7 @@
 
 namespace GumNet\AME\Observer;
 
+use GumNet\AME\Model\AME;
 use GumNet\AME\Model\ApiClient;
 use GumNet\AME\Model\GumApi;
 use GumNet\AME\Model\Values\PaymentInformation;
@@ -69,7 +70,7 @@ class CreditMemoObserver implements ObserverInterface
         /** @var Creditmemo $refund */
         $refund = $observer->getEvent()->getCreditmemo();
         $payment = $refund->getOrder()->getPayment();
-        if ($payment->getMethod() == "ame") {
+        if ($payment->getMethod() == AME::CODE) {
             if (!$this->api->refundOrder(
                 (string)$payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID),
                 $refund->getGrandTotal() * 100

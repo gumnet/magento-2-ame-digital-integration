@@ -45,6 +45,8 @@
                 <address_number>1</address_number>
                 <address_neighborhood>2</address_neighborhood>
                 <show_cashback_products_list>0</show_cashback_products_list>
+                <order_status_created>pending</order_status_created>
+                <order_status_payment_received>processing</order_status_payment_received>
                 <cancel_pending_days>0</cancel_pending_days>
             </ame>
         </payment>

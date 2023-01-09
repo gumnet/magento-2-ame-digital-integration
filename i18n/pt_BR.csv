@@ -10,3 +10,6 @@
 "District","Bairro"
 "There was an error placing your order. Please contact support.","Houve um erro criando seu pedido. Por favor contate o suporte."
 "day(s)","dia(s)"
+"Cancel pending order after days","Cancelar pedidos pendentes após dias"
+"Payment confirmed order status","Status de pagamento confirmado"
+"Order created status","Status de ordem criada"

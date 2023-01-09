@@ -26,6 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+declare(strict_types=1);
 
 namespace GumNet\AME\Model\Config;
 
@@ -33,7 +34,10 @@ use Magento\Framework\Option\ArrayInterface;
 
 class CancelAfterDays implements ArrayInterface
 {
-    public function toOptionArray()
+    /**
+     * @return array
+     */
+    public function toOptionArray(): array
     {
         $result[] = ['value' => 0, 'label' => __('Disabled')];
         for ($i=0; $i<=30; $i++) {

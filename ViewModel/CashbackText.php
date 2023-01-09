@@ -82,7 +82,7 @@ class CashbackText implements ArgumentInterface
     /**
      * @return bool
      */
-    public function isShowCashbackProductsListEnabled(): bool
+    public function isShowCashbackProduct(): bool
     {
         return (bool)$this->scopeConfig
             ->getValue(Config::EXHIBITION_LIST, ScopeInterface::SCOPE_STORE);

@@ -30,10 +30,11 @@
 /** @var \Magento\Framework\View\Element\Template $block */
 /** @var \GumNet\AME\ViewModel\CashbackText $cashbackText */
 $cashbackText = $block->getCashbackText();
-if ($cashbackText->isShowCashbackProductsListEnabled() && $cashbackText->getCashbackPercent()) {
-?>
+if ($cashbackText->isShowCashbackProduct() && $cashbackText->getCashbackPercent()) {
+    ?>
 <div class="products-list-ame-info">
-    <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/logo-ame.svg'));?>" width="45">
+    <img alt="Logo AME" src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/logo-ame.svg'));?>"
+         width="45">
     <span class="product-list-ame-text" style="color: #5f5f5f;"> receba</span>
     <span class="product-list-ame-value" style="color: #f6235e; font-size: 15px">
         R$<?=$block->escapeHtml(
@@ -41,9 +42,9 @@ if ($cashbackText->isShowCashbackProductsListEnabled() && $cashbackText->getCash
         )?>
     </span>
     <span class="product-list-ame-text" style="color: #1b0487;">
-        (<?php echo $cashbackText->getCashbackPercent(); ?>% de volta)
+        (<?=$block->escapeHtml($cashbackText->getCashbackPercent()) ?>% de volta)
     </span>
 </div>
-<?php
+    <?php
 }
 ?>

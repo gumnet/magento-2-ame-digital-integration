@@ -48,6 +48,7 @@ use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
 use Magento\Sales\Model\Service\InvoiceService;
+use Magento\Store\Model\ScopeInterface;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\Controller\Result\Raw;
 use GumNet\AME\Model\Values\Config;
@@ -231,7 +232,11 @@ class Index extends Action
             ->addObject($invoice)
             ->addObject($invoice->getOrder());
         $transaction->save();
-        $order->setState('processing')->setStatus('processing');
+        $processingStatus = $this->_scopeConfig->getValue(
+            Config::STATUS_PROCESSING,
+            ScopeInterface::SCOPE_STORE
+        );
+        $order->setState('processing')->setStatus($processingStatus);
         $this->orderRepository->save($order);
     }
 }

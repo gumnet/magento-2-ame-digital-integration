@@ -139,9 +139,12 @@ class AME extends AbstractMethod
         $order = $payment->getOrder();
         $resultArray = json_decode($this->ame->createOrder($order), true);
         $this->setAdditionalInformation($payment, $resultArray);
-        $newStatus = "pending_payment";
-        $order->setState(Order::STATE_PENDING_PAYMENT)->setStatus($newStatus);
-        $order->addStatusHistoryComment('AME Order ID: ' . $resultArray['id']);
+        $newStatus = $this->_scopeConfig->getValue(
+            Config::STATUS_CREATED,
+            ScopeInterface::SCOPE_STORE
+        );
+        $order->setState(Order::STATE_NEW)->setStatus($newStatus);
+        $order->addCommentToStatusHistory('AME Order ID: ' . $resultArray['id']);
         return $this;
     }
 

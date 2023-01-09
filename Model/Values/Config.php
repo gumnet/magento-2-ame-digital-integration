@@ -26,6 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+declare(strict_types=1);
 
 namespace GumNet\AME\Model\Values;
 
@@ -53,7 +54,6 @@ class Config
     public const EXHIBITION_LIST_OLD = 'ame/exhibition/show_cashback_products_list';
     public const EXHIBITION_LIST = 'payment/ame/show_cashback_products_list';
     public const TRUST_WALLET_ENABLED = 'payment/ame/trust_wallet_enabled';
-
     public const CANCEL_PENDING_DAYS = 'payment/ame/cancel_pending_days';
 
     // Environments
