@@ -29,121 +29,249 @@
 
 namespace GumNet\AME\Controller\Index;
 
-use \Magento\Framework\App\CsrfAwareActionInterface;
-use \Magento\Framework\App\RequestInterface;
-use \Magento\Framework\App\Request\InvalidRequestException;
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\GumApi;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\NotFoundException;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Magento\TestFramework\Helper\Api;
+use Psr\Log\LoggerInterface;
 
-class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
+class Index extends Action implements CsrfAwareActionInterface
 {
-    protected $_session;
-    protected $_request;
-    protected $_scopeConfig;
-    protected $_orderRepository;
-    protected $_dbAME;
-    protected $_mailerAME;
-    protected $_invoiceService;
-    protected $_transactionFactory;
-    protected $_api;
-    protected $_mlogger;
-    protected $_email;
-    protected $_gumApi;
-    protected $_storeManager;
+    /**
+     * @var Context
+     */
+    protected $context;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $mailerAME,
-                                \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-                                \Magento\Framework\DB\TransactionFactory $transactionFactory,
-                                \GumNet\AME\Helper\API $api,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                \Magento\Store\Model\StoreManagerInterface $storeManager,
-                                array $data = []
-                                )
-    {
-        $this->_request = $request;
-        $this->_scopeConfig = $scopeConfig;
-        $this->_orderRepository = $orderRepository;
-        $this->_dbAME = $dbAME;
-        $this->_mailerAME = $mailerAME;
-        $this->_invoiceService = $invoiceService;
-        $this->_transactionFactory = $transactionFactory;
-        $this->_api = $api;
-        $this->_mlogger = $mlogger;
-        $this->_email = $email;
-        $this->_gumApi = $gumApi;
-        $this->_storeManager = $storeManager;
+    /**
+     * @var RequestInterface
+     */
+    protected $request;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var CollectionFactory
+     */
+    protected $orderCollectionFactory;
+
+    /**
+     * @var GumApi
+     */
+    protected $gumApi;
+
+    /**
+     * @var ApiClient
+     */
+    protected $api;
+
+    /**
+     * @param Context $context
+     * @param RequestInterface $request
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepository $orderRepository
+     * @param CollectionFactory $orderCollectionFactory
+     * @param GumApi $gumApi
+     * @param ApiClient $api
+     * @param LoggerInterface $logger
+     * @param array $data
+     */
+    public function __construct(
+        Context $context,
+        RequestInterface $request,
+        ScopeConfigInterface$scopeConfig,
+        OrderRepository $orderRepository,
+        CollectionFactory $orderCollectionFactory,
+        GumApi $gumApi,
+        ApiClient $api,
+        LoggerInterface $logger,
+
+        array $data = []
+    ) {
+        $this->context = $context;
+        $this->request = $request;
+        $this->scopeConfig = $scopeConfig;
+        $this->orderRepository = $orderRepository;
+        $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->gumApi = $gumApi;
+        $this->api = $api;
+        $this->logger = $logger;
         parent::__construct($context);
     }
+
+    /**
+     * @inheritDoc
+     */
     public function execute()
     {
-        $this->_mlogger->log("INFO","AME Callback starting...");
-        $json = file_get_contents('php://input');
-//        $json = fopen('php://input','r');
-        $this->_dbAME->insertCallback($json);
-        if(!$this->isJson($json)){
-            $this->_mlogger->log("ERROR","AME Callback is not json");
-            return;
+        $json = $this->request->getContent();
+        if (!$this->api->isJson($json)) {
+            $message = __('AME Callback - invalid JSON - ' . $json);
+            throw new InputException($message);
         }
-        $input = json_decode($json,true);
-        $this->_mlogger->log("INFO",print_r($input,true));
+        $this->logger->info('AME callback received - ' . $json);
+        $input = json_decode($json, true);
         // verify if id exists
-        if(!array_key_exists('id',$input)){
-            $this->_mlogger->log("ERROR","AME Callback AME ID not found in JSON");
-            return;
+        if (!array_key_exists('id', $input)
+            || !array_key_exists('attributes', $input)) {
+            $message = __('AME Callback - JSON missing keys - ' . $json);
+            throw new InputException($message);
         }
-        $ame_order_id = $input['attributes']['orderId'];
-        $incrId = $this->_dbAME->getOrderIncrementId($ame_order_id);
-        if(!$incrId){
-            $this->_mlogger->log("ERROR","AME Callback Increment ID not found in the database");
-            return;
+        if (isset($input['attributes'])
+            && isset($input['attributes']['trustWallet'])
+            && isset($input['attributes']['trustWallet']['originOrderUuid'])
+        ) {
+            // Valid trustWallet additional charge callback
+            $this->gumApi->queueTransaction($json);
+            $this->_eventManager->dispatch(
+                'ame_callback_trust_wallet_additional_charge',
+                [
+                    'ame_original_order_id' => $input['attributes']['trustWallet']['originOrderUuid'],
+                    'ame_transaction_id' => $input['id'],
+                    'callback_json' => $json
+                ]
+            );
+        } else {
+            $debitWalletId = $input['debitWalletId'] ?? "";
+            $trustWalletId = "";
+            if (isset($input['attributes'])
+                && isset($input['attributes']['trustWallet'])
+                && isset($input['attributes']['trustWallet']['uuid'])) {
+                $trustWalletId = $input['attributes']['trustWallet']['uuid'];
+            }
+            if ($input['status'] == "AUTHORIZED") {
+                $this->setTransactionId(
+                    $input['attributes']['orderId'],
+                    $input['id'],
+                    $input['nsu'],
+                    $debitWalletId,
+                    $trustWalletId,
+                    $json
+                );
+                $this->gumApi->queueTransaction($json);
+            } elseif ($input['status'] == "CANCELED") {
+                $this->cancelOrder($input['attributes']['orderId']);
+                $this->gumApi->queueTransactionError($json);
+            } else {
+                $this->gumApi->queueTransactionError($json);
+            }
         }
-        if($input['status']=="AUTHORIZED") {
-            $this->_dbAME->insertTransaction($input);
-            $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($ame_order_id);
+        /** @var Raw $result */
+        $result = $this->context->getResultFactory()->create(ResultFactory::TYPE_RAW);
+        return $result->setContents('');
+    }
 
-            $this->_mlogger->log("INFO","AME Callback Calling queue transaction API");
+    /**
+     * @param string $ameOrderId
+     * @return void
+     * @throws NotFoundException
+     */
+    public function cancelOrder(string $ameOrderId): void
+    {
+        /** @var Order $order */
+        if ($order = $this->getOrderByAmeId($ameOrderId)) {
+            if (!$order->isCanceled() && $order->canCancel()) {
+                $order->addCommentToStatusHistory(__('Received cancel API callback'));
+                $order->cancel()->save();
+            }
+        } else {
+            /* @note This allows developers to process a not found canceled order callback. */
+            $this->_eventManager->dispatch(
+                'ame_callback_order_not_found_canceled',
+                [
+                    'ame_order_id' => $ameOrderId
+                ]
+            );
+        }
+    }
 
-            $this->_gumApi->queueTransaction($json);
-            $this->_mlogger->log("INFO", "Queue transaction call OK");
+    /**
+     * @param string $ameOrderId
+     * @param string $ameTransactionId
+     * @param string $nsu
+     * @param string $debitWalledId
+     * @param string $trustWalletId
+     * @param string $json
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws NoSuchEntityException
+     */
+    public function setTransactionId(
+        string $ameOrderId,
+        string $ameTransactionId,
+        string $nsu = "",
+        string $debitWalledId = "",
+        string $trustWalletId = "",
+        string $json = ""
+    ): void {
+        if ($order = $this->getOrderByAmeId($ameOrderId)) {
+            $payment = $order->getPayment();
+            $payment->setAdditionalInformation(PaymentInformation::TRANSACTION_ID, $ameTransactionId);
+            if ($nsu) {
+                $payment->setAdditionalInformation(PaymentInformation::NSU, $nsu);
+            }
+            if ($trustWalletId) {
+                $payment->setAdditionalInformation(PaymentInformation::TRUST_WALLET_UUID, $trustWalletId);
+            }
+            $order->addCommentToStatusHistory('Transaction ID: ' . $ameTransactionId . " | NSU: " . $nsu);
+            $this->orderRepository->save($order);
+        } else {
+            /* @note This allows developers to process a not found APPROVED order callback. */
+            $this->_eventManager->dispatch(
+                'ame_callback_order_not_found_approved',
+                [
+                    'ame_order_id' => $ameOrderId,
+                    'ame_transaction_id' => $ameTransactionId,
+                    'nsu' => $nsu,
+                    'trust_wallet_id' => $trustWalletId,
+                    'callback_json' => $json
+                ]
+            );
         }
-        else{
-            $this->_gumApi->queueTransactionError($json);
-            $this->_mlogger->log("ERROR","Wrong Order status: ".$input['status']);
+    }
+
+    /**
+     * @param string $ameOrderId
+     * @return null|Order
+     */
+    public function getOrderByAmeId(string $ameOrderId): ?Order
+    {
+        $orderCollection = $this->orderCollectionFactory->create();
+        $where = "JSON_EXTRACT(sales_order_payment.additional_information, \"$."
+            . PaymentInformation::AME_ID. "\") = '" . $ameOrderId . "'";
+        $orderCollection->getSelect('additional_filter')
+            ->join('sales_order_payment', 'main_table.entity_id = sales_order_payment.parent_id')
+            ->where($where);
+        if (!$orderCollection->count()) {
+            return null;
         }
-//        if($input['status']=="CANCELED"){
-//            $this->_mlogger->log("INFO","AME Callback cancel order ".$incrId);
-//            $this->cancelOrder($order);
-//        }
-//        if($input['status']=="ERROR"||$input['status']=="DENIED"){
-//            $this->_mlogger->log("INFO","AME Callback error/denied - cancel order ".$incrId);
-//            $this->cancelOrder($order);
-//        }
-        $this->_mlogger->log("INFO","AME Callback ended.");
-        die();
+        /** @var \Magento\Sales\Model\Order $order */
+        return $orderCollection->getFirstItem();
     }
-    public function cancelOrder($order){
-        $order->cancel()->save();
-    }
-    public function invoiceOrder($order){
-        $invoice = $this->_invoiceService->prepareInvoice($order);
-        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-        $invoice->register();
-        $transaction = $this->_transactionFactory->create()
-            ->addObject($invoice)
-            ->addObject($invoice->getOrder());
-        $transaction->save();
-        $order->setState('processing')->setStatus('processing');
-        $order->save();
-    }
-    public function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
-    }
+
     /**
      * @inheritDoc
      */
@@ -160,8 +288,12 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
     {
         return true;
     }
-    public function getCallbackUrl()
+
+    /**
+     * @return string
+     */
+    public function getCallbackUrl(): string
     {
-        return $this->_storeManager->getStore()->getBaseUrl() . "m2amecallbackendpoint";
+        return $this->context->getUrl()->getBaseUrl() . 'm2amecallbackendpoint';
     }
 }

@@ -31,13 +31,20 @@ namespace GumNet\AME\Model\Config;
 
 class Environment implements \Magento\Framework\Option\ArrayInterface
 {
+    public const ENV_PROD_LABEL = 'Production';
+    public const ENV_PROD_VALUE = 2;
+    public const ENV_SENSEDIA_LABEL = 'Sensedia';
+    public const ENV_SENSEDIA_VALUE = 3;
+
     public function toOptionArray()
     {
 //            ['value' => 0, 'label' => __('Development')],
 //        ['value' => 1, 'label' => __('Validation')],
+        $envProdLabel = self::ENV_PROD_LABEL;
+        $envSensediaLabel = self::ENV_SENSEDIA_LABEL;
         return [
-            ['value' => 2, 'label' => __('Production')],
-            ['value' => 3, 'label' => __('Sensedia')],
+            ['value' => self::ENV_PROD_VALUE, 'label' => __($envProdLabel)],
+            ['value' => self::ENV_SENSEDIA_VALUE, 'label' => __($envSensediaLabel)],
         ];
     }
 }

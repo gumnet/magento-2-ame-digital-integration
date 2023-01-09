@@ -29,48 +29,54 @@
 
 namespace GumNet\AME\Observer;
 
+use GumNet\AME\Model\AME;
+use GumNet\AME\Model\ApiClient;
+use GumNet\AME\Model\GumApi;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Order\Creditmemo;
 
 class CreditMemoObserver implements ObserverInterface
 {
-    protected $_apiAME;
-    protected $_sensediaAPI;
-    protected $_order;
-    protected $_gumAPI;
-    protected $_dbAME;
+    /**
+     * @var ApiClient
+     */
+    protected $api;
 
+    /**
+     * @var GumApi
+     */
+    protected $gumApi;
+
+    /**
+     * @param ApiClient $api
+     * @param GumApi $gumApi
+     */
     public function __construct(
-        \GumNet\AME\Helper\API $api,
-        \GumNet\AME\Helper\SensediaAPI $sensediaAPI,
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        \GumNet\AME\Helper\GumApi $gumAPI,
-        \GumNet\AME\Helper\DbAME $dbAME
-    )
-    {
-        $this->_apiAME = $sensediaAPI;
-        $this->_order = $order;
-        $this->_gumAPI = $gumAPI;
-        $this->_dbAME = $dbAME;
+        ApiClient $api,
+        GumApi $gumApi
+    ) {
+        $this->api = $api;
+        $this->gumApi = $gumApi;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @inheritdoc
+     */
+    public function execute(Observer $observer): void
     {
+        /** @var Creditmemo $refund */
         $refund = $observer->getEvent()->getCreditmemo();
-        $order = $refund->getOrder();
-        $payment = $order->getPayment();
-        $method = $payment->getMethod();
-        if($method=="ame") {
-            $valor = $refund->getGrandTotal() * 100;
-            $refund = $this->_apiAME->refundOrder($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $valor);
-            if ($refund) {
-                $refund[0] = json_decode($refund[0], true);
-                $this->_dbAME->insertRefund($this->_dbAME->getAmeIdByIncrementId($order->getIncrementId()), $refund[1], $refund[0]['operationId'], $valor, $refund[0]['status']);
-            } else {
+        $payment = $refund->getOrder()->getPayment();
+        if ($payment->getMethod() == AME::CODE) {
+            if (!$this->api->refundOrder(
+                (string)$payment->getAdditionalInformation(PaymentInformation::TRANSACTION_ID),
+                $refund->getGrandTotal() * 100
+            )) {
                 throw new LocalizedException(__('Houve um erro efetuando o reembolso.'));
             }
         }
-        return $this;
-
     }
 }

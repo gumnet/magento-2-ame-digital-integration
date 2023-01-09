@@ -27,50 +27,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-$assetRepo = $objectManager->get('Magento\Framework\View\Asset\Repository');
-$ame_logo = $assetRepo->getUrl("GumNet_AME::images/ame-digital.png");
+use GumNet\AME\Block\QrCode;
 
-echo "";
-if($block->getPaymentMethod()=="ame") {
+/** @var $block QrCode */
+$ame_logo = $block->getLogoUrl();
+
+if ($block->getPaymentMethod() === "ame" && $block->getOrder()) {
     $total_discount = 0;
     $items = $block->getOrder()->getAllItems();
     foreach ($items as $item) {
-        $total_discount = $total_discount + $item->getDiscountAmount();
+        $total_discount += $item->getDiscountAmount();
     }
     ?>
     <div id='success_ame_external'>
         <center>
         <div id='success_ame_internal'>
             &nbsp;<br>
-            <div id="success_ame_value_txt"><img src="<?php echo $ame_logo; ?>" width="150"><br><br>
-                Valor da compra:</div>
-            <div id="success_ame_value">R$<?php echo number_format($block->getPrice(),
-                    2,",","."); ?></div><br>
-            <?php if($block->getCashbackValue()){ ?>
-            <div id="success_ame_cashback_txt">Receba de volta <div id="success_ame_cashback_value">
-                    <?php echo number_format($block->getCashbackValue(),2,",","."); ?></div> em até 30 dias.</div><br>
+            <div id="success_ame_value_txt">
+                <img alt="AME Logo" src="<?=$block->escapeUrl($ame_logo)?>" width="150"><br><br>
+                Valor da compra:
+            </div>
+            <div id="success_ame_value">
+                <?=$block->escapeHtml("R$" . number_format($block->getPrice(), 2, ",", ".")) ?>
+            </div>
+            <br>
+            <?php if ($block->getCashbackValue()) { ?>
+            <div id="success_ame_cashback_txt">Receba de volta
+                <div id="success_ame_cashback_value">
+                    <?=$block->escapeHtml(number_format($block->getCashbackValue(), 2, ",", "."))?>
+                </div> em até 30 dias.</div><br>
                     <?php } ?>
             <div id="success_ame_facil">Pagar com a AME é fácil e rápido!</div>
-            <img id="success_ame_qrcode" src='<?php echo $block->getQrCodeLink(); ?>'/>
+            <img id="success_ame_qrcode" alt="QR Code" src='<?=$block->escapeUrl($block->getQrCodeLink())?>'/>
             <div id="success_ame_info">1. Abra o aplicativo Ame Digital. Se você ainda não tem, <br>baixe no
-                <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/google-logo.svg');?>" alt='Google Play' height="16">
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/google-logo.svg'))?>"
+                     alt='Google Play' height="16">
                 ou na
-                <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/apple-logo.svg');?>" alt='App Store' height="16"><br>
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/apple-logo.svg'))?>"
+                     alt='App Store' height="16"><br>
                 2. Clique em pagar
-                <img src="<?php echo $this->getViewFileUrl('GumNet_AME::images/ame-small-logo.svg');?>" alt='AME Logo'>
+                <img src="<?=$block->escapeUrl($block->getViewFileUrl('GumNet_AME::images/ame-small-logo.svg'))?>"
+                     alt='AME Logo'>
                 e aponte para o QR Code.<br>
                 3. Pronto, agora é só finalizar o pagamento com Ame.<br>
                 <br>
             </div>
-            <br>&nbsp;
-            <br>&nbsp;
-            <br>&nbsp;
+            <br>
+            <br>
+            <br>
         </div>
         </center>
         <script>
             if(window.innerWidth<=500){
-                window.location = "<?php echo $block->getDeepLink();?>";
+                window.location = "<?=$block->escapeUrl($block->getDeepLink());?>";
             }
         </script>
     </div>
@@ -79,7 +88,8 @@ requirejs(['jquery'], function($){
     var updatePaymentLoop = setInterval(updatePaymentConfirmation,3000);
 
     function paymentConfirmed(){
-        var msgPagamentoConfirmado = "<br><br><br>Recebemos seu pagamento.<br><br>Muito obrigado pela compra!<br><br>Enviaremos atualizações para seu email cadastrado.<br><br><br>";
+        var msgPagamentoConfirmado = "<br><br><br>Recebemos seu pagamento.<br><br>" +
+            "Muito obrigado pela compra!<br><br>Enviaremos atualizações para seu email cadastrado.<br><br><br>";
         $('#success_ame_facil').remove();
         $('#success_ame_qrcode').remove();
         $('#success_ame_info').remove();
@@ -88,7 +98,8 @@ requirejs(['jquery'], function($){
     function updatePaymentConfirmation()
     {
         $.ajax({
-            url: "/m2amecallbackendpoint/paymentconfirmation/index/id/<?php echo $block->getOrder()->getEntityId();?>",
+            url: "/m2amecallbackendpoint/paymentconfirmation/index/id/" +
+                "<?=$block->escapeHtml($block->getOrder()->getEntityId())?>",
             context: document.body
         }).done(function (resposta) {
             console.log(resposta);
@@ -101,9 +112,4 @@ requirejs(['jquery'], function($){
 });
 
 </script>
-
-
-
-
-    <?php
-}
+    <?php }

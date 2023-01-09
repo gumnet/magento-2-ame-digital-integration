@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection ALL */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+
 /**
  * @author Gustavo Ulyssea - gustavo.ulyssea@gmail.com
  * @copyright Copyright (c) 2020-2022 GumNet (https://gum.net.br)
@@ -26,77 +30,124 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 namespace GumNet\AME\Block;
 
-class QrCode extends \Magento\Checkout\Block\Onepage\Success
+use Magento\Sales\Model\Order\Config;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Checkout\Block\Onepage\Success;
+use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\App\Http\Context as ContextAlias;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Sales\Model\Order;
+use Magento\Checkout\Model\Session as CheckoutSession;
+
+class QrCode extends Success
 {
+    /**
+     * @var CheckoutSession
+     */
     protected $checkoutSession;
+
+    /**
+     * @var CustomerSession
+     */
     protected $customerSession;
-    protected $_orderFactory;
-    protected $_connection;
-    protected $_apiAME;
+
+    protected $assetRepository;
 
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Customer\Model\Session $customerSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Framework\App\ResourceConnection $resource,
-        \Magento\Sales\Model\Order\Config $orderConfig,
-        \Magento\Framework\App\Http\Context $httpContext,
-        \GumNet\AME\Helper\API $apiAME
+        Context $context,
+        CheckoutSession $checkoutSession,
+        CustomerSession $customerSession,
+        Config $orderConfig,
+        ContextAlias $httpContext,
+        \Magento\Framework\View\Asset\Repository $assetRepository
     ) {
-        parent::__construct($context, $checkoutSession,$orderConfig,$httpContext);
+        parent::__construct($context, $checkoutSession, $orderConfig, $httpContext);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
-        $this->_orderFactory = $orderFactory;
-        $this->_connection = $resource->getConnection();
-        $this->_apiAME = $apiAME;
-    }
-    public function getCashbackValue(){
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT cashback_amount FROM ame_order WHERE increment_id = ".$increment_id;
-        $value = $this->_connection->fetchOne($sql);
-        return $value * 0.01;
+        $this->assetRepository = $assetRepository;
     }
 
-//    public function getCashbackValue(){
-//        $total_discount = 0;
-//        $items = $this->getOrder()->getAllItems();
-//        foreach ($items as $item) {
-//            $total_discount = $total_discount + $item->getDiscountAmount();
-//        }
-//        return ($this->getPrice()-abs($total_discount)) * $this->getCashbackPercent() * 0.01;
-//    }
-//    public function getCashbackPercent(){
-//        return $this->_apiAME->getCashbackPercent();
-//    }
-    public function getPrice(){
-        return $this->getOrder()->getGrandTotal();
-    }
-    public function getOrder()
+    /**
+     * @return float
+     */
+    public function getCashbackValue(): float
     {
-        return $this->_orderFactory->create()->loadByIncrementId($this->getOrderId());
+        if ($order = $this->getOrder()) {
+            return (float)$order->getPayment()->getAdditionalInformation('cashback_amount') * 0.01;
+        }
+        return 0;
     }
 
-    public function getCustomerId()
+    /**
+     * @return float
+     */
+    public function getPrice(): float
     {
-        return $this->customerSession->getCustomer()->getId();
+        if ($order = $this->getOrder()) {
+            return $order->getGrandTotal();
+        }
+        return 0;
     }
-    public function getDeepLink(){
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT deep_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->_connection->fetchOne($sql);
-        return $qr;
+
+    /**
+     * @return Order|null
+     */
+    public function getOrder(): ?Order
+    {
+        if (!$this->customerSession->isLoggedIn()) {
+            return null;
+        }
+        return $this->checkoutSession->getLastRealOrder();
     }
-    public function getQrCodeLink(){
-        $increment_id = $this->getOrderId();
-        $sql = "SELECT qr_code_link FROM ame_order WHERE increment_id = ".$increment_id;
-        $qr = $this->_connection->fetchOne($sql);
-        return $qr;
+
+    /**
+     * @return int
+     */
+    public function getCustomerId(): int
+    {
+        if (!$this->customerSession->isLoggedIn()) {
+            return 0;
+        }
+        return $this->customerSession->getCustomerId();
     }
-    public function getPaymentMethod(){
-        return $this->getOrder()->getPayment()->getMethod();
+
+    /**
+     * @return string
+     */
+    public function getDeepLink(): string
+    {
+        if ($order = $this->getOrder()) {
+            return $order->getPayment()->getAdditionalInformation(PaymentInformation::DEEP_LINK);
+        }
+        return "";
+    }
+
+    /**
+     * @return string
+     */
+    public function getQrCodeLink(): string
+    {
+        if ($order = $this->getOrder()) {
+            return $order->getPayment()->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
+        }
+        return "";
+    }
+
+    /**
+     * @return string
+     */
+    public function getPaymentMethod(): string
+    {
+        if ($order = $this->getOrder()) {
+            return $order->getPayment()->getMethod();
+        }
+        return "";
+    }
+
+    public function getLogoUrl(): ?string
+    {
+        return $this->assetRepository->getUrl("GumNet_AME::images/ame-digital.png");
     }
 }

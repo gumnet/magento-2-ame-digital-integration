@@ -28,17 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="payment_method_is_active">
-        <observer name="disable_pg_ame" instance="GumNet\AME\Observer\ObserverforDisabledFrontendPg" />
-    </event>
-    <event name="checkout_onepage_controller_success_action">
-        <observer name="ame_order_create" instance="GumNet\AME\Observer\OrderCreate"  />
-    </event>
-    <event name="sales_order_creditmemo_refund">
-        <observer name="ame_credit_memo" instance="GumNet\AME\Observer\CreditMemoObserver"  />
+        <observer name="disable_pg_ame" instance="GumNet\AME\Observer\ObserverForDisabledFrontendPg" />
     </event>
     <event name="checkout_submit_before">
         <observer name="ame_validate_form" instance="GumNet\AME\Observer\ValidateForm"  />
+    </event>
+    <event name="sales_order_creditmemo_refund">
+        <observer name="ame_credit_memo" instance="GumNet\AME\Observer\CreditMemoObserver"  />
     </event>
 </config>

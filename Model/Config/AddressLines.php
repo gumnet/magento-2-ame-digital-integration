@@ -29,16 +29,18 @@
 
 namespace GumNet\AME\Model\Config;
 
-class AddressLines implements \Magento\Framework\Option\ArrayInterface
+use Magento\Framework\Option\ArrayInterface;
+
+class AddressLines implements ArrayInterface
 {
     public function toOptionArray()
     {
         return [
-            ['value' => 0, 'label' => __('Line 0')],
-            ['value' => 1, 'label' => __('Line 1')],
-            ['value' => 2, 'label' => __('Line 2')],
-            ['value' => 3, 'label' => __('Line 3')],
-            ['value' => 4, 'label' => __('Line 4')],
+            ['value' => 0, 'label' => __('Line') . " 0"],
+            ['value' => 1, 'label' => __('Line') . " 1"],
+            ['value' => 2, 'label' => __('Line') . " 2"],
+            ['value' => 3, 'label' => __('Line') . " 3"],
+            ['value' => 4, 'label' => __('Line') . " 4"],
         ];
     }
 }

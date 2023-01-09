@@ -28,11 +28,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<page layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+<page layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="product.info.main">
-            <block class="GumNet\AME\Block\CashbackText" name="product.ame.cashback" template="GumNet_AME::cashbacktext.phtml" after="product.price.tier" />
+            <block class="Magento\Framework\View\Element\Template" name="product.ame.cashback"
+                   template="GumNet_AME::cashbacktext.phtml" after="product.price.tier">
+                <arguments>
+                    <argument name="cashback_text" xsi:type="object">GumNet\AME\ViewModel\CashbackText</argument>
+                </arguments>
+            </block>
         </referenceContainer>
-
     </body>
 </page>

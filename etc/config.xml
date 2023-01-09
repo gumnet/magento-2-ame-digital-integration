@@ -28,17 +28,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
     <default>
         <payment>
             <ame>
+                <payment_action>order</payment_action>
+                <model>GumNet\AME\Model\AME</model>
+                <can_refund>1</can_refund>
                 <active>1</active>
                 <title>AME</title>
-                <order_status>pending</order_status>
-                <instructions>Instruction.</instructions>
-                <payment_action>true</payment_action>
-                <model>GumNet\AME\Model\AME</model>
-                <group>offline</group>
+                <sort_order>1</sort_order>
+                <environment>1</environment>
+                <trust_wallet_enabled>0</trust_wallet_enabled>
+                <address_street>0</address_street>
+                <address_number>1</address_number>
+                <address_neighborhood>2</address_neighborhood>
+                <show_cashback_products_list>0</show_cashback_products_list>
+                <order_status_created>pending</order_status_created>
+                <order_status_payment_received>processing</order_status_payment_received>
+                <cancel_pending_days>0</cancel_pending_days>
             </ame>
         </payment>
     </default>

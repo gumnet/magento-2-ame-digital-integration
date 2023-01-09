@@ -29,32 +29,49 @@
 
 namespace GumNet\AME\Observer;
 
-use GumNet\AME\Helper\SensediaAPI;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Sales\Model\Order;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
+use GumNet\AME\Model\Values\Config;
+use Magento\Store\Model\ScopeInterface;
 
 class ValidateForm implements ObserverInterface
 {
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $scopeConfig;
 
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    )
-    {
+        ScopeConfigInterface $scopeConfig
+    ) {
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @param Observer $observer
+     * @return void
+     * @throws LocalizedException
+     */
+    public function execute(Observer $observer)
     {
-        /** @var \Magento\Quote\Model\Quote $quote */
+        /** @var Quote $quote */
         $quote = $observer->getEvent()->getQuote();
         if ($quote->getPayment()->getMethod() != 'ame') {
             return;
         }
-        $neighborhood_line = $this->scopeConfig->getValue('ame/address/neighborhood', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $neighborhood_line = $this->scopeConfig->getValue(
+            Config::ADDRESS_NEIGHBORHOOD,
+            ScopeInterface::SCOPE_STORE
+        );
         if (!isset($quote->getShippingAddress()->getStreet()[$neighborhood_line])
-            ||!$quote->getShippingAddress()->getStreet()[$neighborhood_line]) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Por favor preencha o campo bairro.'));
+            || !$quote->getShippingAddress()->getStreet()[$neighborhood_line]) {
+            throw new LocalizedException(__('Please fill neighborhood field.'));
         }
     }
 }

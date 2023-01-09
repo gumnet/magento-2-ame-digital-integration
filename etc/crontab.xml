@@ -28,13 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
  -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
-    <!--
-    <group id="default">
-        <job instance="GumNet\AME\Cron\UpdatePendingTransactions" method="execute" name="gumnet_ame_updateorders_cron">
-            <schedule>*/5 * * * *</schedule>
-        </job>
-    </group>
-    -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+	<group id="default">
+		<job instance="GumNet\AME\Cron\CancelPendingOrders" method="execute" name="cancel_ame_pending_orders">
+			<schedule>21 4 * * *</schedule>
+		</job>
+	</group>
 </config>
 

@@ -29,18 +29,26 @@
 
 namespace GumNet\AME\Plugin\Order;
 
+use Magento\Framework\App\Request\Http;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use GumNet\AME\Model\Values\PaymentInformation;
+
 class Info
 {
-    protected $dbAME;
+    /**
+     * @var OrderRepositoryInterface
+     */
+
     protected $orderRepository;
+    /**
+     * @var Http
+     */
     protected $request;
 
     public function __construct(
-        \GumNet\AME\Helper\DbAME $dbAME,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Framework\App\Request\Http $request
+        OrderRepositoryInterface $orderRepository,
+        Http $request
     ) {
-        $this->dbAME = $dbAME;
         $this->orderRepository = $orderRepository;
         $this->request = $request;
     }
@@ -50,11 +58,11 @@ class Info
     ) {
         $orderId = $this->request->getParam('order_id');
         $order = $this->orderRepository->get($orderId);
-        if ($order->getPayment()->getMethod() != "ame") {
+        $payment = $order->getPayment();
+        if ($payment->getMethod() != "ame") {
             return $payment_info_html;
         }
-        $increment_id = $order->getIncrementId();
-        $qrcode = $this->dbAME->getQrCodeLink($increment_id);
+        $qrcode = $payment->getAdditionalInformation(PaymentInformation::QR_CODE_LINK);
         $payment_info_html .= "<br>";
         $payment_info_html .= "<img src='".$qrcode."' alt='qrcode'>";
         return $payment_info_html;

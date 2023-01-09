@@ -26,94 +26,98 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+declare(strict_types=1);
 
-namespace GumNet\AME\Cron;
+namespace GumNet\AME\Observer;
+
+use GumNet\AME\Model\AME;
+use GumNet\AME\Model\Values\Config;
+use GumNet\AME\Model\Values\PaymentInformation;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Psr\Log\LoggerInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Sales\Model\Order;
 
 class CancelPendingOrders
 {
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     protected $logger;
 
     /**
-     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
+     * @var CollectionFactory
      */
-    protected $collectionFactory;
+    protected $orderCollectionFactory;
 
     /**
-     * @var \Magento\Sales\Model\OrderFactory
-     */
-    protected $orderFactory;
-
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     protected $scopeConfig;
 
     /**
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory
-     * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @var OrderRepositoryInterface
+     */
+    protected $orderRepository;
+
+    /**
+     * @param LoggerInterface $logger
+     * @param CollectionFactory $orderCollectionFactory
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $collectionFactory,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        LoggerInterface $logger,
+        CollectionFactory $orderCollectionFactory,
+        ScopeConfigInterface $scopeConfig,
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->logger = $logger;
-        $this->collectionFactory = $collectionFactory;
-        $this->orderFactory = $orderFactory;
+        $this->orderCollectionFactory = $orderCollectionFactory;
         $this->scopeConfig = $scopeConfig;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
      * @return void
      */
-    public function execute()
+    public function execute(): void
     {
-        $expiresIn = 1;
-        if (!$expiresIn) {
+        if (!$cancelAfterDays = $this->scopeConfig->getValue(
+            Config::CANCEL_PENDING_DAYS,
+            ScopeInterface::SCOPE_STORE
+        )) {
             return;
         }
-        $to = date('Y-m-d H:i:s', time()-86400*$expires_in);
-        $orderCollection = $this->getOrderCollection($to, 'ame');
-        $this->cancelOrders($orderCollection);
-    }
 
-    /**
-     * @param $to
-     * @param $method
-     * @return \Magento\Sales\Model\ResourceModel\Order\Collection
-     */
-    public function getOrderCollection($to, $method)
-    {
-        $orderCollection = $this->collectionFactory->create()->addFieldToSelect(['*']);
-        $orderCollection->addFieldToFilter('created_at', ['lteq' => $to]);
-        $orderCollection->addFieldToFilter('state', ['eq' => 'new']);
-        $orderCollection->getSelect()
-            ->join(
-                ["sop" => "sales_order_payment"],
-                'main_table.entity_id = sop.parent_id',
-                ['method']
-            )
-            ->where('sop.method = ?', [$method]);
-        return $orderCollection;
-    }
-
-    /**
-     * @param $orderCollection
-     * @return void
-     * @throws \Exception
-     */
-    public function cancelOrders($orderCollection)
-    {
-        foreach ($orderCollection as $item) {
-            $order = $this->orderFactory->create()->load($item->getId());
-            $order->cancel()->save();
-            $this->logger->info("AME: automatic cancel expired order ID: ".$order->getId());
+        $this->logger->info('AME - Starting cancel pending orders CRON.');
+        $orderCollection = $this->getPendingOrders((int)$cancelAfterDays);
+        /** @var Order $order */
+        foreach ($orderCollection->getItems() as $order) {
+            if (!$order->getPayment()->getAdditionalInformation(PaymentInformation::TRANSACTION_ID)
+                && $order->getPayment()->getMethod() == AME::CODE
+                && !$order->hasInvoices()) {
+                $this->logger->info("AME - Payment not detected - cancel pending order: " . $order->getIncrementId());
+                $order->cancel();
+                $this->orderRepository->save($order);
+            }
         }
+    }
+
+    /**
+     * @param int $cancelAfterDays
+     * @return OrderCollection
+     */
+    public function getPendingOrders(int $cancelAfterDays): OrderCollection
+    {
+        $cancelAfterDays++;
+        $cancelTo = date("Y-m-d h:i:s", strtotime("-" . $cancelAfterDays . " day"));
+        $orderCollection = $this->orderCollectionFactory->create();
+        $orderCollection->addFieldToFilter('created_at', ['lteq' => $cancelTo]);
+        $orderCollection->addFieldToFilter('state', ['eq' => Order::STATE_PENDING_PAYMENT]);
+        return $orderCollection;
     }
 }

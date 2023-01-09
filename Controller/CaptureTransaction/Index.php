@@ -29,106 +29,214 @@
 
 namespace GumNet\AME\Controller\CaptureTransaction;
 
-use \Magento\Framework\App\CsrfAwareActionInterface;
-use \Magento\Framework\App\RequestInterface;
-use \Magento\Framework\App\Request\InvalidRequestException;
+use GumNet\AME\Model\GumApi;
+use GumNet\AME\Model\Values\PaymentInformation;
+use http\Exception\InvalidArgumentException;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\DB\TransactionFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Model\Order\Invoice;
+use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
+use Magento\Sales\Model\Service\InvoiceService;
+use Magento\Store\Model\ScopeInterface;
+use Psr\Log\LoggerInterface;
+use Magento\Framework\Controller\Result\Raw;
+use GumNet\AME\Model\Values\Config;
 
-class Index extends \Magento\Framework\App\Action\Action
+class Index extends Action
 {
-    protected $_session;
-    protected $_request;
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $_scopeConfig;
-    protected $_orderRepository;
-    protected $_dbAME;
-    protected $_mailerAME;
-    protected $_invoiceService;
-    protected $_transactionFactory;
-    protected $_api;
-    protected $_mlogger;
-    protected $_email;
-    protected $_gumApi;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context,
-                                \Magento\Framework\App\Request\Http $request,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Magento\Sales\Model\OrderRepository $orderRepository,
-                                \GumNet\AME\Helper\DbAME $dbAME,
-                                \GumNet\AME\Helper\MailerAME $mailerAME,
-                                \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-                                \Magento\Framework\DB\TransactionFactory $transactionFactory,
-                                \GumNet\AME\Helper\API $api,
-                                \Psr\Log\LoggerInterface $mlogger,
-                                \GumNet\AME\Helper\MailerAME $email,
-                                \GumNet\AME\Helper\GumApi $gumApi,
-                                array $data = []
-                                )
-    {
-        $this->_request = $request;
+    /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var InvoiceService
+     */
+    protected $_invoiceService;
+
+    /**
+     * @var TransactionFactory
+     */
+    protected $_transactionFactory;
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    /**
+     * @var GumApi
+     */
+    protected $gumApi;
+
+    /**
+     * @var CollectionFactory
+     */
+    protected $paymentCollectionFactory;
+
+    /**
+     * @var RawFactory
+     */
+    protected $rawResultFactory;
+
+    /**
+     * @param Context $context
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepository $orderRepository
+     * @param InvoiceService $invoiceService
+     * @param TransactionFactory $transactionFactory
+     * @param LoggerInterface $logger
+     * @param GumApi $gumApi
+     * @param CollectionFactory $paymentCollectionFactory
+     * @param RawFactory $rawResultFactory
+     * @param array $data
+     */
+    public function __construct(
+        Context $context,
+        ScopeConfigInterface $scopeConfig,
+        OrderRepository $orderRepository,
+        InvoiceService $invoiceService,
+        TransactionFactory $transactionFactory,
+        LoggerInterface $logger,
+        GumApi $gumApi,
+        CollectionFactory $paymentCollectionFactory,
+        RawFactory $rawResultFactory,
+        array $data = []
+    ) {
         $this->_scopeConfig = $scopeConfig;
-        $this->_orderRepository = $orderRepository;
-        $this->_dbAME = $dbAME;
-        $this->_mailerAME = $mailerAME;
+        $this->orderRepository = $orderRepository;
         $this->_invoiceService = $invoiceService;
         $this->_transactionFactory = $transactionFactory;
-        $this->_api = $api;
-        $this->_mlogger = $mlogger;
-        $this->_email = $email;
-        $this->_gumApi = $gumApi;
+        $this->logger = $logger;
+        $this->gumApi = $gumApi;
+        $this->paymentCollectionFactory = $paymentCollectionFactory;
+        $this->rawResultFactory = $rawResultFactory;
         parent::__construct($context);
     }
-    public function execute()
+
+    /**
+     * @return Raw
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function execute(): Raw
     {
-        $this->_mlogger->log("INFO","AME Capture Transaction starting...");
-
-
-        $ame_transaction_id = $this->_request->getParam('transactionid');
-        $request_ame_order_id = $this->_request->getParam('orderid');
-
-        if(!$db_ame_order_id = $this->_dbAME->getAmeOrderIdByTransactionId($ame_transaction_id)){
-            die("ERROR Transaction not found");
+        $transactionId = $this->getRequest()->getParam('transactionid', '');
+        if (!$request_ame_order_id = $this->getRequest()->getParam('orderid', '')) {
+            if ($ameOriginOrderId = $this->getRequest()->getParam('originorderid', '')) {
+                $this->_eventManager->dispatch(
+                /* @note the following event should be used to process trust wallet additional charge */
+                'ame_callback_trust_wallet_captured',
+                    [
+                        'ame_original_order_id' => $ameOriginOrderId,
+                        'ame_transaction_id' => $transactionId,
+                    ]
+                );
+            } else {
+                $params = json_encode($this->getRequest()->getParams());
+                $this->logger->error('AME - Invalid capture transaction callback - ' . $params);
+                throw new InvalidArgumentException('AME - Invalid capture transaction callback');
+            }
+        } else {
+            if (!$order = $this->getOrderByTransactionId($transactionId)) {
+                /* @note the following event should be used to process not found orders */
+                $this->_eventManager->dispatch(
+                    'ame_callback_order_not_found_captured',
+                    [
+                        'ame_order_id' => $request_ame_order_id,
+                        'ame_transaction_id' => $transactionId,
+                    ]
+                );
+            } else {
+                $ameOrderId = $order->getPayment()->getAdditionalInformation(PaymentInformation::AME_ID);
+                if ($request_ame_order_id != $ameOrderId) {
+                    $message = __("AME Callback - ERROR Invalid transaction for order - " . $request_ame_order_id);
+                    throw new InputException($message);
+                }
+                $this->invoiceOrder($order);
+                $comment = 'AME transaction ID: ' . $transactionId . PHP_EOL . 'NSU: ' . $this->getNsu($transactionId);
+                $order->addStatusHistoryComment($comment);
+                $order->save();
+                $amount = $order->getGrandTotal();
+                $this->gumApi->captureTransaction($transactionId, $request_ame_order_id, $amount);
+            }
         }
-        if($request_ame_order_id != $db_ame_order_id){
-            die("ERROR Invalid transaction for order");
+        return $this->rawResultFactory->create()->setContents('');
+    }
+
+    /**
+     * @param string $transactionId
+     * @return string
+     * @throws InputException
+     * @throws NoSuchEntityException
+     */
+    public function getNsu(string $transactionId)
+    {
+        $order = $this->getOrderByTransactionId($transactionId);
+        return $order->getPayment()->getAdditionalInformation(PaymentInformation::NSU);
+    }
+
+    /**
+     * @param $transactionId
+     * @return OrderInterface|null
+     * @throws InputException
+     * @throws NoSuchEntityException
+     */
+    public function getOrderByTransactionId($transactionId): ?OrderInterface
+    {
+        $paymentCollection = $this->paymentCollectionFactory->create();
+        $paymentCollection->getSelect()->where(
+            "JSON_EXTRACT(additional_information, '$.".PaymentInformation::TRANSACTION_ID."') = '"
+            . $transactionId ."'"
+        );
+        if (!$paymentCollection->count()) {
+            return null;
         }
-        $incrId = $this->_dbAME->getOrderIncrementId($request_ame_order_id);
-        $this->_mlogger->log("INFO","AME Capture Transacton getting Magento Order for ".$incrId);
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $orderInterface = $objectManager->create('Magento\Sales\Api\Data\OrderInterface');
-        $order = $orderInterface->loadByIncrementId($incrId);
-        $orderId = $order->getId();
-        $this->_mlogger->log("INFO","Order ID: ".$orderId);
-        $order = $this->_orderRepository->get($orderId);
-        $this->_mlogger->log("INFO","AME Callback invoicing Magento order ".$incrId);
-        $this->_email->sendDebug("Pagamento AME recebido pedido ".$order->getIncrementId(),"AME ID: ".$request_ame_order_id);
-        $this->invoiceOrder($order);
-        $order->addStatusHistoryComment(
-            'AME transaction ID: '.$this->_dbAME->getCallBackTransactionId($request_ame_order_id)."\n"
-            .'NSU: '.$this->_dbAME->getCallBackNsu($request_ame_order_id));
-        $order->save();
-//        $this->_dbAME->setCaptured($ame_transaction_id,$capture['id']);
-        $ame_transaction_id = $this->_dbAME->getTransactionIdByOrderId($request_ame_order_id);
-        $amount = $this->_dbAME->getTransactionAmount($ame_transaction_id);
-        $capture2 = $this->_gumApi->captureTransaction($ame_transaction_id,$request_ame_order_id,$amount);
-        if($capture2) $this->_dbAME->setCaptured2($ame_transaction_id);
-        $this->_mlogger->log("INFO","AME Capture Transaction ended.");
-        die();
+        /** @var OrderPaymentInterface $payment */
+        $payment = $paymentCollection->getFirstItem();
+        return $this->orderRepository->get($payment->getParentId());
     }
-    public function cancelOrder($order){
-        $order->cancel()->save();
-    }
-    public function invoiceOrder($order){
+
+    /**
+     * @param Order $order
+     * @return void
+     * @throws InputException
+     * @throws AlreadyExistsException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function invoiceOrder(Order $order): void
+    {
         $invoice = $this->_invoiceService->prepareInvoice($order);
-        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
         $invoice->register();
         $transaction = $this->_transactionFactory->create()
             ->addObject($invoice)
             ->addObject($invoice->getOrder());
         $transaction->save();
-        $order->setState('processing')->setStatus('processing');
-        $order->save();
-    }
-    public function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+        $processingStatus = $this->_scopeConfig->getValue(
+            Config::STATUS_PROCESSING,
+            ScopeInterface::SCOPE_STORE
+        );
+        $order->setState('processing')->setStatus($processingStatus);
+        $this->orderRepository->save($order);
     }
 }

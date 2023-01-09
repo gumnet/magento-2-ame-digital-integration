@@ -1,0 +1,14 @@
+type CustomerOrder {
+    ameInformation: AmeInformation
+    @resolver(
+        class: "GumNet\\AME\\Model\\Resolver\\GetAdditionalInformation"
+    )
+}
+
+type AmeInformation @doc(description: "Order Payment AME Additional Information") {
+    ameId: String @doc(description: "AME Order Id")
+    qrCodeLink: String @doc(description: "QR code image link")
+    deepLink: String @doc(description: "Mobile deep link")
+    transaction_id: String @doc(description: "AME Transaction Id")
+    nsu: String @doc(description: "AME nsu")
+}
