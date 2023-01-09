@@ -1,10 +1,10 @@
 {
   "name": "gumnet/magento2-ame-integration",
   "description": "Magento 2 AME Digital Integration",
-  "version": "1.1.22",
+  "version": "2.0.0",
   "homepage": "https://gum.net.br",
   "require": {
-    "php": ">=7.0.0",
+    "php": ">=7.2.0",
     "ramsey/uuid": ">=3.0.0",
     "magento/framework": ">=102.0",
     "ext-json": "*"
