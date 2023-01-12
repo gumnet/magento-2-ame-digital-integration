@@ -43,6 +43,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Order;
@@ -95,6 +96,8 @@ class Index extends Action
      */
     protected $rawResultFactory;
 
+    protected $invoiceSender;
+
     /**
      * @param Context $context
      * @param ScopeConfigInterface $scopeConfig
@@ -105,6 +108,7 @@ class Index extends Action
      * @param GumApi $gumApi
      * @param CollectionFactory $paymentCollectionFactory
      * @param RawFactory $rawResultFactory
+     * @param InvoiceSender $invoiceSender
      * @param array $data
      */
     public function __construct(
@@ -117,6 +121,7 @@ class Index extends Action
         GumApi $gumApi,
         CollectionFactory $paymentCollectionFactory,
         RawFactory $rawResultFactory,
+        InvoiceSender $invoiceSender,
         array $data = []
     ) {
         $this->_scopeConfig = $scopeConfig;
@@ -127,6 +132,7 @@ class Index extends Action
         $this->gumApi = $gumApi;
         $this->paymentCollectionFactory = $paymentCollectionFactory;
         $this->rawResultFactory = $rawResultFactory;
+        $this->invoiceSender = $invoiceSender;
         parent::__construct($context);
     }
 
@@ -234,6 +240,11 @@ class Index extends Action
             ->addObject($invoice)
             ->addObject($invoice->getOrder());
         $transaction->save();
+        try {
+            $this->invoiceSender->send($invoice);
+        } catch (\Exception $e) {
+            $this->logger->warning(__($e->getMessage()));
+        }
         $processingStatus = $this->_scopeConfig->getValue(
             Config::STATUS_PROCESSING,
             ScopeInterface::SCOPE_STORE
