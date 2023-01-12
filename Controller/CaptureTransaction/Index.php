@@ -226,8 +226,10 @@ class Index extends Action
     public function invoiceOrder(Order $order): void
     {
         $invoice = $this->_invoiceService->prepareInvoice($order);
+        $invoice->setCustomerNoteNotify(true);
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
         $invoice->register();
+        /** @var \Magento\Framework\DB\Transaction $transaction */
         $transaction = $this->_transactionFactory->create()
             ->addObject($invoice)
             ->addObject($invoice->getOrder());
