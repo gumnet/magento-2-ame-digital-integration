@@ -34,6 +34,8 @@ use GumNet\AME\Model\AME;
 use GumNet\AME\Model\Values\Config;
 use GumNet\AME\Model\Values\PaymentInformation;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
@@ -43,6 +45,7 @@ use Magento\Sales\Model\Order;
 
 class CancelPendingOrders
 {
+    public const PAYMENT_TABLE = 'sales_order_payment';
     /**
      * @var LoggerInterface
      */
@@ -64,21 +67,29 @@ class CancelPendingOrders
     protected $orderRepository;
 
     /**
+     * @var AbstractDb
+     */
+    protected $abstractDb;
+
+    /**
      * @param LoggerInterface $logger
      * @param CollectionFactory $orderCollectionFactory
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderRepositoryInterface $orderRepository
+     * @param AbstractDb $abstractDb
      */
     public function __construct(
         LoggerInterface $logger,
         CollectionFactory $orderCollectionFactory,
         ScopeConfigInterface $scopeConfig,
-        OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository,
+        AbstractDb $abstractDb
     ) {
         $this->logger = $logger;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->scopeConfig = $scopeConfig;
         $this->orderRepository = $orderRepository;
+        $this->abstractDb = $abstractDb;
     }
 
     /**
@@ -98,7 +109,6 @@ class CancelPendingOrders
         /** @var Order $order */
         foreach ($orderCollection->getItems() as $order) {
             if (!$order->getPayment()->getAdditionalInformation(PaymentInformation::TRANSACTION_ID)
-                && $order->getPayment()->getMethod() == AME::CODE
                 && !$order->hasInvoices()) {
                 $this->logger->info("AME - Payment not detected - cancel pending order: " . $order->getIncrementId());
                 $order->cancel();
@@ -116,8 +126,15 @@ class CancelPendingOrders
         $cancelAfterDays++;
         $cancelTo = date("Y-m-d h:i:s", strtotime("-" . $cancelAfterDays . " day"));
         $orderCollection = $this->orderCollectionFactory->create();
+        $table = $this->abstractDb->getTable(self::PAYMENT_TABLE);
+        $orderCollection->join(
+            [self::PAYMENT_TABLE => $table],
+            'main_table.entity_id = ' . self::PAYMENT_TABLE .'.parent_id',
+            ['method']
+        );
+        $orderCollection->addFieldToFilter(self::PAYMENT_TABLE . '.method', ['eq' => AME::CODE]);
         $orderCollection->addFieldToFilter('created_at', ['lteq' => $cancelTo]);
-        $orderCollection->addFieldToFilter('state', ['eq' => Order::STATE_PENDING_PAYMENT]);
+        $orderCollection->addFieldToFilter('state', ['in' => [Order::STATE_PENDING_PAYMENT, Order::STATE_NEW]]);
         return $orderCollection;
     }
 }

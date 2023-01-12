@@ -40,7 +40,7 @@ class CancelAfterDays implements ArrayInterface
     public function toOptionArray(): array
     {
         $result[] = ['value' => 0, 'label' => __('Disabled')];
-        for ($i=0; $i<=30; $i++) {
+        for ($i=1; $i<=30; $i++) {
             $result[] = ['value' => (string)$i, 'label' => $i . " " . __('day(s)')];
         }
         return $result;
