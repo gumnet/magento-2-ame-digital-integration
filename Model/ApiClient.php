@@ -139,7 +139,7 @@ class ApiClient
                 return $this->generateCashbackFromOrder();
             }
         } catch (LocalizedException $e) {
-            return 0;
+            return 0.0;
         }
     }
 

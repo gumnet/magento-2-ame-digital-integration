@@ -37,12 +37,10 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\ScopeInterface;
 use GumNet\AME\Model\Values\Config;
+use \Magento\Catalog\Helper\Data;
 
 class CashbackText implements ArgumentInterface
 {
-    /**
-     * @var Registry
-     */
     protected $registry;
 
     /**
@@ -62,18 +60,18 @@ class CashbackText implements ArgumentInterface
 
     /**
      * CashbackText constructor.
-     * @param Registry $registry
+     * @param Data $registry
      * @param ApiClient $api
      * @param Http $request
      * @param ScopeInterface $scopeConfig
      */
     public function __construct(
-        Registry $registry,
+        Data $helper,
         ApiClient $api,
         Http $request,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->registry = $registry;
+        $this->helper = $helper;
         $this->api = $api;
         $this->request = $request;
         $this->scopeConfig = $scopeConfig;
@@ -103,12 +101,12 @@ class CashbackText implements ArgumentInterface
     {
         try {
             if ($this->request->getFullActionName() == 'catalog_product_view') {
-                $product = $this->registry->registry('product');
-                return $product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
+                $product = $this->helper->getProduct('product');
+                return (float)$product->getFinalPrice() * $this->getCashbackPercent() * 0.01;
             }
         } catch (NoSuchEntityException $e) {
-            return 0;
+            return 0.0;
         }
-        return 0;
+        return 0.0;
     }
 }

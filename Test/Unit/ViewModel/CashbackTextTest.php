@@ -30,60 +30,72 @@ declare(strict_types=1);
 
 namespace GumNet\AME\Test\ViewModel;
 
-use GumNet\AME\Model\GumApi;
-use GumNet\AME\Observer\CreditMemoObserver;
 use GumNet\AME\Model\ApiClient;
-use Magento\Framework\Event;
-use Magento\Framework\Event\Observer;
-use Magento\Sales\Api\Data\OrderPaymentInterface;
-use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Creditmemo;
+use Magento\Catalog\Helper\Data;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Request\Http;
+use GumNet\AME\ViewModel\CashbackText;
+use Magento\Catalog\Model\Product;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class CashbackTextTest extends TestCase
 {
-    private MockObject $observer;
-    private MockObject $event;
-    private MockObject $creditMemo;
-    private MockObject $order;
-    private MockObject $payment;
-
+    private MockObject $helper;
     private MockObject $api;
-    private MockObject $gumApi;
-    private CreditMemoObserver $creditMemoObserver;
+    private MockObject $request;
+    private MockObject $scopeConfig;
+    private MockObject $product;
+    private CashbackText $cashbackText;
 
     protected function setUp(): void
     {
-        $this->observer = $this->createMock(Observer::class);
-        $this->event = $this->createMock(Event::class);
-        $this->creditMemo = $this->createMock(Creditmemo::class);
-        $this->order = $this->createMock(Order::class);
-        $this->payment = $this->createMock(OrderPaymentInterface::class);
-
+        $this->helper = $this->createMock(Data::class);
         $this->api = $this->createMock(ApiClient::class);
-        $this->gumApi = $this->createMock(GumApi::class);
+        $this->request = $this->createMock(Http::class);
+        $this->scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $this->product = $this->createMock(Product::class);
 
-        $this->creditMemoObserver = new CreditMemoObserver(
+        $this->cashbackText = new CashbackText(
+            $this->helper,
             $this->api,
-            $this->gumApi
+            $this->request,
+            $this->scopeConfig
         );
     }
 
-    public function testExecute()
+    public function testIsShowCashbackProduct()
     {
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-        $this->event->expects($this->once())
-            ->method('getCreditMemo')
-            ->willReturn($this->creditMemo);
-        $this->productModel->expects($this->once())
-            ->method('getFinalPrice')
-            ->willReturn(100.0);
-        $this->apiClient->expects($this->once())
-            ->method('getCashbackPercent')
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->willReturn(1);
+        $this->assertTrue($this->cashbackText->isShowCashbackProduct());
+    }
+    public function testGetCashbackPercent()
+    {
+        $this->api->expects($this->once())
+            ->method('getCashBackPercent')
             ->willReturn(10.0);
-        $this->assertEquals(10.0, $this->cashbackText->getCashbackValue());
+        $this->assertEquals(10, $this->cashbackText->getCashbackPercent());
+    }
+
+    public function testGetCashbackValue()
+    {
+        $this->request->expects($this->once())
+            ->method('getFullActionName')
+            ->willReturn('catalog_product_view');
+
+        $this->helper->expects($this->once())
+            ->method('getProduct')
+            ->willReturn($this->product);
+
+        $this->product->expects($this->once())
+            ->method('getFinalPrice')
+            ->willReturn(100);
+
+        $this->api->expects($this->once())
+            ->method('getCashBackPercent')
+            ->willReturn(10.0);
+        $this->assertEquals(10, $this->cashbackText->getCashbackValue());
     }
 }
