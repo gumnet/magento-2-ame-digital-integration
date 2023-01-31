@@ -33,58 +33,67 @@ namespace GumNet\AME\Test\Plugin;
 use Magento\Framework\App\Request\Http;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Block\Order\Info as InfoOrig;
+use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\Order;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use GumNet\AME\Plugin\Order\Info;
+use Magento\Framework\GraphQl\Config\Element\Field;
+use GumNet\AME\Model\Resolver\GetAdditionalInformation;
+use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
-class InfoTest extends TestCase
+class GetAdditionalInformationTest extends TestCase
 {
-    private MockObject $orderRepository;
-    private MockObject $request;
+    private MockObject $orderFactory;
     private MockObject $order;
     private MockObject $payment;
+    private MockObject $field;
+    private MockObject $resolveInfo;
     private MockObject $origInfo;
 
-    private Info $info;
+    private GetAdditionalInformation $getAdditionalInformation;
 
     protected function setUp(): void
     {
-        $this->orderRepository = $this->createMock(OrderRepositoryInterface::class);
-        $this->request = $this->createMock(Http::class);
+        $this->orderFactory = $this->createMock(OrderFactory::class);
         $this->order = $this->createMock(Order::class);
         $this->payment = $this->createMock(Order\Payment::class);
-        $this->origInfo = $this->createMock(InfoOrig::class);
+        $this->field = $this->createMock(Field::class);
+        $this->resolveInfo = $this->createMock(ResolveInfo::class);
 
-        $this->info = new Info(
-            $this->orderRepository,
-            $this->request,
+        $this->getAdditionalInformation = new GetAdditionalInformation(
+            $this->orderFactory
         );
     }
 
     public function testAfterGetPaymentInfoHtml()
     {
-        $this->request->expects($this->once())
-            ->method('getParam')
-            ->willReturn('1');
-
-        $this->orderRepository->expects($this->once())
-            ->method('get')
+        $this->orderFactory->expects($this->once())
+            ->method('create')
             ->willReturn($this->order);
+
+        $this->order->expects($this->once())
+            ->method('loadByIncrementId')
+            ->willReturnSelf();
 
         $this->order->expects($this->once())
             ->method('getPayment')
             ->willReturn($this->payment);
-        $this->payment->expects($this->once())
-            ->method('getMethod')
-            ->willReturn('ame');
 
+        $additionalInformation = "{\"test\": 123}";
         $this->payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->willReturn('URL');
+            ->willReturn($additionalInformation);
 
-        $result = "<br><img src='URL' alt='qrcode'>";
+        $value = ['increment_id' => 1];
 
-        $this->assertEquals($result, $this->info->afterGetPaymentInfoHtml($this->origInfo, ""));
+        $result = $this->getAdditionalInformation->resolve(
+            $this->field,
+            null,
+            $this->resolveInfo,
+            $value
+        );
+
+        $this->assertEquals($additionalInformation, $result);
     }
 }
