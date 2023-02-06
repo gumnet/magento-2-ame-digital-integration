@@ -28,28 +28,23 @@
  */
 declare(strict_types=1);
 
-namespace GumNet\AME\Test\Plugin;
+namespace GumNet\AME\Test\Unit\Model\Ui;
 
-use Magento\Framework\App\Request\Http;
-use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Block\Order\Info as InfoOrig;
-use Magento\Sales\Model\OrderFactory;
+use GumNet\AME\Model\Resolver\GetAdditionalInformation;
+use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use GumNet\AME\Plugin\Order\Info;
-use Magento\Framework\GraphQl\Config\Element\Field;
-use GumNet\AME\Model\Resolver\GetAdditionalInformation;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
-class GetAdditionalInformationTest extends TestCase
+class ConfigProviderTest extends TestCase
 {
     private MockObject $orderFactory;
     private MockObject $order;
     private MockObject $payment;
     private MockObject $field;
     private MockObject $resolveInfo;
-    private MockObject $origInfo;
 
     private GetAdditionalInformation $getAdditionalInformation;
 
