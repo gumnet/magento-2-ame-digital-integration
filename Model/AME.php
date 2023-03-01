@@ -132,12 +132,15 @@ class AME extends AbstractMethod
      * @return AME
      * @throws NoSuchEntityException
      * @throws NoSuchEntityException
+     * @throws IntegrationException
      */
     public function order(InfoInterface $payment, $amount): AME
     {
         /** @var  \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
-        $resultArray = json_decode($this->ame->createOrder($order), true);
+        if (!$resultArray = json_decode($this->ame->createOrder($order), true)) {
+            throw new IntegrationException(__('There was an error communicating with AME API.'));
+        }
         $this->setAdditionalInformation($payment, $resultArray);
         $newStatus = $this->_scopeConfig->getValue(
             Config::STATUS_CREATED,
